@@ -32,6 +32,7 @@ yolov5/.pre-commit-config.yaml
 yolov5/benchmark.py
 yolov5/CITATION.cff
 yolov5/CONTRIBUTING.md
+!yolov5/weights/*.pt
 
 head_model.blend
 head_model.blend1
