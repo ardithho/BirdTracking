@@ -26,6 +26,11 @@ yolov5/setup.cfg
 yolov5/train.py
 yolov5/val.py
 yolov5/tutorial.ipynb
+yolov5/.gitattributes
+yolov5/.pre-commit-config.yaml
+yolov5/benchmark.py
+yolov5/CITATION.cff
+yolov5/CONTRIBUTING.md
 
 head_model.blend
 head_model.blend1
