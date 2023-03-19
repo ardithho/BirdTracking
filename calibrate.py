@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from functions import kernel
+from functional.general import kernel
 
 
 def getMask(img):

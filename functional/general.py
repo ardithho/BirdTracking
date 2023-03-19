@@ -4,7 +4,7 @@ import math
 import random
 import matplotlib.pyplot as plt
 from matplotlib.colors import hsv_to_rgb
-from colourFunc import *
+from functional.colour import *
 from itertools import combinations
 from sklearn.cluster import KMeans, k_means
 from collections import Counter
@@ -428,7 +428,7 @@ def billMask(img):
 
     contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     if len(contours) > 1:
-        contours = [max([cv2.contourArea(contour) for contour in contours])]
+        contours = sorted(contours, key=lambda x: cv2.contourArea(x), reverse=True)[:1]
         mask = np.zeros(img.shape[:2], np.uint8)
         cv2.drawContours(mask, contours, 0, 255, -1)
 
@@ -483,16 +483,20 @@ def trackHead(img):
     return img_copy
 
 
-def grp_feat(img, bill_label1, bill_label5, eyes_labels1, eyes_labels5):
-    if bill_label1 and bill_label5:
+def grpFeat(img, bill_label1, bill_label5, eyes_labels1, eyes_labels5):
+    if bill_label1 is not None and bill_label5 is not None:
         pos = [(bill_label1[i]+bill_label5[i])/2 for i in range(1, 3)]
         bill = [round(pos[i] * img.shape[1 - i]) for i in range(2)]
-    elif bill_label1:
+        bill_conf = (bill_label1[-1] + bill_label5[-1]) / 2
+    elif bill_label1 is not None:
         bill = [round(bill_label1[1 + i] * img.shape[1 - i]) for i in range(2)]
-    elif bill_label5:
+        bill_conf = bill_label1[-1]
+    elif bill_label5 is not None:
         bill = [round(bill_label5[1 + i] * img.shape[1 - i]) for i in range(2)]
+        bill_conf = bill_label5[-1]
     else:
         bill = None
+        bill_conf = 0
     eyes = []
     for label in eyes_labels1:
         i = 0
@@ -505,15 +509,87 @@ def grp_feat(img, bill_label1, bill_label5, eyes_labels1, eyes_labels5):
                 eyes_labels5.pop(i)
                 match = True
             i += 1
-        pt = [round(pos1[i] * img.shape[1-i]) for i in range(2)]
-        eyes.append(pt)
+        if match or label[-1] > 0.4:
+            pt = [round(pos1[i] * img.shape[1-i]) for i in range(2)]
+            eyes.append(pt)
     for label in eyes_labels5:
-        pt = [round(label[1+i] * img.shape[1-i]) for i in range(2)]
-        eyes.append(pt)
+        if label[-1] > 0.4:
+            pt = [round(label[1+i] * img.shape[1-i]) for i in range(2)]
+            eyes.append(pt)
+    return bill, eyes, bill_conf
+
+
+def filterFeat(img, det1, det5):
+    bill_labels1 = sorted([label for label in det1 if label[0] == 0 and label[-1] >= 0.1], key=lambda x: x[-1],
+                          reverse=True)
+    eyes_labels1 = sorted([label for label in det1 if label[0] != 0 and label[-1] >= 0.1], key=lambda x: x[-1])
+    bill_labels5 = sorted([label for label in det5 if label[0] == 0 and label[-1] >= 0.1], key=lambda x: x[-1],
+                          reverse=True)
+    eyes_labels5 = sorted([label for label in det5 if label[0] != 0 and label[-1] >= 0.1], key=lambda x: x[-1])
+    bill_label1 = bill_labels1[0] if bill_labels1 else None
+    bill_label5 = bill_labels5[0] if bill_labels5 else None
+    bill, eyes, bill_conf = grpFeat(img, bill_label1, bill_label5, eyes_labels1, eyes_labels5)
+    if bill:
+        mask = billMask(img)
+        grey = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+        contours, _ = cv2.findContours(grey, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        if len(contours) >= 1:
+            cnt = contours[0]
+            M = cv2.moments(cnt)
+            centroid = (int(M['m10'] / M['m00']), int(M['m01'] / M['m00']))
+
+            # bounding rect
+            ratio = 3
+            dist = eucDist(bill, centroid) * 2
+            length = dist * ratio
+            x, y, w, h = cv2.boundingRect(cnt)
+            w += length
+            h += length
+            dx = centroid[0] - bill[0]
+            dy = centroid[1] - bill[1]
+            if dx >= 0 and dy != 0 and abs(dx/dy) < 1:
+                x -= w * (1 - abs(dx/dy)) / 2
+            elif dx < 0:
+                if dy != 0 and abs(dx/dy) <= 1:
+                    x += w * (1 - abs(dx/dy)) / 2 - length
+                else:
+                    x -= length
+            if dy >= 0 and dx != 0 and abs(dy/dx) < 1:
+                y -= h * (1 - abs(dy/dx)) / 2
+            elif dy < 0:
+                if dx != 0 and abs(dy/dx) <= 1:
+                    y += h * (1 - abs(dy/dx)) / 2 - length
+                else:
+                    y -= length
+            x = round(x)
+            y = round(y)
+            w = round(w)
+            h = round(h)
+
+            if x <= bill[0] <= x + w and y <= bill[1] <= y + h:
+                for eye in eyes:
+                    if x <= eye[0] <= x + w and y <= eye[1] <= y + h:
+                        eyes.remove(eye)
+            else:
+                bill = None
+        elif bill_conf < 0.5:
+            bill = None
     return bill, eyes
 
+
+def plotFeat(img, bill, eyes, start=(0, 0)):
+    if bill:
+        bill = [round(start[i]+bill[i]) for i in range(2)]
+        for eye in eyes:
+            eye = [round(start[i]+eye[i]) for i in range(2)]
+            cv2.line(img, eye, bill, (255, 0, 255), 2)
+            cv2.circle(img, eye, 4, (0, 255, 255), -1)
+        cv2.circle(img, bill, 4, (255, 255, 0), -1)
+    return img
+
+
 def visualise(img, bill_label1, bill_label5, eyes_labels1, eyes_labels5):
-    bill, eyes = grp_feat(img, bill_label1, bill_label5, eyes_labels1, eyes_labels5)
+    bill, eyes = grpFeat(img, bill_label1, bill_label5, eyes_labels1, eyes_labels5)
     if bill:
         mask = billMask(img)
         grey = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
@@ -571,12 +647,3 @@ def visualise(img, bill_label1, bill_label5, eyes_labels1, eyes_labels5):
             cv2.circle(img, eye, 4, (0, 255, 255), -1)
     return img
 
-
-if __name__ == "__main__":
-    img = cv2.imread('./vid/bgRemoved.jpg')
-    # img = cv2.imread("D:/295c24d19b65ebcbce3382a0a9e4f8ad.jpg")
-    colours, counts = getColours(img)
-    cv2.imshow('img', img)
-    pie(colours, counts)
-    cv2.waitKey()
-    cv2.destroyAllWindows()
