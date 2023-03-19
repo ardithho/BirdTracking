@@ -23,6 +23,8 @@
 !setup.cfg
 !cfg/yolov3*.cfg
 
+!weights/*.pt
+
 storage.googleapis.com
 runs/*
 data/*
