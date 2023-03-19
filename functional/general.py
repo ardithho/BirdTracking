@@ -572,7 +572,7 @@ def filterFeat(img, det1, det5):
                         eyes.remove(eye)
             else:
                 bill = None
-        elif bill_conf < 0.5:
+        elif bill_conf < 0.75:
             bill = None
     return bill, eyes
 
