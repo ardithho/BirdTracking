@@ -8,6 +8,7 @@ __pycache__/
 .git/
 .idea/
 
+yolov5/.git/
 yolov5/.github/
 yolov5/classify/
 yolov5/runs/
