@@ -18,7 +18,7 @@ If your python version does not match the requirements or you do not have python
 please install [Python 3.9](https://www.python.org/downloads/release/python-390/) with this 
 [tutorial](https://realpython.com/installing-python/) to help. 
 (Make sure that you download an installer compatible with your operating system from the Python 3.9 webpage, 
-add Python 3.9 to PATH when running the installer and installing pip in the optional features)
+check `Add Python 3.9 to PATH` when running the installer and installing `pip` in the optional features)
 
 ## Install PyTorch
 After you have python installed, install PyTorch.
