@@ -27,7 +27,7 @@ python detect.py --weights yolov5s.pt --source 0                               #
                                                'https://youtu.be/Zgi9g1ksQHc'  # YouTube
                                                'rtsp://example.com/media.mp4'  # RTSP, RTMP, HTTP stream
 ```
-Use the full path or relative path of files instead of just the file names, 
-the full path of images, videos or directories can be found by 
+Use the full path or relative path of files instead of just the file names. 
+The full path of images, videos or directories can be found by 
 selecting the file in file explorer and then pressing `Ctrl+Shift+C` for Windows, 
 or right-clicking the file and select `Get Info` for macOS.
