@@ -16,16 +16,16 @@ pip install -r requirements.txt  # install
 ## Detect
 `detect.py` runs inference on a variety of sources and saving results to `runs/detect`.
 ```bash
-python detect.py --weights yolov5s.pt --source 0                               # webcam
-                                               img.jpg                         # image
-                                               vid.mp4                         # video
-                                               screen                          # screenshot
-                                               path/                           # directory
-                                               list.txt                        # list of images
-                                               list.streams                    # list of streams
-                                               'path/*.jpg'                    # glob
-                                               'https://youtu.be/Zgi9g1ksQHc'  # YouTube
-                                               'rtsp://example.com/media.mp4'  # RTSP, RTMP, HTTP stream
+python detect.py --source 0                               # webcam
+                          img.jpg                         # image
+                          vid.mp4                         # video
+                          screen                          # screenshot
+                          path/                           # directory
+                          list.txt                        # list of images
+                          list.streams                    # list of streams
+                          'path/*.jpg'                    # glob
+                          'https://youtu.be/Zgi9g1ksQHc'  # YouTube
+                          'rtsp://example.com/media.mp4'  # RTSP, RTMP, HTTP stream
 ```
 Use the full path or relative path of files instead of just the file names. 
 The full path of images, videos or directories can be found by 
