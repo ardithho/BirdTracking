@@ -18,8 +18,6 @@ yolov5/detect_feat1.py
 yolov5/detect_feat5.py
 yolov5/detect_full.py
 yolov5/detect_head.py
-yolov5/export.py
-yolov5/hubconf.py
 yolov5/README.md
 yolov5/README.zh-CN.md
 yolov5/requirements.txt
