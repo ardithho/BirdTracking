@@ -483,43 +483,7 @@ def trackHead(img):
     return img_copy
 
 
-def grpFeat(img, bill_label1, bill_label5, eyes_labels1, eyes_labels5):
-    if bill_label1 is not None and bill_label5 is not None:
-        pos = [(bill_label1[i]+bill_label5[i])/2 for i in range(1, 3)]
-        bill = [round(pos[i] * img.shape[1 - i]) for i in range(2)]
-        bill_conf = (bill_label1[-1] + bill_label5[-1]) / 2
-    elif bill_label1 is not None:
-        bill = [round(bill_label1[1 + i] * img.shape[1 - i]) for i in range(2)]
-        bill_conf = bill_label1[-1]
-    elif bill_label5 is not None:
-        bill = [round(bill_label5[1 + i] * img.shape[1 - i]) for i in range(2)]
-        bill_conf = bill_label5[-1]
-    else:
-        bill = None
-        bill_conf = 0
-    eyes = []
-    for label in eyes_labels1:
-        i = 0
-        match = False
-        pos1 = label[1:3]
-        while not match and i < len(eyes_labels5):
-            pos5 = eyes_labels5[i][1:3]
-            if eucDist(pos1, pos5) < 3 / eucDist((0, 0), img.shape[:2][::-1]):
-                pos1 = [(pos1[i]+pos5[i])/2 for i in range(2)]
-                eyes_labels5.pop(i)
-                match = True
-            i += 1
-        if match or label[-1] > 0.4:
-            pt = [round(pos1[i] * img.shape[1-i]) for i in range(2)]
-            eyes.append(pt)
-    for label in eyes_labels5:
-        if label[-1] > 0.4:
-            pt = [round(label[1+i] * img.shape[1-i]) for i in range(2)]
-            eyes.append(pt)
-    return bill, eyes, bill_conf
-
-
-def boundFeat(img, bill, bill_conf, eyes):
+def boundFeat(img, bill, bill_conf, eyes, tear_marks):
     if bill:
         mask = billMask(img)
         grey = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
@@ -561,15 +525,18 @@ def boundFeat(img, bill, bill_conf, eyes):
                 for eye in eyes:
                     if not (x <= eye[0] <= x + w and y <= eye[1] <= y + h):
                         eyes.remove(eye)
+                for tear in tear_marks:
+                    if not (x <= tear[0] <= x + w and y <= tear[1] <= y + h):
+                        tear_marks.remove(tear)
             else:
                 bill = None
         elif bill_conf < 0.75:
             bill = None
-    return bill, eyes
+    return bill, eyes, tear_marks
 
 
-def filterFeat(img, det):
-    bill_labels = sorted([label for label in det if label[0] == 0 and label[-1] >= 0.1], key=lambda x: x[-1],
+def filterFeat(img, det, classes):
+    bill_labels = sorted([label for label in det if label[0] == classes[0] and label[-1] >= 0.1], key=lambda x: x[-1],
                           reverse=True)
     if bill_labels:
         bill_label = bill_labels[0]
@@ -578,91 +545,25 @@ def filterFeat(img, det):
     else:
         bill = None
         bill_conf = 0
-    eyes_labels = sorted([label for label in det if label[0] != 0 and label[-1] >= 0.1], key=lambda x: x[-1])
+
+    eyes_labels = sorted([label for label in det if label[0] in classes[1] and label[-1] >= 0.1], key=lambda x: x[-1])
     eyes = [[round(label[1+i] * img.shape[1-i]) for i in range(2)] for label in eyes_labels]
-    return boundFeat(img, bill, bill_conf, eyes)
+
+    tear_labels = sorted([label for label in det if label[0] in classes[2] and label[-1] >= 0.1], key=lambda x: x[-1])
+    tear_marks = [[round(label[1 + i] * img.shape[1 - i]) for i in range(2)] for label in tear_labels]
+    return boundFeat(img, bill, bill_conf, eyes, tear_marks)
 
 
-def filterFeat2(img, det1, det5):
-    bill_labels1 = sorted([label for label in det1 if label[0] == 0 and label[-1] >= 0.1], key=lambda x: x[-1],
-                          reverse=True)
-    eyes_labels1 = sorted([label for label in det1 if label[0] != 0 and label[-1] >= 0.1], key=lambda x: x[-1])
-    bill_labels5 = sorted([label for label in det5 if label[0] == 0 and label[-1] >= 0.1], key=lambda x: x[-1],
-                          reverse=True)
-    eyes_labels5 = sorted([label for label in det5 if label[0] != 0 and label[-1] >= 0.1], key=lambda x: x[-1])
-    bill_label1 = bill_labels1[0] if bill_labels1 else None
-    bill_label5 = bill_labels5[0] if bill_labels5 else None
-    bill, eyes, bill_conf = grpFeat(img, bill_label1, bill_label5, eyes_labels1, eyes_labels5)
-    return boundFeat(img, bill, bill_conf, eyes)
-
-
-def plotFeat(img, bill, eyes, start=(0, 0)):
+def plotFeat(img, bill, eyes, tear_marks, start=(0, 0)):
     if bill:
         bill = [round(start[i]+bill[i]) for i in range(2)]
         for eye in eyes:
             eye = [round(start[i]+eye[i]) for i in range(2)]
             cv2.line(img, eye, bill, (255, 0, 255), 2)
             cv2.circle(img, eye, 4, (0, 255, 255), -1)
+        for tear_mark in tear_marks:
+            tear_mark = [round(start[i]+tear_mark[i]) for i in range(2)]
+            cv2.line(img, tear_mark, bill, (255, 0, 255), 2)
+            cv2.circle(img, tear_mark, 4, (0, 255, 0), -1)
         cv2.circle(img, bill, 4, (255, 255, 0), -1)
     return img
-
-
-def visualise(img, bill_label1, bill_label5, eyes_labels1, eyes_labels5):
-    bill, eyes = grpFeat(img, bill_label1, bill_label5, eyes_labels1, eyes_labels5)
-    if bill:
-        mask = billMask(img)
-        grey = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
-        contours, _ = cv2.findContours(grey, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        if len(contours) >= 1:
-            cnt = contours[0]
-            M = cv2.moments(cnt)
-            centroid = (int(M['m10'] / M['m00']), int(M['m01'] / M['m00']))
-
-            # bounding rect
-            ratio = 3
-            dist = eucDist(bill, centroid) * 2
-            length = dist * ratio
-            x, y, w, h = cv2.boundingRect(cnt)
-            w += length
-            h += length
-            dx = centroid[0] - bill[0]
-            dy = centroid[1] - bill[1]
-            if dx >= 0 and dy != 0 and abs(dx/dy) < 1:
-                x -= w * (1 - abs(dx/dy)) / 2
-            elif dx < 0:
-                if dy != 0 and abs(dx/dy) <= 1:
-                    x += w * (1 - abs(dx/dy)) / 2 - length
-                else:
-                    x -= length
-            if dy >= 0 and dx != 0 and abs(dy/dx) < 1:
-                y -= h * (1 - abs(dy/dx)) / 2
-            elif dy < 0:
-                if dx != 0 and abs(dy/dx) <= 1:
-                    y += h * (1 - abs(dy/dx)) / 2 - length
-                else:
-                    y -= length
-            x = round(x)
-            y = round(y)
-            w = round(w)
-            h = round(h)
-            cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2)
-            cv2.line(img, bill, centroid, (0, 255, 255), 2)
-
-            for eye in eyes:
-                if x <= eye[0] <= x + w and y <= eye[1] <= y + h:
-                    cv2.line(img, eye, bill, (255, 0, 255), 2)
-                cv2.circle(img, eye, 4, (0, 255, 255), -1)
-            if x <= bill[0] <= x + w and y <= bill[1] <= y + h:
-                cv2.circle(img, bill, 4, (255, 255, 0), -1)
-            else:
-                cv2.circle(img, bill, 4, (255, 0, 0), -1)
-        else:
-            for eye in eyes:
-                cv2.line(img, eye, bill, (255, 0, 255), 2)
-                cv2.circle(img, eye, 4, (0, 255, 255), -1)
-            cv2.circle(img, bill, 4, (255, 0, 0), -1)
-    else:
-        for eye in eyes:
-            cv2.circle(img, eye, 4, (0, 255, 255), -1)
-    return img
-

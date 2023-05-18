@@ -38,13 +38,11 @@ yolov5/CONTRIBUTING.md
 head_model.blend
 head_model.blend1
 createLabels.py
-detect2.py
 display.py
 fetch.py
 headPose.py
 headTracker.py
 headTraining.py
-imageCV.py
 mainCV.py
 mainYOLO.py
 playVid.py

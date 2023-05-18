@@ -89,6 +89,7 @@ def run(
     weights_dir = os.path.join(ROOT, 'weights')
     weights_head = os.path.join(weights_dir, 'head.pt')
     weights_feat = os.path.join(weights_dir, 'feat6.pt')
+    weights_tear = os.path.join(weights_dir, 'tear2.pt')
     
     source = str(source)
     save_img = not nosave and not source.endswith('.txt')  # save inference images
@@ -108,7 +109,9 @@ def run(
     model_head = DetectMultiBackend(weights_head, device=device, dnn=dnn, data=data, fp16=half)
     stride, names, pt = model_head.stride, model_head.names, model_head.pt
     imgsz = check_img_size(imgsz, s=stride)  # check image size
-    model_feat = DetectMultiBackend(weights_feat, device=device, dnn=dnn, data=data, fp16=half)
+    model_feat = DetectMultiBackend(weights_tear, device=device, dnn=dnn, data=data, fp16=half)
+    # class_order = [0, [1, 2], []]  # head, eyes, tear marks
+    class_order = [0, [1, 4], [2, 5]]
 
     # Dataloader
     bs = 1  # batch_size
@@ -211,8 +214,8 @@ def run(
                             fxywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gnf).view(-1).tolist()
                             fdets[j] = cls, *fxywh, conf
 
-                        bill, eyes = filterFeat(imc, fdets)
-                        im0 = plotFeat(im0, bill, eyes, xyxyf[0][:2])
+                        bill, eyes, tear_marks = filterFeat(imc, fdets, class_order)
+                        im0 = plotFeat(im0, bill, eyes, tear_marks, xyxyf[0][:2])
 
 
             # Stream results
