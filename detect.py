@@ -88,8 +88,7 @@ def run(
 ):
     weights_dir = os.path.join(ROOT, 'weights')
     weights_head = os.path.join(weights_dir, 'head.pt')
-    weights_feat1 = os.path.join(weights_dir, 'feat1.pt')
-    weights_feat5 = os.path.join(weights_dir, 'feat5.pt')
+    weights_feat = os.path.join(weights_dir, 'feat6.pt')
     
     source = str(source)
     save_img = not nosave and not source.endswith('.txt')  # save inference images
@@ -109,8 +108,7 @@ def run(
     model_head = DetectMultiBackend(weights_head, device=device, dnn=dnn, data=data, fp16=half)
     stride, names, pt = model_head.stride, model_head.names, model_head.pt
     imgsz = check_img_size(imgsz, s=stride)  # check image size
-    model_feat1 = DetectMultiBackend(weights_feat1, device=device, dnn=dnn, data=data, fp16=half)
-    model_feat5 = DetectMultiBackend(weights_feat5, device=device, dnn=dnn, data=data, fp16=half)
+    model_feat = DetectMultiBackend(weights_feat, device=device, dnn=dnn, data=data, fp16=half)
 
     # Dataloader
     bs = 1  # batch_size
@@ -126,8 +124,7 @@ def run(
 
     # Run inference
     model_head.warmup(imgsz=(1 if pt or model_head.triton else bs, 3, *imgsz))  # warmup
-    model_feat1.warmup(imgsz=(1 if pt or model_head.triton else bs, 3, *imgsz))
-    model_feat5.warmup(imgsz=(1 if pt or model_head.triton else bs, 3, *imgsz))
+    model_feat.warmup(imgsz=(1 if pt or model_head.triton else bs, 3, *imgsz))
     seen, windows, dt = 0, [], (Profile(), Profile(), Profile())
     for path, im, im0s, vid_cap, s in dataset:
         with dt[0]:
@@ -163,8 +160,7 @@ def run(
             txt_path = str(save_dir / 'labels' / p.stem) + ('' if dataset.mode == 'image' else f'_{frame}')  # im.txt
             s += '%gx%g ' % im.shape[2:]  # print string
             gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
-            imc = im0.copy() if save_crop else im0  # for save_crop
-            # imh = im[i].clone()[None] if len(im[i].shape) == 3 else im[i].clone()  # for feature detection
+            ima = im0.copy()
             annotator = Annotator(im0, line_width=line_thickness, example=str(names))
             if len(det):
                 # Rescale boxes from img_size to im0 size
@@ -188,37 +184,34 @@ def run(
                         label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
                         annotator.box_label(xyxy, label, color=colors(c, True))
 
-                    imc = save_one_box(xyxy, im0, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True, save=save_crop)
+                    imc = ima.copy()
+                    imc = save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True, save=save_crop)
                     xyxyf = xyxy2save(xyxy, im0).numpy()
                     imh = imc.copy()
                     imh = letterbox(imh, imgsz, stride=stride)[0].transpose((2, 0, 1))[::-1]
                     with dt[0]:
-                        imh = torch.from_numpy(imh.copy()).to(model_feat1.device)
-                        imh = imh.half() if model_feat1.fp16 else imh.float()  # uint8 to fp16/32
+                        imh = torch.from_numpy(imh.copy()).to(model_feat.device)
+                        imh = imh.half() if model_feat.fp16 else imh.float()  # uint8 to fp16/32
                         imh /= 255  # 0 - 255 to 0.0 - 1.0
                         if len(imh.shape) == 3:
                             imh = imh[None]  # expand for batch dim
 
                     with dt[1]:
-                        pred1 = model_feat1(imh, augment=augment, visualize=visualize)
-                        pred5 = model_feat5(imh, augment=augment, visualize=visualize)
+                        pred = model_feat(imh, augment=augment, visualize=visualize)
 
                     with dt[2]:
-                        pred1 = non_max_suppression(pred1, conf_thres, iou_thres, classes, agnostic_nms, max_det=max_det)
-                        pred5 = non_max_suppression(pred5, conf_thres, iou_thres, classes, agnostic_nms, max_det=max_det)
+                        pred = non_max_suppression(pred, conf_thres, iou_thres, classes, agnostic_nms, max_det=max_det)
 
-                    fdets = [pred1[0].numpy(), pred5[0].numpy()]
+                    fdets = pred[0].numpy()
                     gnf = torch.tensor(imc.shape)[[1, 0, 1, 0]]  # normalization gain whwh
-                    if any(list(map(len, fdets))):
+                    if len(fdets):
+                        fdets[:, :4] = scale_boxes(imh.shape[2:], fdets[:, :4], imc.shape).round()
                         for j in range(len(fdets)):
-                            fdets[j][:, :4] = scale_boxes(imh.shape[2:], fdets[j][:, :4], imc.shape).round()
+                            *xyxy, conf, cls = fdets[j]
+                            fxywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gnf).view(-1).tolist()
+                            fdets[j] = cls, *fxywh, conf
 
-                            for k in range(len(fdets[j])):
-                                *xyxy, conf, cls = fdets[j][k]
-                                fxywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gnf).view(-1).tolist()
-                                fdets[j][k] = cls, *fxywh, conf
-
-                        bill, eyes = filterFeat(imc, *fdets)
+                        bill, eyes = filterFeat(imc, fdets)
                         im0 = plotFeat(im0, bill, eyes, xyxyf[0][:2])
 
 

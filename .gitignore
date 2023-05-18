@@ -16,8 +16,11 @@ yolov5/segment/
 yolov5/detect.py
 yolov5/detect_feat1.py
 yolov5/detect_feat5.py
+yolov5/detect_feat6.py
 yolov5/detect_full.py
 yolov5/detect_head.py
+yolov5/detect_tear1.py
+yolov5/detect_tear2.py
 yolov5/README.md
 yolov5/README.zh-CN.md
 yolov5/requirements.txt
@@ -35,6 +38,7 @@ yolov5/CONTRIBUTING.md
 head_model.blend
 head_model.blend1
 createLabels.py
+detect2.py
 display.py
 fetch.py
 headPose.py

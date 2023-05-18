@@ -519,21 +519,12 @@ def grpFeat(img, bill_label1, bill_label5, eyes_labels1, eyes_labels5):
     return bill, eyes, bill_conf
 
 
-def filterFeat(img, det1, det5):
-    bill_labels1 = sorted([label for label in det1 if label[0] == 0 and label[-1] >= 0.1], key=lambda x: x[-1],
-                          reverse=True)
-    eyes_labels1 = sorted([label for label in det1 if label[0] != 0 and label[-1] >= 0.1], key=lambda x: x[-1])
-    bill_labels5 = sorted([label for label in det5 if label[0] == 0 and label[-1] >= 0.1], key=lambda x: x[-1],
-                          reverse=True)
-    eyes_labels5 = sorted([label for label in det5 if label[0] != 0 and label[-1] >= 0.1], key=lambda x: x[-1])
-    bill_label1 = bill_labels1[0] if bill_labels1 else None
-    bill_label5 = bill_labels5[0] if bill_labels5 else None
-    bill, eyes, bill_conf = grpFeat(img, bill_label1, bill_label5, eyes_labels1, eyes_labels5)
+def boundFeat(img, bill, bill_conf, eyes):
     if bill:
         mask = billMask(img)
         grey = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
         contours, _ = cv2.findContours(grey, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        if len(contours) >= 1:
+        if len(contours) >= 1 and cv2.contourArea(contours[0]) > 0:
             cnt = contours[0]
             M = cv2.moments(cnt)
             centroid = (int(M['m10'] / M['m00']), int(M['m01'] / M['m00']))
@@ -568,13 +559,41 @@ def filterFeat(img, det1, det5):
 
             if x <= bill[0] <= x + w and y <= bill[1] <= y + h:
                 for eye in eyes:
-                    if x <= eye[0] <= x + w and y <= eye[1] <= y + h:
+                    if not (x <= eye[0] <= x + w and y <= eye[1] <= y + h):
                         eyes.remove(eye)
             else:
                 bill = None
         elif bill_conf < 0.75:
             bill = None
     return bill, eyes
+
+
+def filterFeat(img, det):
+    bill_labels = sorted([label for label in det if label[0] == 0 and label[-1] >= 0.1], key=lambda x: x[-1],
+                          reverse=True)
+    if bill_labels:
+        bill_label = bill_labels[0]
+        bill = [round(bill_label[1 + i] * img.shape[1 - i]) for i in range(2)]
+        bill_conf = bill_label[-1]
+    else:
+        bill = None
+        bill_conf = 0
+    eyes_labels = sorted([label for label in det if label[0] != 0 and label[-1] >= 0.1], key=lambda x: x[-1])
+    eyes = [[round(label[1+i] * img.shape[1-i]) for i in range(2)] for label in eyes_labels]
+    return boundFeat(img, bill, bill_conf, eyes)
+
+
+def filterFeat2(img, det1, det5):
+    bill_labels1 = sorted([label for label in det1 if label[0] == 0 and label[-1] >= 0.1], key=lambda x: x[-1],
+                          reverse=True)
+    eyes_labels1 = sorted([label for label in det1 if label[0] != 0 and label[-1] >= 0.1], key=lambda x: x[-1])
+    bill_labels5 = sorted([label for label in det5 if label[0] == 0 and label[-1] >= 0.1], key=lambda x: x[-1],
+                          reverse=True)
+    eyes_labels5 = sorted([label for label in det5 if label[0] != 0 and label[-1] >= 0.1], key=lambda x: x[-1])
+    bill_label1 = bill_labels1[0] if bill_labels1 else None
+    bill_label5 = bill_labels5[0] if bill_labels5 else None
+    bill, eyes, bill_conf = grpFeat(img, bill_label1, bill_label5, eyes_labels1, eyes_labels5)
+    return boundFeat(img, bill, bill_conf, eyes)
 
 
 def plotFeat(img, bill, eyes, start=(0, 0)):
