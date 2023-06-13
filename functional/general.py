@@ -535,6 +535,101 @@ def boundFeat(img, bill, bill_conf, eyes, tear_marks):
     return bill, eyes, tear_marks
 
 
+def detLR(bill, eye, tear_mark):
+    if tear_mark[1] > eye[1]:
+        if eye[0] >= bill[0]:
+            return 'left'
+        return 'right'
+    if eye[0] >= bill[0]:
+        return 'right'
+    return 'left'
+
+
+def sortFeat(bill, eyes, tear_marks):
+    if len(eyes) == 0 and len(tear_marks) == 0:
+        eyes = [None, None]  # L, R
+        tear_marks = [None, None]  # L, R
+    elif len(eyes) == 0:
+        if len(tear_marks) == 1:
+            if bill:
+                if tear_marks[0][0] >= bill[0]:
+                    tear_marks.append(None)
+                else:
+                    tear_marks.insert(0, None)
+            else:
+                tear_marks.append(None)
+        else:
+            if tear_marks[0][0] < tear_marks[1][0]:
+                tear_marks = [tear_marks[1], tear_marks[0]]
+    elif len(tear_marks) == 0:
+        if len(eyes) == 1:
+            if bill:
+                if eyes[0][0] >= bill[0]:
+                    eyes.append(None)
+                else:
+                    eyes.insert(0, None)
+            else:
+                eyes.append(None)
+        else:
+            if eyes[0][0] < eyes[1][0]:
+                eyes = [eyes[1], eyes[0]]
+    elif len(eyes) == 1 and len(tear_marks) == 1:
+        if bill:
+            if detLR(bill, eyes[0], tear_marks[0]) == 'left':
+                eyes.append(None)
+                tear_marks.append(None)
+            else:
+                eyes.insert(0, None)
+                tear_marks.insert(0, None)
+        else:
+            eyes.append(None)
+            tear_marks.append(None)
+    elif len(eyes) > len(tear_marks):
+        if eucDist(eyes[0], tear_marks[0]) <= eucDist(eyes[1], tear_marks[0]):
+            if detLR(bill, eyes[0], tear_marks[0]) == 'left':
+                tear_marks.append(None)
+            else:
+                eyes = [eyes[1], eyes[0]]
+                tear_marks.insert(0, None)
+        else:
+            if detLR(bill, eyes[1], tear_marks[0]) == 'left':
+                eyes = [eyes[1], eyes[0]]
+                tear_marks.append(None)
+            else:
+                tear_marks.insert(0, None)
+    elif len(eyes) > len(tear_marks):
+        if eucDist(eyes[0], tear_marks[0]) <= eucDist(eyes[0], tear_marks[1]):
+            if detLR(bill, eyes[0], tear_marks[0]) == 'left':
+                eyes.append(None)
+            else:
+                tear_marks = [tear_marks[1], tear_marks[0]]
+                eyes.insert(0, None)
+        else:
+            if detLR(bill, eyes[0], tear_marks[1]) == 'left':
+                tear_marks = [tear_marks[1], tear_marks[0]]
+                eyes.append(None)
+            else:
+                eyes.insert(0, None)
+    else:  # full set
+        if all([eucDist(eyes[0], tear_marks[i]) < eucDist(eyes[1], tear_marks[i]) for i in range(2)]):
+            if eucDist(eyes[1], tear_marks[0]) < eucDist(eyes[1], tear_marks[1]):
+                tear_marks = [tear_marks[1], tear_marks[0]]
+        elif all([eucDist(eyes[1], tear_marks[i]) < eucDist(eyes[0], tear_marks[i]) for i in range(2)]):
+            if eucDist(eyes[0], tear_marks[1]) < eucDist(eyes[0], tear_marks[0]):
+                tear_marks = [tear_marks[1], tear_marks[0]]
+        elif eucDist(eyes[0], tear_marks[1]) < eucDist(eyes[0], tear_marks[0]):
+            tear_marks = [tear_marks[1], tear_marks[0]]
+        if bill:
+            if detLR(bill, eyes[0], tear_marks[0]) == 'right' and detLR(bill, eyes[1], tear_marks[1]) == 'left':
+                eyes = [eyes[1], eyes[0]]
+                tear_marks = [tear_marks[1], tear_marks[0]]
+        else:
+            if detLR(eyes[1], eyes[0], tear_marks[0]) == 'right' and detLR(eyes[0], eyes[1], tear_marks[1]) == 'left':
+                eyes = [eyes[1], eyes[0]]
+                tear_marks = [tear_marks[1], tear_marks[0]]
+    return bill, eyes, tear_marks
+
+
 def filterFeat(img, det, classes):
     bill_labels = sorted([label for label in det if label[0] == classes[0] and label[-1] >= 0.1], key=lambda x: x[-1],
                           reverse=True)
@@ -551,7 +646,7 @@ def filterFeat(img, det, classes):
 
     tear_labels = sorted([label for label in det if label[0] in classes[2] and label[-1] >= 0.1], key=lambda x: x[-1])
     tear_marks = [[round(label[1 + i] * img.shape[1 - i]) for i in range(2)] for label in tear_labels]
-    return boundFeat(img, bill, bill_conf, eyes, tear_marks)
+    return sortFeat(*boundFeat(img, bill, bill_conf, eyes, tear_marks))
 
 
 def plotFeat(img, bill, eyes, tear_marks, start=(0, 0)):
