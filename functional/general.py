@@ -535,7 +535,7 @@ def boundFeat(img, bill, bill_conf, eyes, tear_marks):
     return bill, eyes, tear_marks
 
 
-def detLR(pivot, eye, tear_mark):
+def detLR(pivot, eye, tear_mark):  # determine left right of a pair of features
     if tear_mark[1] > eye[1]:
         if eye[0] >= pivot[0]:
             return 'left'
@@ -545,7 +545,7 @@ def detLR(pivot, eye, tear_mark):
     return 'left'
 
 
-def sortFeat(bill, eyes, tear_marks):
+def sortFeat(bill, eyes, tear_marks):  # sort left right features
     if len(eyes) == 0 and len(tear_marks) == 0:
         eyes = [None, None]  # L, R
         tear_marks = [None, None]  # L, R
@@ -633,7 +633,7 @@ def sortFeat(bill, eyes, tear_marks):
     return bill, eyes, tear_marks
 
 
-def matchLabels(target, labels, dist):
+def matchLabels(target, labels, dist):  # check for overlapping labels
     match = False
     i = 0
     while not match and i < len(labels):
@@ -644,7 +644,7 @@ def matchLabels(target, labels, dist):
     return match
 
 
-def processLabels(labels, n, img_shape):
+def processLabels(labels, n, img_shape):  # remove overlapping labels and return best n
     i = 0
     count = 0
     out_labels = []
@@ -662,6 +662,7 @@ def filterFeat(img, det, classes):
     bill_labels = sorted([label for label in det if label[0] == classes[0] and label[-1] >= 0.1], key=lambda x: x[-1],
                           reverse=True)
     if bill_labels:
+        # choose bill with the highest confidence
         bill_label = bill_labels[0]
         bill = [round(bill_label[1 + i] * img.shape[1 - i]) for i in range(2)]
         bill_conf = bill_label[-1]
@@ -669,12 +670,11 @@ def filterFeat(img, det, classes):
         bill = None
         bill_conf = 0
 
+    # sort by confidence
     eyes_labels = sorted([label for label in det if label[0] in classes[1] and label[-1] >= 0.1], key=lambda x: x[-1])
-    # eyes = [[round(label[1+i] * img.shape[1-i]) for i in range(2)] for label in eyes_labels]
     eyes = processLabels(eyes_labels, 2, img.shape[:2])
 
     tear_labels = sorted([label for label in det if label[0] in classes[2] and label[-1] >= 0.1], key=lambda x: x[-1])
-    # tear_marks = [[round(label[1 + i] * img.shape[1 - i]) for i in range(2)] for label in tear_labels]
     tear_marks = processLabels(tear_labels, 2, img.shape[:2])
     return sortFeat(*boundFeat(img, bill, bill_conf, eyes, tear_marks))
 
