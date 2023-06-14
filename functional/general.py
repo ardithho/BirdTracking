@@ -550,6 +550,7 @@ def sortFeat(bill, eyes, tear_marks):
         eyes = [None, None]  # L, R
         tear_marks = [None, None]  # L, R
     elif len(eyes) == 0:
+        eyes = [None, None]
         if len(tear_marks) == 1:
             if bill:
                 if tear_marks[0][0] >= bill[0]:
@@ -562,6 +563,7 @@ def sortFeat(bill, eyes, tear_marks):
             if tear_marks[0][0] < tear_marks[1][0]:
                 tear_marks = [tear_marks[1], tear_marks[0]]
     elif len(tear_marks) == 0:
+        tear_marks = [None, None]
         if len(eyes) == 1:
             if bill:
                 if eyes[0][0] >= bill[0]:
@@ -631,6 +633,31 @@ def sortFeat(bill, eyes, tear_marks):
     return bill, eyes, tear_marks
 
 
+def matchLabels(target, labels, dist):
+    match = False
+    i = 0
+    while not match and i < len(labels):
+        label = labels[i]
+        if all([label[i]-dist <= target[i] <= label[i]+dist for i in range(2)]):
+            match = True
+        i += 1
+    return match
+
+
+def processLabels(labels, n, img_shape):
+    i = 0
+    count = 0
+    out_labels = []
+    while count < n and i < len(labels):
+        label = labels[i]
+        label = [round(label[1+i] * img_shape[1-i]) for i in range(2)]
+        if not matchLabels(label, out_labels, 3):
+            out_labels.append(label)
+            count += 1
+        i += 1
+    return out_labels
+
+
 def filterFeat(img, det, classes):
     bill_labels = sorted([label for label in det if label[0] == classes[0] and label[-1] >= 0.1], key=lambda x: x[-1],
                           reverse=True)
@@ -643,25 +670,29 @@ def filterFeat(img, det, classes):
         bill_conf = 0
 
     eyes_labels = sorted([label for label in det if label[0] in classes[1] and label[-1] >= 0.1], key=lambda x: x[-1])
-    eyes = [[round(label[1+i] * img.shape[1-i]) for i in range(2)] for label in eyes_labels[:2]]
+    # eyes = [[round(label[1+i] * img.shape[1-i]) for i in range(2)] for label in eyes_labels]
+    eyes = processLabels(eyes_labels, 2, img.shape[:2])
 
     tear_labels = sorted([label for label in det if label[0] in classes[2] and label[-1] >= 0.1], key=lambda x: x[-1])
-    tear_marks = [[round(label[1 + i] * img.shape[1 - i]) for i in range(2)] for label in tear_labels[:2]]
+    # tear_marks = [[round(label[1 + i] * img.shape[1 - i]) for i in range(2)] for label in tear_labels]
+    tear_marks = processLabels(tear_labels, 2, img.shape[:2])
     return sortFeat(*boundFeat(img, bill, bill_conf, eyes, tear_marks))
 
 
 def plotFeat(img, bill, eyes, tear_marks, start=(0, 0)):
+    line_colours = [(0, 255, 0), (0, 0, 255)]  # L, R
     if bill:
         bill = [round(start[i]+bill[i]) for i in range(2)]
-        for eye in eyes:
+        for i in range(2):
+            eye = eyes[i]
             if eye:
                 eye = [round(start[i]+eye[i]) for i in range(2)]
-                cv2.line(img, eye, bill, (255, 0, 255), 2)
+                cv2.line(img, eye, bill, line_colours[i], 2)
                 cv2.circle(img, eye, 4, (0, 255, 255), -1)
-        for tear_mark in tear_marks:
+            tear_mark = tear_marks[i]
             if tear_mark:
                 tear_mark = [round(start[i]+tear_mark[i]) for i in range(2)]
-                cv2.line(img, tear_mark, bill, (255, 0, 255), 2)
-                cv2.circle(img, tear_mark, 4, (0, 255, 0), -1)
+                cv2.line(img, tear_mark, bill, line_colours[i], 2)
+                cv2.circle(img, tear_mark, 4, (0, 150, 255), -1)
         cv2.circle(img, bill, 4, (255, 255, 0), -1)
     return img
