@@ -535,12 +535,12 @@ def boundFeat(img, bill, bill_conf, eyes, tear_marks):
     return bill, eyes, tear_marks
 
 
-def detLR(bill, eye, tear_mark):
+def detLR(pivot, eye, tear_mark):
     if tear_mark[1] > eye[1]:
-        if eye[0] >= bill[0]:
+        if eye[0] >= pivot[0]:
             return 'left'
         return 'right'
-    if eye[0] >= bill[0]:
+    if eye[0] >= pivot[0]:
         return 'right'
     return 'left'
 
@@ -586,26 +586,30 @@ def sortFeat(bill, eyes, tear_marks):
             tear_marks.append(None)
     elif len(eyes) > len(tear_marks):
         if eucDist(eyes[0], tear_marks[0]) <= eucDist(eyes[1], tear_marks[0]):
-            if detLR(bill, eyes[0], tear_marks[0]) == 'left':
+            pivot = bill if bill else eyes[1]
+            if detLR(pivot, eyes[0], tear_marks[0]) == 'left':
                 tear_marks.append(None)
             else:
                 eyes = [eyes[1], eyes[0]]
                 tear_marks.insert(0, None)
         else:
-            if detLR(bill, eyes[1], tear_marks[0]) == 'left':
+            pivot = bill if bill else eyes[0]
+            if detLR(pivot, eyes[1], tear_marks[0]) == 'left':
                 eyes = [eyes[1], eyes[0]]
                 tear_marks.append(None)
             else:
                 tear_marks.insert(0, None)
-    elif len(eyes) > len(tear_marks):
+    elif len(eyes) < len(tear_marks):
         if eucDist(eyes[0], tear_marks[0]) <= eucDist(eyes[0], tear_marks[1]):
-            if detLR(bill, eyes[0], tear_marks[0]) == 'left':
+            pivot = bill if bill else tear_marks[1]
+            if detLR(pivot, eyes[0], tear_marks[0]) == 'left':
                 eyes.append(None)
             else:
                 tear_marks = [tear_marks[1], tear_marks[0]]
                 eyes.insert(0, None)
         else:
-            if detLR(bill, eyes[0], tear_marks[1]) == 'left':
+            pivot = bill if bill else tear_marks[0]
+            if detLR(pivot, eyes[0], tear_marks[1]) == 'left':
                 tear_marks = [tear_marks[1], tear_marks[0]]
                 eyes.append(None)
             else:
@@ -619,14 +623,11 @@ def sortFeat(bill, eyes, tear_marks):
                 tear_marks = [tear_marks[1], tear_marks[0]]
         elif eucDist(eyes[0], tear_marks[1]) < eucDist(eyes[0], tear_marks[0]):
             tear_marks = [tear_marks[1], tear_marks[0]]
-        if bill:
-            if detLR(bill, eyes[0], tear_marks[0]) == 'right' and detLR(bill, eyes[1], tear_marks[1]) == 'left':
-                eyes = [eyes[1], eyes[0]]
-                tear_marks = [tear_marks[1], tear_marks[0]]
-        else:
-            if detLR(eyes[1], eyes[0], tear_marks[0]) == 'right' and detLR(eyes[0], eyes[1], tear_marks[1]) == 'left':
-                eyes = [eyes[1], eyes[0]]
-                tear_marks = [tear_marks[1], tear_marks[0]]
+        pivotL = bill if bill else eyes[1]
+        pivotR = bill if bill else eyes[0]
+        if detLR(pivotL, eyes[0], tear_marks[0]) == 'right' and detLR(pivotR, eyes[1], tear_marks[1]) == 'left':
+            eyes = [eyes[1], eyes[0]]
+            tear_marks = [tear_marks[1], tear_marks[0]]
     return bill, eyes, tear_marks
 
 
@@ -642,10 +643,10 @@ def filterFeat(img, det, classes):
         bill_conf = 0
 
     eyes_labels = sorted([label for label in det if label[0] in classes[1] and label[-1] >= 0.1], key=lambda x: x[-1])
-    eyes = [[round(label[1+i] * img.shape[1-i]) for i in range(2)] for label in eyes_labels]
+    eyes = [[round(label[1+i] * img.shape[1-i]) for i in range(2)] for label in eyes_labels[:2]]
 
     tear_labels = sorted([label for label in det if label[0] in classes[2] and label[-1] >= 0.1], key=lambda x: x[-1])
-    tear_marks = [[round(label[1 + i] * img.shape[1 - i]) for i in range(2)] for label in tear_labels]
+    tear_marks = [[round(label[1 + i] * img.shape[1 - i]) for i in range(2)] for label in tear_labels[:2]]
     return sortFeat(*boundFeat(img, bill, bill_conf, eyes, tear_marks))
 
 
@@ -653,12 +654,14 @@ def plotFeat(img, bill, eyes, tear_marks, start=(0, 0)):
     if bill:
         bill = [round(start[i]+bill[i]) for i in range(2)]
         for eye in eyes:
-            eye = [round(start[i]+eye[i]) for i in range(2)]
-            cv2.line(img, eye, bill, (255, 0, 255), 2)
-            cv2.circle(img, eye, 4, (0, 255, 255), -1)
+            if eye:
+                eye = [round(start[i]+eye[i]) for i in range(2)]
+                cv2.line(img, eye, bill, (255, 0, 255), 2)
+                cv2.circle(img, eye, 4, (0, 255, 255), -1)
         for tear_mark in tear_marks:
-            tear_mark = [round(start[i]+tear_mark[i]) for i in range(2)]
-            cv2.line(img, tear_mark, bill, (255, 0, 255), 2)
-            cv2.circle(img, tear_mark, 4, (0, 255, 0), -1)
+            if tear_mark:
+                tear_mark = [round(start[i]+tear_mark[i]) for i in range(2)]
+                cv2.line(img, tear_mark, bill, (255, 0, 255), 2)
+                cv2.circle(img, tear_mark, 4, (0, 255, 0), -1)
         cv2.circle(img, bill, 4, (255, 255, 0), -1)
     return img
