@@ -416,10 +416,10 @@ def hueMask(img, hue):
 
 def billMask(img):
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    low1 = np.array([0, 80, 80])
+    low1 = np.array([0, 80, 60])
     high1 = np.array([10, 255, 255])
     mask1 = cv2.inRange(hsv, low1, high1)
-    low2 = np.array([170, 80, 80])
+    low2 = np.array([170, 80, 60])
     high2 = np.array([180, 255, 255])
     mask2 = cv2.inRange(hsv, low2, high2)
     mask = cv2.bitwise_or(mask1, mask2)
