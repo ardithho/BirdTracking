@@ -416,10 +416,10 @@ def hueMask(img, hue):
 
 def billMask(img):
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    low1 = np.array([0, 80, 60])
+    low1 = np.array([0, 60, 60])
     high1 = np.array([10, 255, 255])
     mask1 = cv2.inRange(hsv, low1, high1)
-    low2 = np.array([170, 80, 60])
+    low2 = np.array([170, 60, 60])
     high2 = np.array([180, 255, 255])
     mask2 = cv2.inRange(hsv, low2, high2)
     mask = cv2.bitwise_or(mask1, mask2)
@@ -535,14 +535,29 @@ def boundFeat(img, bill, bill_conf, eyes, tear_marks):
     return bill, eyes, tear_marks
 
 
+def angle(pivot, point):
+    if point[0] == pivot[0]:
+        return 3*math.pi/2 if point[1] < pivot[1] else math.pi/2
+    ratio = (point[1] - pivot[1]) / (point[0] - pivot[0])
+    rad = math.atan(ratio)
+    if point[1] < pivot[1]:
+        rad += math.pi
+    if len([1 for i in range(2) if point[i] < pivot[i]]) == 1:
+        rad += math.pi
+    return rad
+
+
 def detLR(pivot, eye, tear_mark):  # determine left right of a pair of features
-    if tear_mark[1] > eye[1]:
-        if eye[0] >= pivot[0]:
+    eye_angle = angle(pivot, eye)
+    tear_angle = angle(pivot, tear_mark)
+    print(eye_angle, tear_angle)
+    if abs(tear_angle - eye_angle) < math.pi:
+        if tear_angle >= eye_angle:
             return 'left'
         return 'right'
-    if eye[0] >= pivot[0]:
-        return 'right'
-    return 'left'
+    if tear_angle < eye_angle:
+        return 'left'
+    return 'right'
 
 
 def sortFeat(bill, eyes, tear_marks):  # sort left right features
