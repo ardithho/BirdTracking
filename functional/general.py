@@ -723,3 +723,15 @@ def plotFeat(img, bill, eyes, tear_marks, start=(0, 0)):
                 cv2.circle(img, tear_mark, 4, (0, 150, 255), -1)
                 cv2.circle(img, tear_mark, 5, line_colours[i], 2)
     return img
+
+
+def to_txt(img, bill, eyes, tear_marks, start=(0, 0)):
+    shape = img.shape[:2]
+    if bill:
+        bill = [(start[i] + bill[i])/shape[1-i] for i in range(2)]
+    for i in range(2):
+        if eyes[i]:
+            eyes[i] = [(start[j]+eyes[i][j])/shape[1-j] for j in range(2)]
+        if tear_marks[i]:
+            tear_marks[i] = [(start[j]+tear_marks[i][j])/shape[1-j] for j in range(2)]
+    return bill, eyes, tear_marks

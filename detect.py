@@ -53,7 +53,7 @@ from yolov5.utils.general import (LOGGER, Profile, check_file, check_img_size, c
 from yolov5.utils.plots import Annotator, colors, save_one_box, xyxy2save
 from yolov5.utils.torch_utils import select_device, smart_inference_mode
 from yolov5.utils.augmentations import letterbox
-from functional.general import filterFeat, plotFeat
+from functional.general import filterFeat, plotFeat, to_txt
 
 
 @smart_inference_mode()
@@ -216,6 +216,29 @@ def run(
 
                         bill, eyes, tear_marks = filterFeat(imc, fdets, class_order)
                         im0 = plotFeat(im0, bill, eyes, tear_marks, xyxyf[0][:2])
+                        bill, eyes, tear_marks = to_txt(im0, bill, eyes, tear_marks, xyxyf[0][:2])
+
+                        if save_txt:  # Write to file
+                            if bill is None:
+                                line = (1, -1, -1)
+                            else:
+                                line = (1, *bill)
+                            with open(f'{txt_path}.txt', 'a') as f:
+                                f.write(('%g ' * len(line)).rstrip() % line + '\n')
+                            for eye in eyes:
+                                if eye is None:
+                                    line = (2, -1, -1)
+                                else:
+                                    line = (2, *eye)
+                                with open(f'{txt_path}.txt', 'a') as f:
+                                    f.write(('%g ' * len(line)).rstrip() % line + '\n')
+                            for tear in tear_marks:
+                                if tear is None:
+                                    line = (3, -1, -1)
+                                else:
+                                    line = (3, *tear)
+                                with open(f'{txt_path}.txt', 'a') as f:
+                                    f.write(('%g ' * len(line)).rstrip() % line + '\n')
 
 
             # Stream results
