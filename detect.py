@@ -166,6 +166,11 @@ def run(
             ima = im0.copy()
             annotator = Annotator(im0, line_width=line_thickness, example=str(names))
             if len(det):
+                # Write number of head detections
+                if save_txt:
+                    with open(f'{txt_path}.txt', 'a') as f:
+                        f.write(str(len(det)) + '\n')
+
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_boxes(im.shape[2:], det[:, :4], im0.shape).round()
 
@@ -174,7 +179,7 @@ def run(
                     n = (det[:, 5] == c).sum()  # detections per class
                     s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
 
-                # Write results
+                # Write results for each head detection
                 for *xyxy, conf, cls in reversed(det):
                     if save_txt:  # Write to file
                         xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
@@ -218,7 +223,7 @@ def run(
                         im0 = plotFeat(im0, bill, eyes, tear_marks, xyxyf[0][:2])
                         bill, eyes, tear_marks = to_txt(im0, bill, eyes, tear_marks, xyxyf[0][:2])
 
-                        if save_txt:  # Write to file
+                        if save_txt:  # Write features to file
                             if bill is None:
                                 line = (1, -1, -1)
                             else:
@@ -239,7 +244,6 @@ def run(
                                     line = (3, *tear)
                                 with open(f'{txt_path}.txt', 'a') as f:
                                     f.write(('%g ' * len(line)).rstrip() % line + '\n')
-
 
             # Stream results
             im0 = annotator.result()
