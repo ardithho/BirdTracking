@@ -550,7 +550,6 @@ def angle(pivot, point):
 def detLR(pivot, eye, tear_mark):  # determine left right of a pair of features
     eye_angle = angle(pivot, eye)
     tear_angle = angle(pivot, tear_mark)
-    print(eye_angle, tear_angle)
     if abs(tear_angle - eye_angle) < math.pi:
         if tear_angle >= eye_angle:
             return 'left'
