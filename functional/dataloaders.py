@@ -1,11 +1,12 @@
 import os
+import cv2
 from general import eucDist
 
 
 class DetectionsDataloader:
-    def __init__(self, dir, noOfFeatures=6, offset=5):
-        self.dir = dir
-        self.n = noOfFeatures
+    def __init__(self, directory, no_of_features=6, offset=5):
+        self.dir = directory
+        self.n = no_of_features
         self.offset = offset
         self.filenames = os.listdir(self.dir)
         self.noOfFrames = int(self.filenames[-1].split('_')[-1])
@@ -136,7 +137,7 @@ class DetectionsDataloader:
                         for i in range(1, skip + 1):
                             self.detections[startNo+i][headNo][featNo] = [round(start[j]+diff[j]*(i/skip)) for j in range(2)]
 
-    def compare(self, h, w):
+    def compare(self, filepath):
         pass
 
 
@@ -281,4 +282,10 @@ class DetectionsDataloader:
 #     return detections
 
 if __name__ == '__main__':
-    pass
+    ROOT = os.path.dirname(os.getcwd())
+    det_dir = os.path.join(ROOT, 'runs/detect/exp3/labels')
+    vid_path = os.path.join(ROOT, 'vid/fps120/K203_K238_1_GH020045_cut.mp4')
+    features = DetectionsDataloader(det_dir)
+    features.load()
+    features.interpolate()
+    features.compare(vid_path)
