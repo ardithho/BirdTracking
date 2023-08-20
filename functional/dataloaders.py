@@ -3,18 +3,19 @@ from general import eucDist
 
 
 class DetectionsDataloader:
-    def self(self, dir, noOfFeatures=6, offset=5):
+    def __init__(self, dir, noOfFeatures=6, offset=5):
         self.dir = dir
         self.n = noOfFeatures
         self.offset = offset
         self.filenames = os.listdir(self.dir)
         self.noOfFrames = int(self.filenames[-1].split('_')[-1])
         self.detections = [[[None] * self.n] * 2] * self.noOfFrames
+        self.unsorted = None
         self.frameSkips = [0] * self.noOfFrames
         self.headCounts = [0] * self.noOfFrames  # head count for each frame
         self.pairFrameSkips = [[0] * 2] * self.noOfFrames
 
-    def load_txt(self):
+    def load(self):
         counter = 0
         frameSkip = 0
         headDetected = False
@@ -48,6 +49,7 @@ class DetectionsDataloader:
         return sum([abs(eucDist(*pairs[i])) for i in range(len(pairs))]) / len(pairs)
 
     def sort_detections(self):
+        self.unsorted = self.detections.copy()
         if self.headCounts[0] == 1:
             self.detections[0][1] = None
         elif self.headCounts[0] == 0:
@@ -89,6 +91,7 @@ class DetectionsDataloader:
                         frameSkip[headNo] = 0
 
     def interpolate(self):
+        self.sort_detections()
         # interpolate missing frames
         for headNo in range(2):
             for frameNo in range(self.firstHead, self.noOfFrames):
@@ -132,6 +135,9 @@ class DetectionsDataloader:
                         diff = [curr[i] - start[i] for i in range(2)]
                         for i in range(1, skip + 1):
                             self.detections[startNo+i][headNo][featNo] = [round(start[j]+diff[j]*(i/skip)) for j in range(2)]
+
+    def compare(self, h, w):
+        pass
 
 
 # def load_txt(dir, n):
@@ -273,3 +279,6 @@ class DetectionsDataloader:
 #     detections, frameSkips = sort_detections(detections, headCounts, frameSkips, n, offset)
 #     detections = interpolate(detections, frameSkips, n, offset, firstHead)
 #     return detections
+
+if __name__ == '__main__':
+    pass
