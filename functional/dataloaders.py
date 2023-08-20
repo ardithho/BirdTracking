@@ -27,7 +27,7 @@ def load_txt(dir, n):
                     if not headDetected:
                         headDetected = True
                         firstHead = frameNo - 1
-                    for headNo in range(heads):
+                    for headNo in range(heads):  # write feature detections
                         for featNo in range(n):
                             pos = [float(x) for x in f.readline().split()[1:3]]
                             if pos[0] >= 0 and pos[1] >= 0:
@@ -43,7 +43,7 @@ def head_dist(head1, head2, n):
     return sum([abs(eucDist(*pairs[i])) for i in range(len(pairs))]) / len(pairs)
 
 
-def sort_detections(detections, headCounts, frameSkips, n, offset):
+def sort_detections(detections, headCounts, frameSkips, n, offset, firstHead):
     if headCounts[0] == 1:
         detections[0][1] = None
     elif headCounts[0] == 0:
@@ -73,14 +73,39 @@ def sort_detections(detections, headCounts, frameSkips, n, offset):
         else:
             if headCounts[currNo] == 1:
                 detections[currNo][1] = None
-    return detections
+
+    frameSkip = [0, 0]
+    for frameNo in range(firstHead, len(detections)):
+        for headNo in range(2):
+            if detections[frameNo][headNo] is None:
+                frameSkip[headNo] += 1
+            else:
+                if frameSkip[headNo] > 0:
+                    frameSkips[frameNo][headNo] = frameSkip[headNo]
+                    frameSkip[headNo] = 0
+    return detections, frameSkips
 
 
-def interpolate(detections, headCounts, frameSkips, n, offset, firstHead):
+def interpolate(detections, frameSkips, n, offset, firstHead):
     noOfFrames = len(detections)
     featSkip = [[0] * n] * 2
     featSkips = [[[0] * n] * 2] * noOfFrames
     featDetected = [[False] * n] * 2
+    # interpolate missing frames
+    for headNo in range(2):
+        for frameNo in range(firstHead, noOfFrames):
+            skip = frameSkips[frameNo][headNo]
+            if offset >= skip > 0:
+                curr = detections[frameNo][headNo]
+                startNo = frameNo - skip - 1
+                start = detections[startNo][headNo]
+                for featNo in range(n):
+                    if curr[featNo] is not None and start[featNo] is not None:
+                        diff = [curr[featNo][i]-start[featNo][i] for i in range(2)]
+                        y = start[featNo]
+                        for i in range(1, skip+1):
+                            detections[startNo+i][headNo][featNo] = [round(y[j]+diff[j]*(i/skip)) for j in range(2)]
+    # write feature skips
     for frameNo in range(firstHead, noOfFrames):
         curr = detections[frameNo]
         for i in range(2):
@@ -94,14 +119,18 @@ def interpolate(detections, headCounts, frameSkips, n, offset, firstHead):
                         featSkip[i][j] = 0
                     else:
                         featSkip[i][j] += 1
-    for frameNo in range(firstHead, noOfFrames):
-        if frameSkips[frameNo] > 0:
-            skip = frameSkips[frameNo]
-            start = detections[frameNo - skip - 1]
-            for i in range(frameNo-skip, frameNo):
-                for headNo in range(2):
-                    for featNo in range(n):
-                        pass
+    # interpolate missing features
+    for headNo in range(2):
+        for featNo in range(n):
+            for frameNo in range(firstHead, noOfFrames):
+                skip = featSkips[frameNo][headNo][featNo]
+                if offset >= skip > 0:
+                    curr = detections[frameNo][headNo][featNo]
+                    startNo = frameNo - skip - 1
+                    start = detections[startNo][headNo][featNo]
+                    diff = [curr[i]-start[i] for i in range(2)]
+                    for i in range(1, skip+1):
+                        detections[startNo+i][headNo][featNo] = [round(start[j]+diff[j]*(i/skip)) for j in range(2)]
     return detections
 
 
@@ -109,6 +138,6 @@ def load_detections(dir):
     n = 6  # number of features including head
     offset = 5
     detections, headCounts, frameSkips, firstHead = load_txt(dir, n)
-    detections = sort_detections(detections, headCounts, frameSkips, n, offset)
-    detections = interpolate(detections, headCounts, frameSkips, n, offset, firstHead)
+    detections, frameSkips = sort_detections(detections, headCounts, frameSkips, n, offset)
+    detections = interpolate(detections, frameSkips, n, offset, firstHead)
     return detections
