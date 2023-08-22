@@ -1,13 +1,15 @@
 import os
 import cv2
-from general import eucDist
+from functional.general import eucDist
 
 
 class DetectionsDataloader:
-    def __init__(self, directory, no_of_features=6, offset=5):
+    def __init__(self, directory, no_of_features=6, offset=3, resize=0.5, pt_size=3):
         self.dir = directory
         self.n = no_of_features
         self.offset = offset
+        self.resize = resize
+        self.ptSize = pt_size
         self.filenames = sorted(os.listdir(self.dir), key=lambda x: get_frame_no(x))
         self.noOfFrames = get_frame_no(self.filenames[-1])
         self.detections = [[[None] * self.n for i in range(2)] for i in range(self.noOfFrames)]
@@ -149,10 +151,12 @@ class DetectionsDataloader:
         fps = cap.get(cv2.CAP_PROP_FPS)
         frameNo = 0
 
+        print('Press \'q\' to stop.')
+
         while cap.isOpened():
             ret, frame = cap.read()
             if ret:
-                frame = cv2.resize(frame, None, fx=0.3, fy=0.3, interpolation=cv2.INTER_CUBIC)
+                frame = cv2.resize(frame, None, fx=self.resize, fy=self.resize, interpolation=cv2.INTER_CUBIC)
                 shape = frame.shape[:2]
                 iFrame = frame.copy()
                 for headNo in range(2):
@@ -161,13 +165,13 @@ class DetectionsDataloader:
                         for featNo in range(1, self.n):
                             if currHead[featNo] is not None:
                                 pt = [round(currHead[featNo][i]*shape[1-i]) for i in range(2)]
-                                cv2.circle(frame, pt, 3, colours[featNo-1], -1)
+                                cv2.circle(frame, pt, self.ptSize, colours[featNo-1], -1)
                     currHead = self.detections[frameNo][headNo]
                     if currHead is not None:
                         for featNo in range(1, self.n):
                             if currHead[featNo] is not None:
                                 pt = [round(currHead[featNo][i]*shape[1-i]) for i in range(2)]
-                                cv2.circle(iFrame, pt, 3, colours[featNo-1], -1)
+                                cv2.circle(iFrame, pt, self.ptSize, colours[featNo-1], -1)
 
                 output = cv2.vconcat([frame, iFrame])
                 cv2.imshow('compare', output)
@@ -188,7 +192,7 @@ if __name__ == '__main__':
     ROOT = os.path.dirname(os.getcwd())
     det_dir = os.path.join(ROOT, 'runs/detect/exp7/labels')
     vid_path = os.path.join(ROOT, 'vid/fps120/K203_K238_1_GH020045_cut.mp4')
-    features = DetectionsDataloader(det_dir)
-    features.load()
-    features.interpolate()
-    features.compare(vid_path)
+    detections = DetectionsDataloader(det_dir, resize=0.3)
+    detections.load()
+    detections.interpolate()
+    detections.compare(vid_path)
