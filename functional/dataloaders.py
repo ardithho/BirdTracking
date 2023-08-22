@@ -8,13 +8,13 @@ class DetectionsDataloader:
         self.dir = directory
         self.n = no_of_features
         self.offset = offset
-        self.filenames = os.listdir(self.dir)
-        self.noOfFrames = int(self.filenames[-1].split('_')[-1])
-        self.detections = [[[None] * self.n] * 2] * self.noOfFrames
+        self.filenames = sorted(os.listdir(self.dir), key=lambda x: get_frame_no(x))
+        self.noOfFrames = get_frame_no(self.filenames[-1])
+        self.detections = [[[None] * self.n for i in range(2)] for i in range(self.noOfFrames)]
         self.unsorted = None
         self.frameSkips = [0] * self.noOfFrames
         self.headCounts = [0] * self.noOfFrames  # head count for each frame
-        self.pairFrameSkips = [[0] * 2] * self.noOfFrames
+        self.pairFrameSkips = [[0] * 2 for i in range(self.noOfFrames)]
 
     def load(self):
         counter = 0
@@ -22,31 +22,31 @@ class DetectionsDataloader:
         headDetected = False
         for filename in self.filenames:
             path = os.path.join(self.dir, filename)
-            frameNo = int(filename.split('_')[-1])
-            if frameNo == (counter + 1):
-                with open(path) as f:
-                    heads = int(f.readline())
-                    if heads == 0:
-                        frameSkip += 1
-                    else:
-                        self.headCounts[counter] = heads
-                        if headDetected and frameSkip > 0:
-                            self.frameSkips[counter] = frameSkip
-                        frameSkip = 0
-                        if not headDetected:
-                            headDetected = True
-                            self.firstHead = frameNo - 1
-                        for headNo in range(heads):  # write feature detections
-                            for featNo in range(self.n):
-                                pos = [float(x) for x in f.readline().split()[1:3]]
-                                if pos[0] >= 0 and pos[1] >= 0:
-                                    self.detections[counter][headNo][featNo] = pos
-            else:  # should not happen
+            frameNo = get_frame_no(filename)
+            while frameNo > (counter + 1):
                 frameSkip += 1
+                counter += 1
+            with open(path) as f:
+                heads = int(f.readline())
+                if heads == 0:
+                    frameSkip += 1
+                else:
+                    self.headCounts[counter] = heads
+                    if headDetected and frameSkip > 0:
+                        self.frameSkips[counter] = frameSkip
+                    frameSkip = 0
+                    if not headDetected:
+                        headDetected = True
+                        self.firstHead = frameNo - 1
+                    for headNo in range(heads):  # write feature detections
+                        for featNo in range(self.n):
+                            pos = [float(x) for x in f.readline().split()[1:3]]
+                            if pos[0] >= 0 and pos[1] >= 0:
+                                self.detections[counter][headNo][featNo] = pos
             counter += 1
 
     def head_dist(self, head1, head2):
-        pairs = [(head1[i], head2[i]) for i in range(self.n) if head1[i] >= 0 and head2[i] >= 0]
+        pairs = [(head1[i], head2[i]) for i in range(self.n) if head1[i] is not None and head2[i] is not None]
         return sum([abs(eucDist(*pairs[i])) for i in range(len(pairs))]) / len(pairs)
 
     def sort_detections(self):
@@ -59,27 +59,28 @@ class DetectionsDataloader:
             prevNo = currNo - 1 - self.frameSkips[currNo]
             previous = self.detections[prevNo]
             current = self.detections[currNo]
-            if self.frameSkips[currNo] <= self.offset:
-                if self.headCounts[prevNo] == 1 and self.headCounts[currNo] == 1:
-                    if previous[0] is None:
-                        self.detections[currNo] = [None, current[0]]
+            if self.headCounts[prevNo] > 0 and self.headCounts[currNo] > 0:
+                if self.frameSkips[currNo] <= self.offset:
+                    if self.headCounts[prevNo] == 1 and self.headCounts[currNo] == 1:
+                        if previous[0] is None:
+                            self.detections[currNo] = [None, current[0]]
+                        else:
+                            self.detections[currNo][1] = None
+                    elif self.headCounts[prevNo] < self.headCounts[currNo]:
+                        index = 1 if previous[0] is None else 0
+                        if self.head_dist(previous[index], current[1 - index]) < self.head_dist(previous[index], current[index]):
+                            self.detections[currNo] = [current[1], current[0]]
+                    elif self.headCounts[currNo] < self.headCounts[prevNo]:
+                        if self.head_dist(previous[1], current[0]) < self.head_dist(previous[0], current[0]):
+                            self.detections[currNo] = [None, current[0]]
                     else:
-                        self.detections[currNo][1] = None
-                elif self.headCounts[prevNo] < self.headCounts[currNo]:
-                    index = 1 if previous[0] is None else 0
-                    if self.head_dist(previous[index], current[1 - index]) < self.head_dist(previous[index], current[index]):
-                        self.detections[currNo] = [current[1], current[0]]
-                elif self.headCounts[currNo] < self.headCounts[prevNo]:
-                    if self.head_dist(previous[1], current[0]) < self.head_dist(previous[0], current[0]):
-                        self.detections[currNo] = [None, current[0]]
+                        original = sum([self.head_dist(previous[i], current[i]) for i in range(2)])
+                        flipped = sum([self.head_dist(previous[i], current[1-i]) for i in range(2)])
+                        if flipped < original:
+                            self.detections[currNo] = [current[1], current[0]]
                 else:
-                    original = sum([self.head_dist(previous[i], current[i])] for i in range(2))
-                    flipped = sum([self.head_dist(previous[i], current[1-i])] for i in range(2))
-                    if flipped < original:
-                        self.detections[currNo] = [current[1], current[0]]
-            else:
-                if self.headCounts[currNo] == 1:
-                    self.detections[currNo][1] = None
+                    if self.headCounts[currNo] == 1:
+                        self.detections[currNo][1] = None
 
         frameSkip = [0, 0]
         for frameNo in range(self.firstHead, self.noOfFrames):
@@ -101,16 +102,18 @@ class DetectionsDataloader:
                     curr = self.detections[frameNo][headNo]
                     startNo = frameNo - skip - 1
                     start = self.detections[startNo][headNo]
+                    for i in range(self.n):
+                        self.detections[startNo+i][headNo] = [None] * self.n
                     for featNo in range(self.n):
                         if curr[featNo] is not None and start[featNo] is not None:
                             diff = [curr[featNo][i] - start[featNo][i] for i in range(2)]
                             y = start[featNo]
                             for i in range(1, skip + 1):
-                                self.detections[startNo+i][headNo][featNo] = [round(y[j]+diff[j]*(i/skip)) for j in range(2)]
+                                self.detections[startNo+i][headNo][featNo] = [y[j]+diff[j]*(i/skip) for j in range(2)]
         # write feature skips
-        featSkip = [[0] * self.n] * 2
-        featSkips = [[[0] * self.n] * 2] * self.noOfFrames
-        featDetected = [[False] * self.n] * 2
+        featSkip = [[0] * self.n for i in range(2)]
+        featSkips = [[[0] * self.n for i in range(2)] for i in range(self.noOfFrames)]
+        featDetected = [[False] * self.n for i in range(2)]
         for frameNo in range(self.firstHead, self.noOfFrames):
             curr = self.detections[frameNo]
             for i in range(2):
@@ -124,6 +127,9 @@ class DetectionsDataloader:
                             featSkip[i][j] = 0
                         else:
                             featSkip[i][j] += 1
+                else:
+                    for j in range(self.n):
+                        featSkip[i][j] += 1
         # interpolate missing features
         for headNo in range(2):
             for featNo in range(self.n):
@@ -135,155 +141,52 @@ class DetectionsDataloader:
                         start = self.detections[startNo][headNo][featNo]
                         diff = [curr[i] - start[i] for i in range(2)]
                         for i in range(1, skip + 1):
-                            self.detections[startNo+i][headNo][featNo] = [round(start[j]+diff[j]*(i/skip)) for j in range(2)]
+                            self.detections[startNo+i][headNo][featNo] = [start[j]+diff[j]*(i/skip) for j in range(2)]
 
     def compare(self, filepath):
-        pass
+        colours = [(255, 255, 0), (0, 255, 255), (0, 255, 255), (0, 150, 255), (0, 150, 255)]
+        cap = cv2.VideoCapture(filepath)
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        frameNo = 0
+
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if ret:
+                frame = cv2.resize(frame, None, fx=0.3, fy=0.3, interpolation=cv2.INTER_CUBIC)
+                shape = frame.shape[:2]
+                iFrame = frame.copy()
+                for headNo in range(2):
+                    currHead = self.unsorted[frameNo][headNo]
+                    if currHead is not None:
+                        for featNo in range(1, self.n):
+                            if currHead[featNo] is not None:
+                                pt = [round(currHead[featNo][i]*shape[1-i]) for i in range(2)]
+                                cv2.circle(frame, pt, 3, colours[featNo-1], -1)
+                    currHead = self.detections[frameNo][headNo]
+                    if currHead is not None:
+                        for featNo in range(1, self.n):
+                            if currHead[featNo] is not None:
+                                pt = [round(currHead[featNo][i]*shape[1-i]) for i in range(2)]
+                                cv2.circle(iFrame, pt, 3, colours[featNo-1], -1)
+
+                output = cv2.vconcat([frame, iFrame])
+                cv2.imshow('compare', output)
+                frameNo += 1
+
+            if cv2.waitKey(int(1000/fps)) & 0xFF == ord('q'):
+                break
+
+        cap.release()
+        cv2.destroyAllWindows()
 
 
-# def load_txt(dir, n):
-#     filenames = os.listdir(dir)
-#     counter = 0
-#     frameSkip = 0
-#     noOfFrames = int(filenames[-1].split('_')[-1])
-#     detections = [[[None] * n] * 2] * noOfFrames
-#     frameSkips = [None] * noOfFrames
-#     headCounts = [0] * noOfFrames  # head count for each frame
-#     headDetected = False
-#     for filename in filenames:
-#         path = os.path.join(dir, filename)
-#         frameNo = int(filename.split('_')[-1])
-#         if frameNo == (counter + 1):
-#             with open(path) as f:
-#                 heads = int(f.readline())
-#                 if heads == 0:
-#                     frameSkip += 1
-#                 else:
-#                     headCounts[counter] = heads
-#                     if headDetected and frameSkip > 0:
-#                         frameSkips[counter] = frameSkip
-#                     frameSkip = 0
-#                     if not headDetected:
-#                         headDetected = True
-#                         firstHead = frameNo - 1
-#                     for headNo in range(heads):  # write feature detections
-#                         for featNo in range(n):
-#                             pos = [float(x) for x in f.readline().split()[1:3]]
-#                             if pos[0] >= 0 and pos[1] >= 0:
-#                                 detections[counter][headNo][featNo] = pos
-#         else:  # should not happen
-#             frameSkip += 1
-#         counter += 1
-#     return detections, headCounts, frameSkips, firstHead
-#
-#
-# def head_dist(head1, head2, n):
-#     pairs = [(head1[i], head2[i]) for i in range(n) if head1[i] >= 0 and head2[i] >= 0]
-#     return sum([abs(eucDist(*pairs[i])) for i in range(len(pairs))]) / len(pairs)
-#
-#
-# def sort_detections(detections, headCounts, frameSkips, n, offset, firstHead):
-#     if headCounts[0] == 1:
-#         detections[0][1] = None
-#     elif headCounts[0] == 0:
-#         detections[0] = [None] * 2
-#     for currNo in range(1, len(detections)):
-#         prevNo = currNo - 1 - frameSkips[currNo]
-#         previous = detections[prevNo]
-#         current = detections[currNo]
-#         if frameSkips[currNo] <= offset:
-#             if headCounts[prevNo] == 1 and headCounts[currNo] == 1:
-#                 if previous[0] is None:
-#                     detections[currNo] = [None, current[0]]
-#                 else:
-#                     detections[currNo][1] = None
-#             elif headCounts[prevNo] < headCounts[currNo]:
-#                 index = 1 if previous[0] is None else 0
-#                 if head_dist(previous[index], current[1-index], n) < head_dist(previous[index], current[index], n):
-#                     detections[currNo] = [current[1], current[0]]
-#             elif headCounts[currNo] < headCounts[prevNo]:
-#                 if head_dist(previous[1], current[0]) < head_dist(previous[0], current[0]):
-#                     detections[currNo] = [None, current[0]]
-#             else:
-#                 original = sum([head_dist(previous[i], current[i], n)] for i in range(2))
-#                 flipped = sum([head_dist(previous[i], current[1-i], n)] for i in range(2))
-#                 if flipped < original:
-#                     detections[currNo] = [current[1], current[0]]
-#         else:
-#             if headCounts[currNo] == 1:
-#                 detections[currNo][1] = None
-#
-#     frameSkip = [0, 0]
-#     for frameNo in range(firstHead, len(detections)):
-#         for headNo in range(2):
-#             if detections[frameNo][headNo] is None:
-#                 frameSkip[headNo] += 1
-#             else:
-#                 if frameSkip[headNo] > 0:
-#                     frameSkips[frameNo][headNo] = frameSkip[headNo]
-#                     frameSkip[headNo] = 0
-#     return detections, frameSkips
-#
-#
-# def interpolate(detections, frameSkips, n, offset, firstHead):
-#     noOfFrames = len(detections)
-#     featSkip = [[0] * n] * 2
-#     featSkips = [[[0] * n] * 2] * noOfFrames
-#     featDetected = [[False] * n] * 2
-#     # interpolate missing frames
-#     for headNo in range(2):
-#         for frameNo in range(firstHead, noOfFrames):
-#             skip = frameSkips[frameNo][headNo]
-#             if offset >= skip > 0:
-#                 curr = detections[frameNo][headNo]
-#                 startNo = frameNo - skip - 1
-#                 start = detections[startNo][headNo]
-#                 for featNo in range(n):
-#                     if curr[featNo] is not None and start[featNo] is not None:
-#                         diff = [curr[featNo][i]-start[featNo][i] for i in range(2)]
-#                         y = start[featNo]
-#                         for i in range(1, skip+1):
-#                             detections[startNo+i][headNo][featNo] = [round(y[j]+diff[j]*(i/skip)) for j in range(2)]
-#     # write feature skips
-#     for frameNo in range(firstHead, noOfFrames):
-#         curr = detections[frameNo]
-#         for i in range(2):
-#             if curr[i] is not None:
-#                 for j in range(n):
-#                     if curr[i][j] is not None:
-#                         if featDetected[i][j]:
-#                             featSkips[frameNo][i][j] = featSkip[i][j]
-#                         else:
-#                             featDetected[i][j] = True
-#                         featSkip[i][j] = 0
-#                     else:
-#                         featSkip[i][j] += 1
-#     # interpolate missing features
-#     for headNo in range(2):
-#         for featNo in range(n):
-#             for frameNo in range(firstHead, noOfFrames):
-#                 skip = featSkips[frameNo][headNo][featNo]
-#                 if offset >= skip > 0:
-#                     curr = detections[frameNo][headNo][featNo]
-#                     startNo = frameNo - skip - 1
-#                     start = detections[startNo][headNo][featNo]
-#                     diff = [curr[i]-start[i] for i in range(2)]
-#                     for i in range(1, skip+1):
-#                         detections[startNo+i][headNo][featNo] = [round(start[j]+diff[j]*(i/skip)) for j in range(2)]
-#     return detections
-#
-#
-# def load_detections(dir):
-#     n = 6  # number of features including head
-#     offset = 5
-#     detections, headCounts, frameSkips, firstHead = load_txt(dir, n)
-#     detections, frameSkips = sort_detections(detections, headCounts, frameSkips, n, offset)
-#     detections = interpolate(detections, frameSkips, n, offset, firstHead)
-#     return detections
+def get_frame_no(filename):
+    return int(filename.split('_')[-1].split('.')[0])
+
 
 if __name__ == '__main__':
     ROOT = os.path.dirname(os.getcwd())
-    det_dir = os.path.join(ROOT, 'runs/detect/exp3/labels')
+    det_dir = os.path.join(ROOT, 'runs/detect/exp7/labels')
     vid_path = os.path.join(ROOT, 'vid/fps120/K203_K238_1_GH020045_cut.mp4')
     features = DetectionsDataloader(det_dir)
     features.load()

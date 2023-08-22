@@ -34,6 +34,7 @@ import platform
 import sys
 from pathlib import Path
 
+import numpy as np
 import torch
 
 ROOT = os.path.join(Path.cwd(), 'yolov5')  # YOLOv5 root directory
@@ -166,6 +167,8 @@ def run(
             ima = im0.copy()
             annotator = Annotator(im0, line_width=line_thickness, example=str(names))
             if len(det):
+                # Take top 2 head detections
+                det = torch.tensor(sorted(np.array(det), key=lambda x: x[-2], reverse=True)[:2])
                 # Write number of head detections
                 if save_txt:
                     with open(f'{txt_path}.txt', 'a') as f:
@@ -181,12 +184,6 @@ def run(
 
                 # Write results for each head detection
                 for *xyxy, conf, cls in reversed(det):
-                    if save_txt:  # Write to file
-                        xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
-                        line = (cls, *xywh, conf) if save_conf else (cls, *xywh)  # label format
-                        with open(f'{txt_path}.txt', 'a') as f:
-                            f.write(('%g ' * len(line)).rstrip() % line + '\n')
-
                     if save_img or save_crop or view_img:  # Add bbox to image
                         c = int(cls)  # integer class
                         label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
@@ -223,27 +220,33 @@ def run(
                         im0 = plotFeat(im0, bill, eyes, tear_marks, xyxyf[0][:2])
                         bill, eyes, tear_marks = to_txt(im0, bill, eyes, tear_marks, xyxyf[0][:2])
 
-                        if save_txt:  # Write features to file
+                    else:
+                        bill = None
+                        eyes = [None] * 2
+                        tear_marks = [None] * 2
+
+                    if save_txt:  # Write detections to file
+                        with open(f'{txt_path}.txt', 'a') as f:
+                            xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
+                            line = (0, *xywh, conf) if save_conf else (0, *xywh)  # label format
+                            f.write(('%g ' * len(line)).rstrip() % line + '\n')
                             if bill is None:
                                 line = (1, -1, -1)
                             else:
                                 line = (1, *bill)
-                            with open(f'{txt_path}.txt', 'a') as f:
-                                f.write(('%g ' * len(line)).rstrip() % line + '\n')
+                            f.write(('%g ' * len(line)).rstrip() % line + '\n')
                             for eye in eyes:
                                 if eye is None:
                                     line = (2, -1, -1)
                                 else:
                                     line = (2, *eye)
-                                with open(f'{txt_path}.txt', 'a') as f:
-                                    f.write(('%g ' * len(line)).rstrip() % line + '\n')
+                                f.write(('%g ' * len(line)).rstrip() % line + '\n')
                             for tear in tear_marks:
                                 if tear is None:
                                     line = (3, -1, -1)
                                 else:
                                     line = (3, *tear)
-                                with open(f'{txt_path}.txt', 'a') as f:
-                                    f.write(('%g ' * len(line)).rstrip() % line + '\n')
+                                f.write(('%g ' * len(line)).rstrip() % line + '\n')
 
             # Stream results
             im0 = annotator.result()
