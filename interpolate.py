@@ -11,7 +11,7 @@ if str(ROOT) not in sys.path:
 
 def run(
         labels=ROOT / 'data/detect/labels',
-        source=ROOT / 'data/detect/K213_K268_1_GH010020_cut.mp4',
+        source=ROOT / 'data/detect/K213_K268.mp4',
         offset=3,
         resize=0.5,
         pt_size=3
@@ -24,8 +24,8 @@ def run(
 
 def parse_opt():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--labels', type=str, default=ROOT / 'data/detect/labels')
-    parser.add_argument('--source', type=str, default=ROOT / 'data/detect/K213_K268_1_GH010020_cut.mp4')
+    parser.add_argument('--labels', type=str, default=ROOT / 'data/detect/labels', help='directory of labels')
+    parser.add_argument('--source', type=str, default=ROOT / 'data/detect/K213_K268.mp4', help='video filepath')
     parser.add_argument('--offset', type=int, default=3, help='number of frames to interpolate over')
     parser.add_argument('--resize', type=float, default=0.5, help='resize output frame size')
     parser.add_argument('--pt-size', type=int, default=3, help='size of annotation points')
