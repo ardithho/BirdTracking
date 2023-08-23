@@ -36,4 +36,18 @@ Add `--save-txt` for saving detections in .txt file.
 
 
 ## Interpolate
+`interpolate.py` interpolates missing features in result labels from `detect.py`. 
+It is only available for videos.
 
+```bash
+python interpolate.py --labels {relative path} --source {video filepath}
+```
+At the end of running `detect.py`, it should show the relative path of the directory of the labels as 
+`{n} labels saved to {relative path}` if `--save-txt` was used.
+
+The filepath for `--source` should be the same one as used for `detect.py`.
+
+```bash
+python interpolate.py -h
+```
+Run this to check out other parameter options.

@@ -26,9 +26,9 @@ def parse_opt():
     parser = argparse.ArgumentParser()
     parser.add_argument('--labels', type=str, default=ROOT / 'data/detect/labels', help='directory of labels')
     parser.add_argument('--source', type=str, default=ROOT / 'data/detect/K213_K268.mp4', help='video filepath')
-    parser.add_argument('--offset', type=int, default=3, help='number of frames to interpolate over')
-    parser.add_argument('--resize', type=float, default=0.5, help='resize output frame size')
-    parser.add_argument('--pt-size', type=int, default=3, help='size of annotation points')
+    parser.add_argument('--offset', type=int, default=3, help='number of frames to interpolate over (int)')
+    parser.add_argument('--resize', type=float, default=0.5, help='resize output frame size (float)')
+    parser.add_argument('--pt-size', type=int, default=3, help='size of annotation points (int)')
     opt = parser.parse_args()
     # opt.imgsz *= 2 if len(opt.imgsz) == 1 else 1  # expand
     return opt
