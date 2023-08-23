@@ -16,7 +16,7 @@ pip install -r requirements.txt  # install
 ## Detect
 `detect.py` runs inference on a variety of sources and saving results to `runs/detect`.
 ```bash
-python detect.py --source 0                               # webcam                  --save-txt
+python detect.py --source 0                               # webcam
                           img.jpg                         # image
                           vid.mp4                         # video
                           screen                          # screenshot
