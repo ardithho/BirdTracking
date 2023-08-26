@@ -153,7 +153,7 @@ class DetectionsDataloader:
 
         print('Press \'q\' to stop.')
 
-        while cap.isOpened():
+        while cap.isOpened() and frameNo < self.noOfFrames:
             ret, frame = cap.read()
             if ret:
                 frame = cv2.resize(frame, None, fx=self.resize, fy=self.resize, interpolation=cv2.INTER_CUBIC)
