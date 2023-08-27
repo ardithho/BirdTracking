@@ -1,5 +1,6 @@
 import os
 import cv2
+import time
 from functional.general import eucDist
 
 
@@ -12,6 +13,9 @@ class DetectionsDataloader:
         self.ptSize = pt_size
         self.filenames = sorted(os.listdir(self.dir), key=lambda x: get_frame_no(x))
         self.noOfFrames = get_frame_no(self.filenames[-1])
+        maxFrameNo = max([get_frame_no(filename) for filename in self.filenames])
+        if self.noOfFrames != maxFrameNo:
+            print(f'{self.noOfFrames} {maxFrameNo}; max frame numbers do not match')
         self.detections = [[[None] * self.n for i in range(2)] for i in range(self.noOfFrames)]
         self.unsorted = None
         self.frameSkips = [0] * self.noOfFrames
@@ -19,13 +23,16 @@ class DetectionsDataloader:
         self.pairFrameSkips = [[0] * 2 for i in range(self.noOfFrames)]
 
     def load(self):
+        print('Loading detections...', end='')
+        timeStart = time.time()
+
         counter = 0
         frameSkip = 0
         headDetected = False
         for filename in self.filenames:
             path = os.path.join(self.dir, filename)
             frameNo = get_frame_no(filename)
-            while frameNo > (counter + 1):
+            while frameNo > (counter + 1) and self.noOfFrames > (counter + 1):
                 frameSkip += 1
                 counter += 1
             with open(path) as f:
@@ -47,11 +54,17 @@ class DetectionsDataloader:
                                 self.detections[counter][headNo][featNo] = pos
             counter += 1
 
+        timeEnd = time.time()
+        print(f'finished in %.3fms' % ((timeEnd - timeStart)*1000))
+
     def head_dist(self, head1, head2):
         pairs = [(head1[i], head2[i]) for i in range(self.n) if head1[i] is not None and head2[i] is not None]
         return sum([abs(eucDist(*pairs[i])) for i in range(len(pairs))]) / len(pairs)
 
     def sort_detections(self):
+        print('Sorting detections...', end='')
+        timeStart = time.time()
+
         self.unsorted = self.detections.copy()
         if self.headCounts[0] == 1:
             self.detections[0][1] = None
@@ -94,8 +107,14 @@ class DetectionsDataloader:
                         self.pairFrameSkips[frameNo][headNo] = frameSkip[headNo]
                         frameSkip[headNo] = 0
 
+        timeEnd = time.time()
+        print(f'finished in %.3fms' % ((timeEnd - timeStart)*1000))
+
     def interpolate(self):
         self.sort_detections()
+
+        print('Interpolating detections...', end='')
+        timeStart = time.time()
         # interpolate missing frames
         for headNo in range(2):
             for frameNo in range(self.firstHead, self.noOfFrames):
@@ -144,6 +163,9 @@ class DetectionsDataloader:
                         diff = [curr[i] - start[i] for i in range(2)]
                         for i in range(1, skip + 1):
                             self.detections[startNo+i][headNo][featNo] = [start[j]+diff[j]*(i/skip) for j in range(2)]
+
+        timeEnd = time.time()
+        print(f'finished in %.3fms' % ((timeEnd - timeStart)*1000))
 
     def compare(self, filepath):
         colours = [(255, 255, 0), (0, 255, 255), (0, 255, 255), (0, 150, 255), (0, 150, 255)]
@@ -196,3 +218,8 @@ if __name__ == '__main__':
     detections.load()
     detections.interpolate()
     detections.compare(vid_path)
+
+    # det_dir = os.path.join(ROOT, 'data/labels_shoko/set_6')
+    # detections = DetectionsDataloader(det_dir, resize=0.3)
+    # detections.load()
+    # detections.interpolate()

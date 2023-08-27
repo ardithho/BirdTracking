@@ -7,6 +7,7 @@ JSON2YOLO/
 __pycache__/
 .git/
 .idea/
+data/labels_shoko/
 
 yolov5/.git/
 yolov5/.github/
