@@ -39,9 +39,11 @@ yolov5/CONTRIBUTING.md
 
 head_model.blend
 head_model.blend1
+sim_model.blend
+sim_model.blend1
+full_model.blend
+full_model.blend1
 createLabels.py
-display.py
-fetch.py
 headPose.py
 headTracker.py
 headTraining.py
