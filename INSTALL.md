@@ -54,7 +54,7 @@ pwd
 To work on this project, go to the project's directory by running the following 
 command and replacing `[project path]`with the path returned from the previous `pwd` command.
 ```bash
-cd [project path]
+cd {project path}
 ```
 Git pull for project updates.
 ```bash
