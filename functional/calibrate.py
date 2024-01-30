@@ -41,6 +41,7 @@ def drawCorners(img, mask):
     if ret:
         cnrs = cv2.cornerSubPix(mask, corners, (11, 11), (-1, -1), criteria)
         cv2.drawChessboardCorners(img, size, cnrs, ret)
+        # cv2.circle(img, list(map(int, corners[len(corners)//2][0])), 3, (255, 0, 0), -1)
     return img
 
 
@@ -55,7 +56,7 @@ def calibrateUndis(img, mask):
         imgpts = [corners]
         # calibration
         ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpts, imgpts, mask.shape[::-1], None, None)
-        dist *= 0.1
+        # dist *= 0.1
         # undistortion
         h, w = mask.shape[:2]
         newCameraMtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), 1, (w, h))
@@ -76,6 +77,7 @@ def calibrateRemap(img, mask):  # technically the same (I guess :)
         objp[:, :2] = np.mgrid[0:4, 0:7].T.reshape(-1, 2)
         objpts = [objp]
         imgpts = [corners]
+
         # calibration
         ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpts, imgpts, mask.shape[::-1], None, None)
         dist *= 0.1
@@ -87,6 +89,31 @@ def calibrateRemap(img, mask):  # technically the same (I guess :)
         # x, y, w, h = roi
         # dst = dst[y:y + h, x:x + w]
         return dst
+    return img
+
+
+def projectPoint(img, mask):
+    pt = (100, 100)
+    size = (4, 7)  # (r, c)
+    flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_FAST_CHECK + cv2.CALIB_CB_NORMALIZE_IMAGE
+    ret, corners = cv2.findChessboardCorners(mask, size, flags)
+    if ret:
+        objp = np.zeros((7 * 4, 3), np.float32)
+        objp[:, :2] = np.mgrid[0:4, 0:7].T.reshape(-1, 2)
+        objpts = [objp]
+        imgpts = [corners]
+        world_origin = list(map(int, corners[len(corners)//2][0]))
+        # calibration
+        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpts, imgpts, mask.shape[::-1], None, None)
+
+        intrinstic = np.matrix(mtx)
+        cam_coord = np.linalg.inv(intrinstic) @ [*pt, 1]
+        print(cam_coord)
+        rvec, tvec = cv2.solvePnP(objpts, imgpts, intrinstic)
+        extrinsic = np.hstack((intrinstic, np.zeros((intrinstic.shape[0], 1), dtype=intrinstic.dtype)))
+        print(np.linalg.inv(intrinstic))
+        world_coord = np.linalg.inv(intrinstic) @ cam_coord.T
+        print(world_coord)
 
 
 if __name__ == "__main__":
@@ -94,5 +121,6 @@ if __name__ == "__main__":
     binaryMask = getMask(img)
     cv2.imshow('corners', drawCorners(img, binaryMask))
     cv2.imshow('undistort', calibrateUndis(img, binaryMask))
+    projectPoint(img, binaryMask)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
