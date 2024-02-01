@@ -1,6 +1,7 @@
 img/
 vid/
 runs/
+venv/
 perspective/
 labelbox_exports/
 JSON2YOLO/
