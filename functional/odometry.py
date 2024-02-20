@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 
+# https://inst.eecs.berkeley.edu/~ee290t/fa19/lectures/lecture10-3-decomposing-F-matrix-into-Rotation-and-Translation.pdf
 
 def extractFeatures(frame):
     orb = cv2.ORB_create()
