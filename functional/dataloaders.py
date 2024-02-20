@@ -218,8 +218,3 @@ if __name__ == '__main__':
     detections.load()
     detections.interpolate()
     detections.compare(vid_path)
-
-    # det_dir = os.path.join(ROOT, 'data/labels_shoko/set_6')
-    # detections = DetectionsDataloader(det_dir, resize=0.3)
-    # detections.load()
-    # detections.interpolate()

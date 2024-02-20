@@ -106,7 +106,7 @@ def projectPoint(img, mask):
         # calibration
         ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpts, imgpts, mask.shape[::-1], None, None)
 
-        intrinstic = np.matrix(mtx)
+        intrinstic = np.matrix(mtx)[:, :-1]
         cam_coord = np.linalg.inv(intrinstic) @ [*pt, 1]
         print(cam_coord)
         rvec, tvec = cv2.solvePnP(objpts, imgpts, intrinstic)
