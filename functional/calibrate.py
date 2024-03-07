@@ -92,6 +92,10 @@ def calibrateRemap(img, mask):  # technically the same (I guess :)
     return img
 
 
+def essentialMatrix(img, mask):
+    pass
+
+
 def projectPoint(img, mask):
     pt = (100, 100)
     size = (4, 7)  # (r, c)

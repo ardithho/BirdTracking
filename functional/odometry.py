@@ -17,7 +17,9 @@ def estimateMotion(curr_frame, prev_frame):
     distThreshold = 0.9
     filteredMatch = [m for m, n in match if m.distance < distThreshold * n.distance]
 
-    for m in filteredMatch:
-        u1, v1 = kp1[m.queryIdx].pt
-        u2, v2 = kp2[m.trainIdx].pt
-
+    # for m in filteredMatch:
+    #     u1, v1 = kp1[m.queryIdx].pt
+    #     u2, v2 = kp2[m.trainIdx].pt
+    src_pts = np.float32([kp1[m.queryIdx].pt for m in filteredMatch]).reshape(-1, 1, 2)
+    dst_pts = np.float32([kp2[m.queryIdx].pt for m in filteredMatch]).reshape(-1, 1, 2)
+    M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
