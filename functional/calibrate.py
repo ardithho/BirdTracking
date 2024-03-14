@@ -93,6 +93,7 @@ def calibrateRemap(img, mask):  # technically the same (I guess :)
 
 
 def essentialMatrix(img, mask):
+    # https://stackoverflow.com/questions/33906111/how-do-i-estimate-positions-of-two-cameras-in-opencv
     pass
 
 
