@@ -86,13 +86,11 @@ def calibrateRemap(img, mask):  # technically the same (I guess :)
         newCameraMtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), 1, (w, h))
         mapx, mapy = cv2.initUndistortRectifyMap(mtx, dist, None, newCameraMtx, (w, h), 5)
         dst = cv2.remap(img, mapx, mapy, cv2.INTER_LINEAR)
-        # x, y, w, h = roi
-        # dst = dst[y:y + h, x:x + w]
         return dst
     return img
 
 
-def essentialMatrix(img, mask):
+def essentialMatrix(img1, img2, mask):
     # https://stackoverflow.com/questions/33906111/how-do-i-estimate-positions-of-two-cameras-in-opencv
     pass
 
