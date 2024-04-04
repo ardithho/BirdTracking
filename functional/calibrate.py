@@ -17,10 +17,10 @@ def get_mask(img):
 
     mask = np.zeros(img.shape[:2], np.uint8)
     cv2.drawContours(mask, cnts[:1], 0, 255, -1)
-    chessBoard = cv2.bitwise_and(grey, grey, mask=mask)
-    _, binaryMask = cv2.threshold(chessBoard, 150, 255, cv2.THRESH_BINARY)
-    binaryMask -= 255
-    return binaryMask
+    chessboard = cv2.bitwise_and(grey, grey, mask=mask)
+    _, binary_mask = cv2.threshold(chessboard, 150, 255, cv2.THRESH_BINARY)
+    binary_mask -= 255
+    return binary_mask
 
 
 def harris_corners(img):
@@ -34,64 +34,75 @@ def harris_corners(img):
     return img
 
 
-def draw_corners(img, mask):
+def draw_corners(img, mask, size=(4, 7)):
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.01)
-    size = (4, 7)  # (r, c)
     flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_FAST_CHECK + cv2.CALIB_CB_NORMALIZE_IMAGE
     ret, corners = cv2.findChessboardCorners(mask, size, flags)
     if ret:
         cnrs = cv2.cornerSubPix(mask, corners, (11, 11), (-1, -1), criteria)
         cv2.drawChessboardCorners(img, size, cnrs, ret)
-        # cv2.circle(img, list(map(int, corners[len(corners)//2][0])), 3, (255, 0, 0), -1)
     return img
+
+
+def find_points(img, size=(4, 7)):
+    flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_FAST_CHECK + cv2.CALIB_CB_NORMALIZE_IMAGE
+    ret, corners = cv2.findChessboardCorners(img, size, flags)
+    if not ret:
+        size = size[::-1]
+        ret, corners = cv2.findChessboardCorners(img, size, flags)
+    if ret:
+        objpt = np.zeros((math.prod(size), 3), np.float32)
+        objpt[:, :2] = np.mgrid[0:size[0], 0:size[1]].T.reshape(-1, 2)
+        objpts = [objpt]
+        imgpts = [corners]
+        return objpts, imgpts
+    return None, None
 
 
 def calibrate_undis(img, mask, size=(4, 7)):
-    flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_FAST_CHECK + cv2.CALIB_CB_NORMALIZE_IMAGE
-    ret, corners = cv2.findChessboardCorners(mask, size, flags)
-    if ret:
-        objp = np.zeros((math.prod(size), 3), np.float32)
-        objp[:, :2] = np.mgrid[0:size[0], 0:size[1]].T.reshape(-1, 2)
-        objpts = [objp]
-        imgpts = [corners]
-        # calibration
-        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpts, imgpts, mask.shape[::-1], None, None)
-        # dist *= 0.1
-        # undistortion
-        h, w = mask.shape[:2]
-        newCameraMtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), 1, (w, h))
-        dst = cv2.undistort(img, mtx, dist, None, newCameraMtx)
-        # crop (not quite useful :)))
-        # x, y, w, h = roi
-        # dst = dst[y:y+h, x:x+w]
-        return dst
-    return img
+    objpts, imgpts = find_points(mask, size)
+    if imgpts is None:
+        return img
+
+    # calibration
+    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpts, imgpts, mask.shape[::-1], None, None)
+    # dist *= 0.1
+    # undistortion
+    h, w = mask.shape[:2]
+    newCameraMtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), 1, (w, h))
+    dst = cv2.undistort(img, mtx, dist, None, newCameraMtx)
+    # crop
+    # x, y, w, h = roi
+    # dst = dst[y:y+h, x:x+w]
+    return dst
 
 
-def calibrate_remap(img, mask, size=(4, 7)):  # technically the same (I guess :)
-    flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_FAST_CHECK + cv2.CALIB_CB_NORMALIZE_IMAGE
-    ret, corners = cv2.findChessboardCorners(mask, size, flags)
-    if ret:
-        objp = np.zeros((math.prod(size), 3), np.float32)
-        objp[:, :2] = np.mgrid[0:size[0], 0:size[1]].T.reshape(-1, 2)
-        objpts = [objp]
-        imgpts = [corners]
+def calibrate_remap(img, mask, size=(4, 7)):  # technically the same
+    objpts, imgpts = find_points(mask, size)
+    if imgpts is None:
+        return img
 
-        # calibration
-        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpts, imgpts, mask.shape[::-1], None, None)
-        dist *= 0.1
-        # undistortion
-        h, w = mask.shape[:2]
-        newCameraMtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), 1, (w, h))
-        mapx, mapy = cv2.initUndistortRectifyMap(mtx, dist, None, newCameraMtx, (w, h), 5)
-        dst = cv2.remap(img, mapx, mapy, cv2.INTER_LINEAR)
-        return dst
-    return img
+    # calibration
+    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpts, imgpts, mask.shape[::-1], None, None)
+    dist *= 0.1
+    # undistortion
+    h, w = mask.shape[:2]
+    newCameraMtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), 1, (w, h))
+    mapx, mapy = cv2.initUndistortRectifyMap(mtx, dist, None, newCameraMtx, (w, h), 5)
+    dst = cv2.remap(img, mapx, mapy, cv2.INTER_LINEAR)
+    return dst
 
 
 def stereo_essential_mat(frameL, frameR, size=(4, 7)):
-    flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_FAST_CHECK + cv2.CALIB_CB_NORMALIZE_IMAGE
-    ret, corners = cv2.findChessboardCorners(frameL, size, flags)
+    _, imgptsL = find_points(frameL, size)
+    _, imgptsR = find_points(frameR, size)
+    if imgptsL is None or imgptsR is None:
+        return None, None
+
+    if imgptsL.shape != imgptsR.shape:
+        pass
+    e, mask = cv2.findEssentialMat(imgptsL, imgptsR)
+    return e, mask
 
 
 def essential_matrix(img1, img2, mask1, mask2):
@@ -99,7 +110,7 @@ def essential_matrix(img1, img2, mask1, mask2):
     pass
 
 
-def projectPoint(img, mask):
+def project_point(img, mask):
     pt = (100, 100)
     size = (4, 7)  # (r, c)
     flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_FAST_CHECK + cv2.CALIB_CB_NORMALIZE_IMAGE
@@ -128,6 +139,6 @@ if __name__ == "__main__":
     binaryMask = get_mask(img)
     cv2.imshow('corners', draw_corners(img, binaryMask))
     cv2.imshow('undistort', calibrate_undis(img, binaryMask))
-    # projectPoint(img, binaryMask)
+    # project_point(img, binaryMask)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
