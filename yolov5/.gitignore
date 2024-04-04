@@ -23,9 +23,6 @@
 !setup.cfg
 !cfg/yolov3*.cfg
 
-!weights/
-!weights/*.pt
-
 storage.googleapis.com
 runs/*
 data/*
@@ -258,3 +255,6 @@ com_crashlytics_export_strings.xml
 crashlytics.properties
 crashlytics-build.properties
 fabric.properties
+
+!weights/
+!weights/*.pt

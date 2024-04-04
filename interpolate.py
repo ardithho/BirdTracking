@@ -30,7 +30,6 @@ def parse_opt():
     parser.add_argument('--resize', type=float, default=0.5, help='resize output frame size (float)')
     parser.add_argument('--pt-size', type=int, default=3, help='size of annotation points (int)')
     opt = parser.parse_args()
-    # opt.imgsz *= 2 if len(opt.imgsz) == 1 else 1  # expand
     return opt
 
 

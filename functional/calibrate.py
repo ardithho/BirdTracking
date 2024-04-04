@@ -122,7 +122,7 @@ def projectPoint(img, mask):
 
 
 if __name__ == "__main__":
-    img = cv2.imread('../vid/fps10/chessboard.jpg')
+    img = cv2.imread('../data/fps10/chessboard.jpg')
     binaryMask = getMask(img)
     cv2.imshow('corners', drawCorners(img, binaryMask))
     cv2.imshow('undistort', calibrateUndis(img, binaryMask))
