@@ -3,14 +3,14 @@ import numpy as np
 
 # https://inst.eecs.berkeley.edu/~ee290t/fa19/lectures/lecture10-3-decomposing-F-matrix-into-Rotation-and-Translation.pdf
 
-def extractFeatures(frame):
+def extract_features(frame):
     orb = cv2.ORB_create()
     return orb.detectAndCompute()
 
 
-def estimateMotion(curr_frame, prev_frame):
-    kp1, des1 = extractFeatures(prev_frame)
-    kp2, des2 = extractFeatures(curr_frame)
+def estimate_motion(curr_frame, prev_frame):
+    kp1, des1 = extract_features(prev_frame)
+    kp2, des2 = extract_features(curr_frame)
 
     bf = cv2.BFMatcher(cv2.NORM_HAMMING, corssCheck=True)
     match = bf.match(des1, des2)

@@ -1,9 +1,10 @@
 import cv2
 import numpy as np
+import math
 from functional.general import kernel
 
 
-def getMask(img):
+def get_mask(img):
     grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     _, thw = cv2.threshold(grey, 200, 255, cv2.THRESH_BINARY)
     _, thb = cv2.threshold(grey, 50, 255, cv2.THRESH_BINARY_INV)
@@ -22,7 +23,7 @@ def getMask(img):
     return binaryMask
 
 
-def harrisCorners(img):
+def harris_corners(img):
     grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     dst = cv2.cornerHarris(grey, 2, 15, 0.07)
     dst_norm = np.empty(dst.shape, dtype=np.float32)
@@ -33,7 +34,7 @@ def harrisCorners(img):
     return img
 
 
-def drawCorners(img, mask):
+def draw_corners(img, mask):
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.01)
     size = (4, 7)  # (r, c)
     flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_FAST_CHECK + cv2.CALIB_CB_NORMALIZE_IMAGE
@@ -45,13 +46,12 @@ def drawCorners(img, mask):
     return img
 
 
-def calibrateUndis(img, mask):
-    size = (4, 7)  # (r, c)
+def calibrate_undis(img, mask, size=(4, 7)):
     flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_FAST_CHECK + cv2.CALIB_CB_NORMALIZE_IMAGE
     ret, corners = cv2.findChessboardCorners(mask, size, flags)
     if ret:
-        objp = np.zeros((7 * 4, 3), np.float32)
-        objp[:, :2] = np.mgrid[0:4, 0:7].T.reshape(-1, 2)
+        objp = np.zeros((math.prod(size), 3), np.float32)
+        objp[:, :2] = np.mgrid[0:size[0], 0:size[1]].T.reshape(-1, 2)
         objpts = [objp]
         imgpts = [corners]
         # calibration
@@ -68,13 +68,12 @@ def calibrateUndis(img, mask):
     return img
 
 
-def calibrateRemap(img, mask):  # technically the same (I guess :)
-    size = (4, 7)  # (r, c)
+def calibrate_remap(img, mask, size=(4, 7)):  # technically the same (I guess :)
     flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_FAST_CHECK + cv2.CALIB_CB_NORMALIZE_IMAGE
     ret, corners = cv2.findChessboardCorners(mask, size, flags)
     if ret:
-        objp = np.zeros((7 * 4, 3), np.float32)
-        objp[:, :2] = np.mgrid[0:4, 0:7].T.reshape(-1, 2)
+        objp = np.zeros((math.prod(size), 3), np.float32)
+        objp[:, :2] = np.mgrid[0:size[0], 0:size[1]].T.reshape(-1, 2)
         objpts = [objp]
         imgpts = [corners]
 
@@ -90,7 +89,12 @@ def calibrateRemap(img, mask):  # technically the same (I guess :)
     return img
 
 
-def essentialMatrix(img1, img2, mask):
+def stereo_essential_mat(frameL, frameR, size=(4, 7)):
+    flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_FAST_CHECK + cv2.CALIB_CB_NORMALIZE_IMAGE
+    ret, corners = cv2.findChessboardCorners(frameL, size, flags)
+
+
+def essential_matrix(img1, img2, mask1, mask2):
     # https://stackoverflow.com/questions/33906111/how-do-i-estimate-positions-of-two-cameras-in-opencv
     pass
 
@@ -120,10 +124,10 @@ def projectPoint(img, mask):
 
 
 if __name__ == "__main__":
-    img = cv2.imread('../data/fps10/chessboard.jpg')
-    binaryMask = getMask(img)
-    cv2.imshow('corners', drawCorners(img, binaryMask))
-    cv2.imshow('undistort', calibrateUndis(img, binaryMask))
-    projectPoint(img, binaryMask)
+    img = cv2.imread('../data/calibration/fps10/chessboard.jpg')
+    binaryMask = get_mask(img)
+    cv2.imshow('corners', draw_corners(img, binaryMask))
+    cv2.imshow('undistort', calibrate_undis(img, binaryMask))
+    # projectPoint(img, binaryMask)
     cv2.waitKey(0)
     cv2.destroyAllWindows()

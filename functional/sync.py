@@ -39,14 +39,9 @@ def first_flash(vid_path, kernel):
                 flash = count
                 print(flash)
                 break
-                # if cv2.waitKey(0) & 0xFF == ord('q'):
-                #     break
         else:
             print(count)
             break
-
-        # if cv2.waitKey(1) & 0xFF == ord('q'):
-        #     break
 
     cap.release()
     return flash
