@@ -37,7 +37,7 @@ yolov5/benchmark.py
 yolov5/CITATION.cff
 yolov5/CONTRIBUTING.md
 !yolov5/weights/*.pt
-.ipynb
+*.ipynb
 
 head_model.blend
 head_model.blend1
