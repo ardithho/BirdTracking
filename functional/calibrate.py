@@ -55,12 +55,12 @@ def find_points(img, size=(4, 7)):
         objpt[:, :2] = np.mgrid[0:size[0], 0:size[1]].T.reshape(-1, 2)
         objpts = [objpt]
         imgpts = [corners]
-        return objpts, imgpts
-    return None, None
+        return objpts, imgpts, size
+    return None, None, None
 
 
 def calibrate_undis(img, mask, size=(4, 7)):
-    objpts, imgpts = find_points(mask, size)
+    objpts, imgpts, _ = find_points(mask, size)
     if imgpts is None:
         return img
 
@@ -78,7 +78,7 @@ def calibrate_undis(img, mask, size=(4, 7)):
 
 
 def calibrate_remap(img, mask, size=(4, 7)):  # technically the same
-    objpts, imgpts = find_points(mask, size)
+    objpts, imgpts, _ = find_points(mask, size)
     if imgpts is None:
         return img
 
@@ -93,15 +93,24 @@ def calibrate_remap(img, mask, size=(4, 7)):  # technically the same
     return dst
 
 
+def remap(pts, size):
+    h, w = size
+    ret = [[0 for _ in range(h)] for _ in range(w)]
+    for r in range(w):
+        for c in range(h):
+            ret[r][c] = pts[c][w-r-1]
+    return ret
+
+
 def stereo_essential_mat(frameL, frameR, size=(4, 7)):
-    _, imgptsL = find_points(frameL, size)
-    _, imgptsR = find_points(frameR, size)
+    _, imgptsL, sizeL = find_points(frameL, size)
+    _, imgptsR, sizeR = find_points(frameR, size)
     if imgptsL is None or imgptsR is None:
         return None, None
 
-    if imgptsL.shape != imgptsR.shape:
-        pass
-    e, mask = cv2.findEssentialMat(imgptsL, imgptsR)
+    if sizeL != sizeR:
+        imgptsR = remap(imgptsR, sizeR)
+    e, mask = cv2.findEssentialMat(imgptsL[0], imgptsR[0])
     return e, mask
 
 
@@ -110,16 +119,11 @@ def essential_matrix(img1, img2, mask1, mask2):
     pass
 
 
-def project_point(img, mask):
+def project_point(img, mask, size=(4, 7)):
     pt = (100, 100)
-    size = (4, 7)  # (r, c)
-    flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_FAST_CHECK + cv2.CALIB_CB_NORMALIZE_IMAGE
-    ret, corners = cv2.findChessboardCorners(mask, size, flags)
-    if ret:
-        objp = np.zeros((7 * 4, 3), np.float32)
-        objp[:, :2] = np.mgrid[0:4, 0:7].T.reshape(-1, 2)
-        objpts = [objp]
-        imgpts = [corners]
+    objpts, imgpts = find_points(mask, size)
+    if imgpts is not None:
+        corners = imgpts[0]
         world_origin = list(map(int, corners[len(corners)//2][0]))
         # calibration
         ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpts, imgpts, mask.shape[::-1], None, None)
