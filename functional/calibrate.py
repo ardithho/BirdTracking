@@ -1,7 +1,18 @@
 import cv2
 import numpy as np
 import math
+import os
 from functional.general import kernel
+
+
+def contour_valid(img, contour, area_thresh=0.0025, centre_thresh=0.2):
+    h, w = img.shape[:2]
+    area = cv2.contourArea(contour) > math.prod(img.shape[:2])*area_thresh
+    M = cv2.moments(contour)
+    cX = int(M["m10"] / M["m00"])
+    cY = int(M["m01"] / M["m00"])
+    centre = w*centre_thresh < cX < w*(1-centre_thresh) and h*area_thresh < cY < h*(1-area_thresh)
+    return area and centre
 
 
 def get_mask(img):
@@ -12,7 +23,7 @@ def get_mask(img):
     combined = cv2.morphologyEx(combined, cv2.MORPH_CLOSE, kernel(5))
     combined = cv2.morphologyEx(combined, cv2.MORPH_OPEN, kernel(5))
     contours, hierarchy = cv2.findContours(combined, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    cnts = [contour for contour in contours if cv2.contourArea(contour) > 2048]
+    cnts = [contour for contour in contours if contour_valid(img, contour)]
     cnts = sorted(cnts, key=lambda x: cv2.contourArea(x), reverse=True)
 
     mask = np.zeros(img.shape[:2], np.uint8)
@@ -34,7 +45,8 @@ def harris_corners(img):
     return img
 
 
-def draw_corners(img, mask, size=(4, 7)):
+def draw_corners(img, size=(4, 7)):
+    mask = get_mask(img)
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.01)
     flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_FAST_CHECK + cv2.CALIB_CB_NORMALIZE_IMAGE
     ret, corners = cv2.findChessboardCorners(mask, size, flags)
@@ -59,16 +71,17 @@ def find_points(img, size=(4, 7)):
     return None, None, None
 
 
-def calibrate_undis(img, mask, size=(4, 7)):
+def calibrate_undis(img, size=(4, 7)):
+    mask = get_mask(img)
     objpts, imgpts, _ = find_points(mask, size)
     if imgpts is None:
         return img
 
     # calibration
-    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpts, imgpts, mask.shape[::-1], None, None)
+    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpts, imgpts, img.shape[::-1], None, None)
     # dist *= 0.1
     # undistortion
-    h, w = mask.shape[:2]
+    h, w = img.shape[:2]
     newCameraMtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), 1, (w, h))
     dst = cv2.undistort(img, mtx, dist, None, newCameraMtx)
     # crop
@@ -77,16 +90,17 @@ def calibrate_undis(img, mask, size=(4, 7)):
     return dst
 
 
-def calibrate_remap(img, mask, size=(4, 7)):  # technically the same
+def calibrate_remap(img, size=(4, 7)):  # technically the same
+    mask = get_mask(img)
     objpts, imgpts, _ = find_points(mask, size)
     if imgpts is None:
         return img
 
     # calibration
-    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpts, imgpts, mask.shape[::-1], None, None)
+    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpts, imgpts, img.shape[::-1], None, None)
     dist *= 0.1
     # undistortion
-    h, w = mask.shape[:2]
+    h, w = img.shape[:2]
     newCameraMtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), 1, (w, h))
     mapx, mapy = cv2.initUndistortRectifyMap(mtx, dist, None, newCameraMtx, (w, h), 5)
     dst = cv2.remap(img, mapx, mapy, cv2.INTER_LINEAR)
@@ -103,8 +117,10 @@ def remap(pts, size):
 
 
 def stereo_essential_mat(frameL, frameR, size=(4, 7)):
-    _, imgptsL, sizeL = find_points(frameL, size)
-    _, imgptsR, sizeR = find_points(frameR, size)
+    maskL = get_mask(frameL)
+    maskR = get_mask(frameR)
+    _, imgptsL, sizeL = find_points(maskL, size)
+    _, imgptsR, sizeR = find_points(maskR, size)
     if imgptsL is None or imgptsR is None:
         return None, None
 
@@ -119,9 +135,10 @@ def essential_matrix(img1, img2, mask1, mask2):
     pass
 
 
-def project_point(img, mask, size=(4, 7)):
+def project_point(img, size=(4, 7)):
     pt = (100, 100)
-    objpts, imgpts = find_points(mask, size)
+    mask = get_mask(img)
+    objpts, imgpts = find_points(mask)
     if imgpts is not None:
         corners = imgpts[0]
         world_origin = list(map(int, corners[len(corners)//2][0]))
@@ -139,10 +156,15 @@ def project_point(img, mask, size=(4, 7)):
 
 
 if __name__ == "__main__":
-    img = cv2.imread('../data/calibration/fps10/chessboard.jpg')
-    binaryMask = get_mask(img)
-    cv2.imshow('corners', draw_corners(img, binaryMask))
-    cv2.imshow('undistort', calibrate_undis(img, binaryMask))
-    # project_point(img, binaryMask)
+    # img = cv2.imread('../data/calibration/fps10/chessboard.jpg')
+    # cv2.imshow('corners', draw_corners(img))
+    # cv2.imshow('undistort', calibrate_undis(img))
+    # project_point(img)
+    img_dir = '../data/calibration/K203_K238/chessboard'
+    frame_no = 2189
+    frameL = cv2.imread(os.path.join(img_dir, f'l/{frame_no}.jpg'))
+    frameR = cv2.imread(os.path.join(img_dir, f'r/{frame_no}.jpg'))
+    e, mask = stereo_essential_mat(frameL, frameR)
+    print(e)
     cv2.waitKey(0)
     cv2.destroyAllWindows()

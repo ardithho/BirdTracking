@@ -36,7 +36,7 @@ import torch
 import torchvision
 import yaml
 
-# Import 'ultralytics' package or install if if missing
+# Import 'ultralytics' package or install if missing
 try:
     import ultralytics
 
