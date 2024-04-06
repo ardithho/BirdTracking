@@ -70,14 +70,17 @@ def main():
     count = 0
     e = None
     while caps[0].isOpened() and caps[1].isOpened():
-        for i in range(2): caps[i].grab
+        for i in range(10):
+            count += 1
+            for j in range(2):
+                caps[j].grab
         ret1, frame1 = caps[0].retrieve()
         ret2, frame2 = caps[1].retrieve()
         if ret1 and ret2:
-            count += 1
             frame1 = cv2.resize(frame1, None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC)
             frame2 = cv2.resize(frame2, None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC)
             cv2.imshow('frame', cv2.vconcat([frame1, frame2]))
+            cv2.waitKey(1)
             if e is None:
                 e, mask = stereo_essential_mat(frame1, frame2)
                 print(count, e)
