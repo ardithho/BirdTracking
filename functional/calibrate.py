@@ -57,7 +57,10 @@ def draw_corners(img, size=(4, 7)):
 
 
 def find_points(img, size=(4, 7)):
-    flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_FAST_CHECK + cv2.CALIB_CB_NORMALIZE_IMAGE + cv2.CALIB_USE_INTRINSIC_GUESS
+    flags = (cv2.CALIB_CB_ADAPTIVE_THRESH
+             + cv2.CALIB_CB_FAST_CHECK
+             + cv2.CALIB_CB_NORMALIZE_IMAGE
+             + cv2.CALIB_USE_INTRINSIC_GUESS)
     ret, corners = cv2.findChessboardCorners(img, size, flags)
     if not ret:
         size = size[::-1]
@@ -71,7 +74,7 @@ def find_points(img, size=(4, 7)):
     return None, None, None
 
 
-def calibrate_undis(img, size=(4, 7)):
+def calibrate(img, size=(4, 7)):
     mask = get_mask(img)
     objpts, imgpts, _ = find_points(mask, size)
     if imgpts is None:
@@ -87,23 +90,6 @@ def calibrate_undis(img, size=(4, 7)):
     # crop
     # x, y, w, h = roi
     # dst = dst[y:y+h, x:x+w]
-    return dst
-
-
-def calibrate_remap(img, size=(4, 7)):  # technically the same
-    mask = get_mask(img)
-    objpts, imgpts, _ = find_points(mask, size)
-    if imgpts is None:
-        return img
-
-    # calibration
-    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpts, imgpts, img.shape[::-1], None, None)
-    dist *= 0.1
-    # undistortion
-    h, w = img.shape[:2]
-    newCameraMtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), 1, (w, h))
-    mapx, mapy = cv2.initUndistortRectifyMap(mtx, dist, None, newCameraMtx, (w, h), 5)
-    dst = cv2.remap(img, mapx, mapy, cv2.INTER_LINEAR)
     return dst
 
 
