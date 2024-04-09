@@ -49,6 +49,35 @@ def first_flash(vid_path, kernel_size=5):
     return flash
 
 
+def sync(vidL, vidR, skip=1800):
+    capL = cv2.VideoCapture(vidL)
+    capR = cv2.VideoCapture(vidR)
+    offsetL = first_flash(vidL)
+    offsetR = first_flash(vidR)
+    capL.set(cv2.CAP_PROP_POS_FRAMES, offsetL+skip)
+    capR.set(cv2.CAP_PROP_POS_FRAMES, offsetR+skip)
+
+    e = None
+    while capL.isOpened() and capR.isOpened():
+        for i in range(30):
+            _ = capL.grab()
+            _ = capR.grab()
+        retL, frameL = capL.retrieve()
+        retR, frameR = capR.retrieve()
+        if retL and retR:
+            if e is None:
+                e, mask = stereo_essential_mat(frameL, frameR)
+                if e is not None:
+                    break
+        else:
+            break
+
+        capL.release()
+        capR.release()
+
+    return offsetL, offsetR, e, mask
+
+
 def main():
     ROOT = os.path.dirname(os.getcwd())
     vid_root = os.path.join(ROOT, 'data/vid/fps120/K203_K238')
