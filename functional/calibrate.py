@@ -57,7 +57,7 @@ def draw_corners(img, size=(4, 7)):
 
 
 def find_points(img, size=(4, 7)):
-    flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_FAST_CHECK + cv2.CALIB_CB_NORMALIZE_IMAGE
+    flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_FAST_CHECK + cv2.CALIB_CB_NORMALIZE_IMAGE + cv2.CALIB_USE_INTRINSIC_GUESS
     ret, corners = cv2.findChessboardCorners(img, size, flags)
     if not ret:
         size = size[::-1]
@@ -117,10 +117,8 @@ def remap(pts, size):
 
 
 def stereo_essential_mat(frameL, frameR, size=(4, 7)):
-    maskL = get_mask(frameL)
-    maskR = get_mask(frameR)
-    _, imgptsL, sizeL = find_points(maskL, size)
-    _, imgptsR, sizeR = find_points(maskR, size)
+    _, imgptsL, sizeL = find_points(frameL, size)
+    _, imgptsR, sizeR = find_points(frameR, size)
     if imgptsL is None or imgptsR is None:
         return None, None
 

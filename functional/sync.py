@@ -52,8 +52,8 @@ def first_flash(vid_path, kernel_size=5):
 def main():
     ROOT = os.path.dirname(os.getcwd())
     vid_root = os.path.join(ROOT, 'data/vid/fps120/K203_K238')
-    vid_dir1 = os.path.join(vid_root, 'GOPRO1')
-    vid_dir2 = os.path.join(vid_root, 'GOPRO2')
+    vid_dir1 = os.path.join(vid_root, 'GOPRO2')
+    vid_dir2 = os.path.join(vid_root, 'GOPRO1')
     vid_paths1 = [os.path.join(vid_dir1, path) for path in os.listdir(vid_dir1) if path[-3:] == 'MP4']
     vid_paths2 = [os.path.join(vid_dir2, path) for path in os.listdir(vid_dir2) if path[-3:] == 'MP4']
     vid_paths = [vid_paths1, vid_paths2]
@@ -82,7 +82,7 @@ def main():
             if e is None:
                 e, mask = stereo_essential_mat(frame1, frame2)
                 print(count, e)
-                if e:
+                if e is not None:
                     break
             out = cv2.vconcat([frame1, frame2])
             cv2.imshow('frame', out)
