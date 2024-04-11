@@ -7,7 +7,7 @@ def extract_features(frame, mask=None):
     return orb.detectAndCompute(frame, mask)
 
 
-def find_matching_pts(curr_frame, prev_frame, curr_mask=None, prev_mask=None):
+def find_matching_pts(prev_frame, curr_frame, prev_mask=None, curr_mask=None):
     kp1, des1 = extract_features(prev_frame, prev_mask)
     kp2, des2 = extract_features(curr_frame, curr_mask)
 
@@ -21,13 +21,25 @@ def find_matching_pts(curr_frame, prev_frame, curr_mask=None, prev_mask=None):
     return src_pts, dst_pts
 
 
-def estimate_homography(curr_frame, prev_frame, curr_mask=None, prev_mask=None):
+def estimate_homography(prev_frame, curr_frame, prev_mask=None, curr_mask=None):
     src_pts, dst_pts = find_matching_pts(curr_frame, prev_frame, curr_mask, prev_mask)
     return cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
 
 
-def estimate_essential_mat(curr_frame, prev_frame, curr_mask=None, prev_mask=None):
+def estimate_essential_mat(prev_frame, curr_frame, prev_mask=None, curr_mask=None):
     # https://inst.eecs.berkeley.edu/~ee290t/fa19/lectures/lecture10-3-decomposing-F-matrix-into-Rotation-and-Translation.pdf
     # https://stackoverflow.com/questions/33906111/how-do-i-estimate-positions-of-two-cameras-in-opencv
     src_pts, dst_pts = find_matching_pts(curr_frame, prev_frame, curr_mask, prev_mask)
     return cv2.findEssentialMat(src_pts, dst_pts)
+
+
+if __name__ == '__main__':
+    cap = cv2.VideoCapture('data/vid/fps120/K203_K238/GOPRO2/GH010039.MP4')
+    if cap.isOpened(): prev = cap.read()[1]
+    while cap.isOpened():
+        ret, curr = cap.read()
+        if ret:
+            print(estimate_homography(prev, curr))
+            print(estimate_essential_mat(prev, curr))
+            prev = curr
+    cap.release()

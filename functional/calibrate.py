@@ -114,26 +114,6 @@ def stereo_essential_mat(frameL, frameR, size=(4, 7)):
     return e, mask
 
 
-def project_point(img, size=(4, 7)):
-    pt = (100, 100)
-    mask = get_mask(img)
-    objpts, imgpts = find_points(mask)
-    if imgpts is not None:
-        corners = imgpts[0]
-        world_origin = list(map(int, corners[len(corners)//2][0]))
-        # calibration
-        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpts, imgpts, mask.shape[::-1], None, None)
-
-        intrinstic = np.matrix(mtx)[:, :-1]
-        cam_coord = np.linalg.inv(intrinstic) @ [*pt, 1]
-        print(cam_coord)
-        rvec, tvec = cv2.solvePnP(objpts, imgpts, intrinstic)
-        extrinsic = np.hstack((intrinstic, np.zeros((intrinstic.shape[0], 1), dtype=intrinstic.dtype)))
-        print(np.linalg.inv(intrinstic))
-        world_coord = np.linalg.inv(intrinstic) @ cam_coord.T
-        print(world_coord)
-
-
 if __name__ == "__main__":
     # img = cv2.imread('../data/calibration/fps10/chessboard.jpg')
     # cv2.imshow('corners', draw_corners(img))
