@@ -23,3 +23,8 @@ def estimate_motion(curr_frame, prev_frame):
     src_pts = np.float32([kp1[m.queryIdx].pt for m in filteredMatch]).reshape(-1, 1, 2)
     dst_pts = np.float32([kp2[m.trainIdx].pt for m in filteredMatch]).reshape(-1, 1, 2)
     M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
+
+
+def essential_matrix(img1, img2, mask1, mask2):
+    # https://stackoverflow.com/questions/33906111/how-do-i-estimate-positions-of-two-cameras-in-opencv
+    pass

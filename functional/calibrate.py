@@ -114,11 +114,6 @@ def stereo_essential_mat(frameL, frameR, size=(4, 7)):
     return e, mask
 
 
-def essential_matrix(img1, img2, mask1, mask2):
-    # https://stackoverflow.com/questions/33906111/how-do-i-estimate-positions-of-two-cameras-in-opencv
-    pass
-
-
 def project_point(img, size=(4, 7)):
     pt = (100, 100)
     mask = get_mask(img)
