@@ -47,7 +47,7 @@ def first_flash(vid_path, kernel_size=5):
     return flash
 
 
-def sync(vidL, vidR, skip=1800):
+def sync(vidL, vidR, skip=1800, stride=30):
     capL = cv2.VideoCapture(vidL)
     capR = cv2.VideoCapture(vidR)
     offsetL = first_flash(vidL) + skip
@@ -57,7 +57,7 @@ def sync(vidL, vidR, skip=1800):
 
     e = None
     while capL.isOpened() and capR.isOpened():
-        for i in range(30):
+        for i in range(stride):
             _ = capL.grab()
             _ = capR.grab()
             offsetL += 1
