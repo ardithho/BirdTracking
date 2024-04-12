@@ -114,7 +114,7 @@ def stereo_essential_mat(frameL, frameR, size=(4, 7)):
     return e, mask
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     # img = cv2.imread('../data/calibration/fps10/chessboard.jpg')
     # cv2.imshow('corners', draw_corners(img))
     # cv2.imshow('undistort', calibrate_undis(img))
