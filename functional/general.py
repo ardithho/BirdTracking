@@ -225,11 +225,11 @@ def significantKP(kps):
     return ptsCentroid(largest)
 
 
-def manDist(a, b):
+def man_dist(a, b):
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
 
-def eucDist(a, b):
+def euc_dist(a, b):
     return math.sqrt((a[0]-b[0])**2 + (a[1] - b[1])**2)
 
 
@@ -255,7 +255,7 @@ def circleRadius(pts):
     if len(cpts) == 3:
         return circleProperties(cpts)[-1]
     elif len(cpts) == 2:
-        return eucDist(*cpts)
+        return euc_dist(*cpts)
     return 0  # technically shouldn't happen
 
 
@@ -310,7 +310,7 @@ def circleProperties(pts):
 def ptInCircle(p, D):
     if len(D) == 3:
         cx, cy, r = circleProperties(D)
-        if eucDist(p, (cx, cy)) <= r:
+        if euc_dist(p, (cx, cy)) <= r:
             return True
     return False
 
@@ -452,7 +452,7 @@ def trackHead(img):
 
         # bounding rect
         ratio = 3
-        dist = eucDist(pt, centroid) * 2
+        dist = euc_dist(pt, centroid) * 2
         length = dist * ratio
         x, y, w, h = cv2.boundingRect(cnt)
         w += length
@@ -495,7 +495,7 @@ def boundFeat(img, bill, bill_conf, eyes, tear_marks):
 
             # bounding rect
             ratio = 3
-            dist = eucDist(bill, centroid) * 2
+            dist = euc_dist(bill, centroid) * 2
             length = dist * ratio
             x, y, w, h = cv2.boundingRect(cnt)
             w += length
@@ -559,7 +559,7 @@ def detLR(pivot, eye, tear_mark):  # determine left right of a pair of features
     return 'right'
 
 
-def sortFeat(bill, eyes, tear_marks):  # sort left right features
+def sort_feat(bill, eyes, tear_marks):  # sort left right features
     if len(eyes) == 0 and len(tear_marks) == 0:
         eyes = [None, None]  # L, R
         tear_marks = [None, None]  # L, R
@@ -601,7 +601,7 @@ def sortFeat(bill, eyes, tear_marks):  # sort left right features
             eyes.append(None)
             tear_marks.append(None)
     elif len(eyes) > len(tear_marks):
-        if eucDist(eyes[0], tear_marks[0]) <= eucDist(eyes[1], tear_marks[0]):
+        if euc_dist(eyes[0], tear_marks[0]) <= euc_dist(eyes[1], tear_marks[0]):
             pivot = bill if bill else eyes[1]
             if detLR(pivot, eyes[0], tear_marks[0]) == 'left':
                 tear_marks.append(None)
@@ -616,7 +616,7 @@ def sortFeat(bill, eyes, tear_marks):  # sort left right features
             else:
                 tear_marks.insert(0, None)
     elif len(eyes) < len(tear_marks):
-        if eucDist(eyes[0], tear_marks[0]) <= eucDist(eyes[0], tear_marks[1]):
+        if euc_dist(eyes[0], tear_marks[0]) <= euc_dist(eyes[0], tear_marks[1]):
             pivot = bill if bill else tear_marks[1]
             if detLR(pivot, eyes[0], tear_marks[0]) == 'left':
                 eyes.append(None)
@@ -631,13 +631,13 @@ def sortFeat(bill, eyes, tear_marks):  # sort left right features
             else:
                 eyes.insert(0, None)
     else:  # full set
-        if all([eucDist(eyes[0], tear_marks[i]) < eucDist(eyes[1], tear_marks[i]) for i in range(2)]):
-            if eucDist(eyes[1], tear_marks[0]) < eucDist(eyes[1], tear_marks[1]):
+        if all([euc_dist(eyes[0], tear_marks[i]) < euc_dist(eyes[1], tear_marks[i]) for i in range(2)]):
+            if euc_dist(eyes[1], tear_marks[0]) < euc_dist(eyes[1], tear_marks[1]):
                 tear_marks = [tear_marks[1], tear_marks[0]]
-        elif all([eucDist(eyes[1], tear_marks[i]) < eucDist(eyes[0], tear_marks[i]) for i in range(2)]):
-            if eucDist(eyes[0], tear_marks[1]) < eucDist(eyes[0], tear_marks[0]):
+        elif all([euc_dist(eyes[1], tear_marks[i]) < euc_dist(eyes[0], tear_marks[i]) for i in range(2)]):
+            if euc_dist(eyes[0], tear_marks[1]) < euc_dist(eyes[0], tear_marks[0]):
                 tear_marks = [tear_marks[1], tear_marks[0]]
-        elif eucDist(eyes[0], tear_marks[1]) < eucDist(eyes[0], tear_marks[0]):
+        elif euc_dist(eyes[0], tear_marks[1]) < euc_dist(eyes[0], tear_marks[0]):
             tear_marks = [tear_marks[1], tear_marks[0]]
         pivotL = bill if bill else eyes[1]
         pivotR = bill if bill else eyes[0]
@@ -647,7 +647,7 @@ def sortFeat(bill, eyes, tear_marks):  # sort left right features
     return bill, eyes, tear_marks
 
 
-def matchLabels(target, labels, dist):  # check for overlapping labels
+def match_labels(target, labels, dist):  # check for overlapping labels
     match = False
     i = 0
     while not match and i < len(labels):
@@ -658,21 +658,21 @@ def matchLabels(target, labels, dist):  # check for overlapping labels
     return match
 
 
-def processLabels(labels, n, img_shape):  # remove overlapping labels and return best n
+def process_labels(labels, n, img_shape):  # remove overlapping labels and return best n
     i = 0
     count = 0
     out_labels = []
     while count < n and i < len(labels):
         label = labels[i]
         label = [round(label[1+i] * img_shape[1-i]) for i in range(2)]
-        if not matchLabels(label, out_labels, 3):
+        if not match_labels(label, out_labels, 3):
             out_labels.append(label)
             count += 1
         i += 1
     return out_labels
 
 
-def filterFeat(img, det, classes):
+def filter_feat(img, det, classes):
     bill_labels = sorted([label for label in det if label[0] == classes[0] and label[-1] >= 0.1], key=lambda x: x[-1],
                           reverse=True)
     if bill_labels:
@@ -686,14 +686,14 @@ def filterFeat(img, det, classes):
 
     # sort by confidence
     eyes_labels = sorted([label for label in det if label[0] in classes[1] and label[-1] >= 0.1], key=lambda x: x[-1])
-    eyes = processLabels(eyes_labels, 2, img.shape[:2])
+    eyes = process_labels(eyes_labels, 2, img.shape[:2])
 
     tear_labels = sorted([label for label in det if label[0] in classes[2] and label[-1] >= 0.1], key=lambda x: x[-1])
-    tear_marks = processLabels(tear_labels, 2, img.shape[:2])
-    return sortFeat(*boundFeat(img, bill, bill_conf, eyes, tear_marks))
+    tear_marks = process_labels(tear_labels, 2, img.shape[:2])
+    return sort_feat(*boundFeat(img, bill, bill_conf, eyes, tear_marks))
 
 
-def plotFeat(img, bill, eyes, tear_marks, start=(0, 0)):
+def plot_feat(img, bill, eyes, tear_marks, start=(0, 0)):
     line_colours = [(0, 255, 0), (0, 0, 255)]  # L, R
     if bill:
         bill = [round(start[i]+bill[i]) for i in range(2)]

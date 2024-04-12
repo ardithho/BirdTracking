@@ -54,7 +54,7 @@ from yolov5.utils.general import (LOGGER, Profile, check_file, check_img_size, c
 from yolov5.utils.plots import Annotator, colors, save_one_box, xyxy2save
 from yolov5.utils.torch_utils import select_device, smart_inference_mode
 from yolov5.utils.augmentations import letterbox
-from functional.general import filterFeat, plotFeat, to_txt
+from functional.general import filter_feat, plot_feat, to_txt
 
 
 @smart_inference_mode()
@@ -216,8 +216,8 @@ def run(
                             fxywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gnf).view(-1).tolist()
                             fdets[j] = cls, *fxywh, conf
 
-                        bill, eyes, tear_marks = filterFeat(imc, fdets, class_order)
-                        im0 = plotFeat(im0, bill, eyes, tear_marks, xyxyf[0][:2])
+                        bill, eyes, tear_marks = filter_feat(imc, fdets, class_order)
+                        im0 = plot_feat(im0, bill, eyes, tear_marks, xyxyf[0][:2])
                         bill, eyes, tear_marks = to_txt(im0, bill, eyes, tear_marks, xyxyf[0][:2])
 
                     else:

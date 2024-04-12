@@ -1,7 +1,7 @@
 import os
 import cv2
 import time
-from functional.general import eucDist
+from functional.general import euc_dist
 
 
 class DetectionsDataloader:
@@ -59,7 +59,7 @@ class DetectionsDataloader:
 
     def head_dist(self, head1, head2):
         pairs = [(head1[i], head2[i]) for i in range(self.n) if head1[i] is not None and head2[i] is not None]
-        return sum([abs(eucDist(*pairs[i])) for i in range(len(pairs))]) / len(pairs)
+        return sum([abs(euc_dist(*pairs[i])) for i in range(len(pairs))]) / len(pairs)
 
     def sort_detections(self):
         print('Sorting detections...', end='')
