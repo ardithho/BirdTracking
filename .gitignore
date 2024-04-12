@@ -1,5 +1,6 @@
 runs
 venv
+datasets
 __pycache__
 perspective/
 JSON2YOLO/
@@ -12,7 +13,6 @@ yolov5/.git/
 yolov5/.github/
 yolov5/classify/
 yolov5/segment/
-yolov5/detect.py
 yolov5/detect_*.py
 yolov5/README.md
 yolov5/requirements.txt
@@ -26,6 +26,8 @@ yolov5/CITATION.cff
 yolov5/CONTRIBUTING.md
 !yolov5/weights/*.pt
 *.ipynb
+
+yolov8/yolov8n.pt
 
 createLabels.py
 headPose.py
