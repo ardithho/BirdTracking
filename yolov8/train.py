@@ -43,7 +43,7 @@ def load_dataset_feat(api_key='jyKUZIKA3yySfSqRdXqI',
     return project.version(version).download('yolov8', f'datasets/{project_name}-{version}')
 
 
-def train_model(data, model='yolov8n.yaml', epochs=200, batch=16, imgsz=416):
+def train_model(data, model='yolov8n.yaml', epochs=200, batch=16, imgsz=416, name='train'):
     """
     Train the model for toy recognition.
 
@@ -59,12 +59,14 @@ def train_model(data, model='yolov8n.yaml', epochs=200, batch=16, imgsz=416):
     - model (YOLO): The trained model.
     """
     model = YOLO(model)
-    model.train(data=data, epochs=epochs, batch=batch, imgsz=imgsz)
+    model.train(data=data, epochs=epochs, batch=batch, imgsz=imgsz, name=name)
     return model
 
 
 if __name__ == '__main__':
-    dataset = load_dataset_feat()
+    name = 'feat'
+    dataset = None
+    exec(f'dataset = load_dataset_{name}()')
     data_file = f'{dataset.location}/data.yaml'
     with open(data_file, 'r') as f:
         data = yaml.safe_load(f)
@@ -72,4 +74,4 @@ if __name__ == '__main__':
     data['val'] = '../valid/images'
     with open(data_file, 'w') as f:
         yaml.dump(data, f)
-    model = train_model(data_file, batch=32)
+    model = train_model(data_file, batch=32, name=name)

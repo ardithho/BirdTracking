@@ -2,6 +2,7 @@ import argparse
 import os
 import sys
 from pathlib import Path
+from ultralytics import YOLO
 
 ROOT = os.path.join(Path.cwd(), 'yolov8')  # YOLOv8 root directory
 if str(ROOT) not in sys.path:
@@ -12,8 +13,6 @@ PROJECT_ROOT = Path.cwd()  # this project root directory
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))  # add PROJECT_ROOT to PATH
 PROJECT_ROOT = Path(os.path.relpath(PROJECT_ROOT, Path.cwd()))  # relative
-
-from ultralytics import YOLO
 
 
 class Detect:

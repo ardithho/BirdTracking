@@ -21,8 +21,6 @@ def get_offset(vid_path1, vid_path2):
 def first_flash(vid_path, kernel_size=5):
     kernel = np.ones((kernel_size, kernel_size), np.uint8)
     cap = cv2.VideoCapture(vid_path)
-    # fps = cap.get(cv2.CAP_PROP_FPS)
-    # frame_count = cap.get(cv2.CAP_PROP_FRAME_COUNT)
     count = 0
     flash = -1
 
@@ -52,16 +50,18 @@ def first_flash(vid_path, kernel_size=5):
 def sync(vidL, vidR, skip=1800):
     capL = cv2.VideoCapture(vidL)
     capR = cv2.VideoCapture(vidR)
-    offsetL = first_flash(vidL)
-    offsetR = first_flash(vidR)
-    capL.set(cv2.CAP_PROP_POS_FRAMES, offsetL+skip)
-    capR.set(cv2.CAP_PROP_POS_FRAMES, offsetR+skip)
+    offsetL = first_flash(vidL) + skip
+    offsetR = first_flash(vidR) + skip
+    capL.set(cv2.CAP_PROP_POS_FRAMES, offsetL)
+    capR.set(cv2.CAP_PROP_POS_FRAMES, offsetR)
 
     e = None
     while capL.isOpened() and capR.isOpened():
         for i in range(30):
             _ = capL.grab()
             _ = capR.grab()
+            offsetL += 1
+            offsetR += 1
         retL, frameL = capL.retrieve()
         retR, frameR = capR.retrieve()
         if retL and retR:
@@ -71,7 +71,6 @@ def sync(vidL, vidR, skip=1800):
                     break
         else:
             break
-
         capL.release()
         capR.release()
 
@@ -87,43 +86,7 @@ def main():
     vid_paths2 = [os.path.join(vid_dir2, path) for path in os.listdir(vid_dir2) if path[-3:] == 'MP4']
     vid_paths = [vid_paths1, vid_paths2]
 
-    # offset, offset_vid = get_offset(vid_paths1[0], vid_paths2[0])
-    caps = [cv2.VideoCapture(vid_path[0]) for vid_path in vid_paths]
-    skip = 1700
-    offset1 = first_flash(vid_paths1[0])
-    offset2 = first_flash(vid_paths2[0])
-    caps[0].set(cv2.CAP_PROP_POS_FRAMES, offset1+skip)
-    caps[1].set(cv2.CAP_PROP_POS_FRAMES, offset2+skip)
-    # caps[offset_vid].set(cv2.CAP_PROP_POS_FRAMES, offset)
-
-    count = 0
-    e = None
-    while caps[0].isOpened() and caps[1].isOpened():
-        for i in range(30):
-            count += 1
-            for j in range(2):
-                _ = caps[j].grab()
-        ret1, frame1 = caps[0].retrieve()
-        ret2, frame2 = caps[1].retrieve()
-        if ret1 and ret2:
-            frame1 = cv2.resize(frame1, None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC)
-            frame2 = cv2.resize(frame2, None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC)
-            if e is None:
-                e, mask = stereo_essential_mat(frame1, frame2)
-                print(count, e)
-                if e is not None:
-                    break
-            out = cv2.vconcat([frame1, frame2])
-            cv2.imshow('frame', out)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-        else:
-            break
-
-    for cap in caps:
-        cap.release()
-
-    cv2.destroyAllWindows()
+    print(sync(vid_paths[0][0], vid_paths[1][0]))
 
 
 if __name__ == '__main__':
