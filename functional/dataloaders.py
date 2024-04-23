@@ -5,12 +5,13 @@ from functional.general import euc_dist
 
 
 class DetectionsDataloader:
-    def __init__(self, directory, no_of_features=6, offset=3, resize=0.5, pt_size=3):
+    def __init__(self, directory, no_of_features=6, offset=3, resize=0.5, pt_size=3, thickness=2):
         self.dir = directory
         self.n = no_of_features
         self.offset = offset
         self.resize = resize
         self.ptSize = pt_size
+        self.thickness = thickness
         self.filenames = sorted(os.listdir(self.dir), key=lambda x: get_frame_no(x))
         self.noOfFrames = get_frame_no(self.filenames[-1])
         maxFrameNo = max([get_frame_no(filename) for filename in self.filenames])
@@ -169,6 +170,7 @@ class DetectionsDataloader:
 
     def compare(self, filepath):
         colours = [(255, 255, 0), (0, 255, 255), (0, 255, 255), (0, 150, 255), (0, 150, 255)]
+        line_colours = [(0, 255, 0), (0, 0, 255)]
         cap = cv2.VideoCapture(filepath)
         fps = cap.get(cv2.CAP_PROP_FPS)
         frameNo = 0
@@ -184,16 +186,30 @@ class DetectionsDataloader:
                 for headNo in range(2):
                     currHead = self.unsorted[frameNo][headNo]
                     if currHead is not None:
-                        for featNo in range(1, self.n):
+                        head_pt = None
+                        if currHead[1] is not None:
+                            head_pt = [round(currHead[1][i]*shape[1-i]) for i in range(2)]
+                        for featNo in range(2, self.n):
                             if currHead[featNo] is not None:
                                 pt = [round(currHead[featNo][i]*shape[1-i]) for i in range(2)]
+                                if head_pt is not None:
+                                    cv2.line(frame, head_pt, pt, line_colours[featNo%2], self.thickness)
                                 cv2.circle(frame, pt, self.ptSize, colours[featNo-1], -1)
+                        if head_pt is not None:
+                            cv2.circle(frame, head_pt, self.ptSize, colours[0], -1)
                     currHead = self.detections[frameNo][headNo]
                     if currHead is not None:
-                        for featNo in range(1, self.n):
+                        head_pt = None
+                        if currHead[1] is not None:
+                            head_pt = [round(currHead[1][i] * shape[1-i]) for i in range(2)]
+                        for featNo in range(2, self.n):
                             if currHead[featNo] is not None:
                                 pt = [round(currHead[featNo][i]*shape[1-i]) for i in range(2)]
+                                if head_pt is not None:
+                                    cv2.line(iFrame, head_pt, pt, line_colours[featNo%2], self.thickness)
                                 cv2.circle(iFrame, pt, self.ptSize, colours[featNo-1], -1)
+                        if head_pt is not None:
+                            cv2.circle(iFrame, head_pt, self.ptSize, colours[0], -1)
 
                 output = cv2.vconcat([frame, iFrame])
                 cv2.imshow('compare', output)

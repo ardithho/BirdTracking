@@ -1,7 +1,7 @@
 import os
 import cv2
 import numpy as np
-from calibrate import stereo_essential_mat
+from functional.calibrate import stereo_essential_mat
 
 
 def calculate_offset(flash1, flash2):
@@ -18,7 +18,7 @@ def get_offset(vid_path1, vid_path2):
     return calculate_offset(flash1, flash2)
 
 
-def first_flash(vid_path, kernel_size=5):
+def first_flash(vid_path, kernel_size=5, save=False):
     kernel = np.ones((kernel_size, kernel_size), np.uint8)
     cap = cv2.VideoCapture(vid_path)
     count = 0
@@ -39,6 +39,9 @@ def first_flash(vid_path, kernel_size=5):
             contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
             if len(contours) >= 1:
                 flash = count
+                if save:
+                    cv2.imwrite(f'data/img/sync/frame_{count}.jpg', frame)
+                    cv2.imwrite(f'data/img/sync/mask_{count}.jpg', mask)
                 break
         else:
             break
