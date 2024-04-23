@@ -1,6 +1,5 @@
 import cv2
-from yolov8.detect import Detect
-from yolov8.detect_feat import detect_features
+from yolov8.detect import Detect, detect_features
 from functional.sync import sync
 
 

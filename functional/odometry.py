@@ -7,7 +7,7 @@ def extract_features(frame, mask=None):
     return orb.detectAndCompute(frame, mask)
 
 
-def find_matching_pts(prev_frame, curr_frame, prev_mask=None, curr_mask=None):
+def find_matches(prev_frame, curr_frame, prev_mask=None, curr_mask=None):
     kp1, des1 = extract_features(prev_frame, prev_mask)
     kp2, des2 = extract_features(curr_frame, curr_mask)
 
@@ -15,10 +15,15 @@ def find_matching_pts(prev_frame, curr_frame, prev_mask=None, curr_mask=None):
     matches = list(bf.match(des1, des2))
     matches.sort(key=lambda x: x.distance)
     thresh = 0.9
-    filtered = matches[:int(len(matches)*thresh)]
+    filtered = matches[:int(len(matches) * thresh)]
+    return filtered, kp1, kp2
 
-    src_pts = np.float32([kp1[m.queryIdx].pt for m in filtered]).reshape(-1, 1, 2)
-    dst_pts = np.float32([kp2[m.trainIdx].pt for m in filtered]).reshape(-1, 1, 2)
+
+def find_matching_pts(prev_frame, curr_frame, prev_mask=None, curr_mask=None):
+    matches, kp1, kp2 = find_matches(prev_frame, curr_frame, prev_mask, curr_mask)
+
+    src_pts = np.float32([kp1[m.queryIdx].pt for m in matches]).reshape(-1, 1, 2)
+    dst_pts = np.float32([kp2[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
     return src_pts, dst_pts
 
 

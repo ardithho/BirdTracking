@@ -30,6 +30,15 @@ class Detect:
         return self.model.predict(**kwargs)
 
 
+feat_model = Detect(ROOT / 'weights/feat.pt')
+def detect_features(img, boxes):
+    feat = []
+    for xyxy in boxes.xyxy:
+        x0, y0, x1, y1 = list(map(int, list(xyxy.cpu().numpy())))
+        feat.append(feat_model.predictions(img[y0:y1, x0:x1])[0].boxes)
+    return feat
+
+
 def run(
         weights=ROOT / 'weights/full.pt',  # model path or triton URL
         source=ROOT / 'data/images',  # file/dir/URL/glob/screen/0(webcam)
