@@ -7,14 +7,13 @@ def extract_features(frame, mask=None):
     return orb.detectAndCompute(frame, mask)
 
 
-def find_matches(prev_frame, curr_frame, prev_mask=None, curr_mask=None):
+def find_matches(prev_frame, curr_frame, prev_mask=None, curr_mask=None, thresh=0.8):
     kp1, des1 = extract_features(prev_frame, prev_mask)
     kp2, des2 = extract_features(curr_frame, curr_mask)
 
     bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
     matches = list(bf.match(des1, des2))
     matches.sort(key=lambda x: x.distance)
-    thresh = 0.9
     filtered = matches[:int(len(matches) * thresh)]
     return filtered, kp1, kp2
 

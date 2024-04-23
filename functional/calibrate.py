@@ -77,20 +77,12 @@ def find_points(img, size=(4, 7)):
 def calibrate(img, size=(4, 7)):
     mask = get_mask(img)
     objpts, imgpts, _ = find_points(mask, size)
-    if imgpts is None:
-        return img
-
-    # calibration
-    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpts, imgpts, img.shape[::-1], None, None)
-    # dist *= 0.1
-    # undistortion
-    h, w = img.shape[:2]
-    newCameraMtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), 1, (w, h))
-    dst = cv2.undistort(img, mtx, dist, None, newCameraMtx)
-    # crop
-    # x, y, w, h = roi
-    # dst = dst[y:y+h, x:x+w]
-    return dst
+    if imgpts is not None:
+        # calibration
+        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpts, imgpts, img.shape[::-1], None, None)
+        if ret:
+            return mtx, dist
+    return None, None
 
 
 def remap(pts, size):
@@ -115,10 +107,6 @@ def stereo_essential_mat(frameL, frameR, size=(4, 7)):
 
 
 if __name__ == '__main__':
-    # img = cv2.imread('../data/calibration/fps10/chessboard.jpg')
-    # cv2.imshow('corners', draw_corners(img))
-    # cv2.imshow('undistort', calibrate_undis(img))
-    # project_point(img)
     img_dir = '../data/calibration/K203_K238/chessboard'
     frame_no = 2189
     frameL = cv2.imread(os.path.join(img_dir, f'l/{frame_no}.jpg'))
