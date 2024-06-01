@@ -240,7 +240,7 @@ def ptsCentroid(arr):
     return int(sum_x/l), int(sum_y/l)
 
 
-def welzl(P, R):  # Welzl's algorithm (emo guy)
+def welzl(P, R):  # Welzl's algorithm
     if len(P) == 0 or len(R) == 3:
         return list(R)
     p = set(random.sample(P, 1))
