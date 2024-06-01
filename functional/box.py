@@ -7,7 +7,3 @@ class Box:
         self.xywhn = xywhn
         self.xyxy = xyxy
         self.xyxyn = xyxyn
-        self.xywhn = xywhn
-        self.xywhn = xywhn
-        self.xywhn = xywhn
-        self.xywhn = xywhn
