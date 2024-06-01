@@ -1,8 +1,10 @@
 def iou(box1, box2):
     xyxy1 = box1.xyxy
     xyxy2 = box2.xyxy
-    intersect = (min(xyxy1[2], xyxy2[2]) - max(xyxy1[0], xyxy2[0])) * (min(xyxy1[3], xyxy2[3]) - max(xyxy1[1], xyxy2[1]))
-    union = box1.area() + box2.area() - intersect
+    iw = max(min(xyxy1[2], xyxy2[2]) - max(xyxy1[0], xyxy2[0]), 0)
+    ih = max(min(xyxy1[3], xyxy2[3]) - max(xyxy1[1], xyxy2[1]), 0)
+    intersect = iw * ih
+    union = box1.area + box2.area - intersect
     return intersect / union
 
 
@@ -15,8 +17,5 @@ class Box:
         self.xywhn = xywhn
         self.xyxy = xyxy
         self.xyxyn = xyxyn
-
-    def area(self, normalised=False):
-        if normalised:
-            return self.xywhn[2] * self.xywhn[3]
-        return self.xywh[2] * self.xywh[3]
+        self.area = xywh[2] * xywh[3]
+        self.arean = xywhn[2] * xywhn[3]
