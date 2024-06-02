@@ -8,6 +8,14 @@ def iou(box1, box2):
     return intersect / union
 
 
+def extract_boxes(boxes):
+    ret = []
+    for cls, conf, id, xywh, xywhn, xyxy, xyxyn \
+            in boxes.cls, boxes.conf, boxes.id, boxes.xywh, boxes.xywhn, boxes.xyxy, boxes.xyxyn:
+        ret.append(Box(cls, conf, id, xywh, xywhn, xyxy, xyxyn))
+    return ret
+
+
 class Box:
     def __init__(self, cls, conf, id, xywh, xywhn, xyxy, xyxyn):
         self.cls = cls
