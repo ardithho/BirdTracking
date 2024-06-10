@@ -8,15 +8,6 @@ def load_dataset_full(api_key='jyKUZIKA3yySfSqRdXqI',
                       project_name='bird-full', version=1):
     """
     Load the dataset for full detection.
-
-    Parameters:
-    - api_key (str): The API key for accessing the Roboflow API.
-    - workspace (str): The name of the workspace.
-    - project (str): The name of the project.
-    - version (int): The version of the project.
-
-    Returns:
-    - dataset (str): The downloaded dataset.
     """
     rf = Roboflow(api_key=api_key)
     project = rf.workspace(workspace).project(project_name)
@@ -28,15 +19,6 @@ def load_dataset_head(api_key='jyKUZIKA3yySfSqRdXqI',
                       project_name='bird-head', version=3):
     """
     Load the dataset for head detection.
-
-    Parameters:
-    - api_key (str): The API key for accessing the Roboflow API.
-    - workspace (str): The name of the workspace.
-    - project (str): The name of the project.
-    - version (int): The version of the project.
-
-    Returns:
-    - dataset (str): The downloaded dataset.
     """
     rf = Roboflow(api_key=api_key)
     project = rf.workspace(workspace).project(project_name)
@@ -48,15 +30,6 @@ def load_dataset_feat(api_key='jyKUZIKA3yySfSqRdXqI',
                       project_name='bird-feature-detailed', version=9):
     """
     Load the dataset for feat detection.
-
-    Parameters:
-    - api_key (str): The API key for accessing the Roboflow API.
-    - workspace (str): The name of the workspace.
-    - project (str): The name of the project.
-    - version (int): The version of the project.
-
-    Returns:
-    - dataset (str): The downloaded dataset.
     """
     rf = Roboflow(api_key=api_key)
     project = rf.workspace(workspace).project(project_name)
@@ -68,15 +41,6 @@ def load_dataset_pose(api_key='jyKUZIKA3yySfSqRdXqI',
                       project_name='bird-keypoints-full', version=1):
     """
     Load the dataset for pose estimation.
-
-    Parameters:
-    - api_key (str): The API key for accessing the Roboflow API.
-    - workspace (str): The name of the workspace.
-    - project (str): The name of the project.
-    - version (int): The version of the project.
-
-    Returns:
-    - dataset (str): The downloaded dataset.
     """
     rf = Roboflow(api_key=api_key)
     project = rf.workspace(workspace).project(project_name)
