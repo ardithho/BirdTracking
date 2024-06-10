@@ -63,7 +63,27 @@ def load_dataset_feat(api_key='jyKUZIKA3yySfSqRdXqI',
     return project.version(version).download('yolov8', f'datasets/{project_name}-{version}')
 
 
-def train_model(data, model='yolov8n.yaml', epochs=200, batch=16, imgsz=416, name='train'):
+def load_dataset_pose(api_key='jyKUZIKA3yySfSqRdXqI',
+                      workspace='bird-tracking-yvxlp',
+                      project_name='bird-keypoints-full', version=1):
+    """
+    Load the dataset for pose estimation.
+
+    Parameters:
+    - api_key (str): The API key for accessing the Roboflow API.
+    - workspace (str): The name of the workspace.
+    - project (str): The name of the project.
+    - version (int): The version of the project.
+
+    Returns:
+    - dataset (str): The downloaded dataset.
+    """
+    rf = Roboflow(api_key=api_key)
+    project = rf.workspace(workspace).project(project_name)
+    return project.version(version).download('yolov8', f'datasets/{project_name}-{version}')
+
+
+def train_model(data, model='yolov8n.yaml', epochs=200, batch=16, imgsz=416, name='train', device=(0, 1)):
     """
     Train the model for toy recognition.
 
@@ -79,7 +99,7 @@ def train_model(data, model='yolov8n.yaml', epochs=200, batch=16, imgsz=416, nam
     - model (YOLO): The trained model.
     """
     model = YOLO(model)
-    model.train(data=data, epochs=epochs, batch=batch, imgsz=imgsz, name=name)
+    model.train(data=data, epochs=epochs, batch=batch, imgsz=imgsz, name=name, device=device)
     return model
 
 
