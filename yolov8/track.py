@@ -3,6 +3,9 @@ from parser import parse_opt, ROOT
 
 
 class Tracker:
+    """
+        Track bird head features using our pre-trained model and default YOLO tracker.
+    """
     def __init__(self, model_path=ROOT / 'weights/pose.pt'):
         self.model = YOLO(model_path)
 

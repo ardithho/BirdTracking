@@ -4,9 +4,8 @@ from parser import parse_opt, ROOT
 
 class Predictor:
     """
-    Detect bird head features in source using our pre-trained model.
+    Detect bird head features using our pre-trained model.
     """
-
     def __init__(self, model_path=ROOT / 'weights/pose.pt'):
         self.model = YOLO(model_path)
 
