@@ -1,7 +1,7 @@
 import os
 import cv2
 import time
-from functional.general import euc_dist
+from utils.general import euc_dist
 
 
 class DetectionsDataloader:

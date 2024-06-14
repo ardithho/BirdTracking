@@ -1,15 +1,16 @@
 import cv2
 from yolov8.predict import Predictor, detect_features
-from functional.sync import sync
+from yolov8.track import Tracker
+from utils.sync import sync
 
 from ultralytics.data.utils import IMG_FORMATS, VID_FORMATS
 
 
 STRIDE = 30
 
+tracker = Tracker('yolov8/weights/head.pt')
 predictor_head = Predictor('yolov8/weights/head.pt')
 predictor_feat = Predictor('yolov8/weights/feat.pt')
-
 
 vidL = 'data/vid/fps120/K203_K238/GOPRO2/GH010039.MP4'
 vidR = 'data/vid/fps120/K203_K238/GOPRO1/GH010045.MP4'

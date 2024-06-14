@@ -1,7 +1,7 @@
 import argparse
 import sys
 from pathlib import Path
-from functional.dataloaders import DetectionsDataloader
+from utils.dataloaders import DetectionsDataloader
 
 
 ROOT = Path.cwd()  # this project root directory

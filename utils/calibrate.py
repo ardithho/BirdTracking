@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import math
 import os
-from functional.general import kernel
+from utils.general import kernel
 
 
 def contour_valid(img, contour, area_thresh=0.0025, centre_thresh=0.2):

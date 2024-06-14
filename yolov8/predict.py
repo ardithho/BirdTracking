@@ -12,8 +12,8 @@ class Predictor:
     def predict(self, **kwargs):
         self.model.predict(**kwargs)
 
-    def predictions(self, **kwargs):
-        return self.model.predict(**kwargs)
+    def predictions(self, source, save=False, **kwargs):
+        return self.model.predict(source, save=save, **kwargs)
 
 
 feat_model = Predictor(ROOT / 'weights/feat.pt')

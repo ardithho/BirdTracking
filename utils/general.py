@@ -4,7 +4,7 @@ import math
 import random
 import matplotlib.pyplot as plt
 from matplotlib.colors import hsv_to_rgb
-from functional.colour import *
+from utils.colour import *
 from itertools import combinations
 from sklearn.cluster import KMeans, k_means
 from collections import Counter

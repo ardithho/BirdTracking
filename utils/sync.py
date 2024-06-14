@@ -1,7 +1,7 @@
 import os
 import cv2
 import numpy as np
-from functional.calibrate import stereo_essential_mat
+from utils.calibrate import stereo_essential_mat
 
 
 def calculate_offset(flash1, flash2):
