@@ -1,12 +1,12 @@
 import cv2
-from yolov8.detect import Detect, detect_features
+from yolov8.predict import Predictor, detect_features
 from functional.sync import sync
 
 
 STRIDE = 30
 
-model_head = Detect('yolov8/weights/head.pt')
-model_feat = Detect('yolov8/weights/feat.pt')
+model_head = Predictor('yolov8/weights/head.pt')
+model_feat = Predictor('yolov8/weights/feat.pt')
 
 
 vidL = 'data/vid/fps120/K203_K238/GOPRO2/GH010039.MP4'

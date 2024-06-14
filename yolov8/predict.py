@@ -15,12 +15,12 @@ if str(PROJECT_ROOT) not in sys.path:
 PROJECT_ROOT = Path(os.path.relpath(PROJECT_ROOT, Path.cwd()))  # relative
 
 
-class Detect:
+class Predictor:
     """
     Detect bird head features in source using our pre-trained model.
     """
 
-    def __init__(self, model_path=ROOT / 'weights/full.pt'):
+    def __init__(self, model_path=ROOT / 'weights/pose.pt'):
         self.model = YOLO(model_path)
 
     def predict(self, **kwargs):
@@ -30,7 +30,7 @@ class Detect:
         return self.model.predict(**kwargs)
 
 
-feat_model = Detect(ROOT / 'weights/feat.pt')
+feat_model = Predictor(ROOT / 'weights/feat.pt')
 def detect_features(img, boxes):
     feat = []
     for xyxy in boxes.xyxy:
@@ -40,7 +40,7 @@ def detect_features(img, boxes):
 
 
 def run(
-        weights=ROOT / 'weights/full.pt',  # model path or triton URL
+        weights=ROOT / 'weights/pose.pt',  # model path or triton URL
         source=ROOT / 'data/images',  # file/dir/URL/glob/screen/0(webcam)
         conf=0.25,  # confidence threshold
         iou=0.7,  # NMS IOU threshold
@@ -63,7 +63,7 @@ def run(
         boxes=True,  # show boxes
         line_width=3  # bounding box thickness (pixels)
 ):
-    model = Detect(weights)
+    model = Predictor(weights)
     model.predict(
         source=source,
         conf=conf,
@@ -91,7 +91,7 @@ def run(
 
 def parse_opt():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--weights', nargs='+', type=str, default=ROOT / 'weights/full.pt', help='model path or triton URL')
+    parser.add_argument('--weights', type=str, default=ROOT / 'weights/full.pt', help='model path or triton URL')
     parser.add_argument('--source', type=str, default=ROOT / 'data/images', help='file/dir/URL/glob/screen/0(webcam)')
     parser.add_argument('--conf', type=float, default=0.25, help='confidence threshold')
     parser.add_argument('--iou', type=float, default=0.7, help='NMS IoU threshold')

@@ -1,4 +1,4 @@
-from yolov8.detect import main, parse_opt
+from yolov8.predict import main, parse_opt
 
 
 if __name__ == "__main__":

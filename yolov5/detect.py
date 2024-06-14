@@ -3,7 +3,7 @@
 Run YOLOv5 detection inference on images, videos, directories, globs, YouTube, webcam, streams, etc.
 
 Usage - sources:
-    $ python detect.py --weights yolov5s.pt --source 0                               # webcam
+    $ python predict.py --weights yolov5s.pt --source 0                               # webcam
                                                      img.jpg                         # image
                                                      vid.mp4                         # video
                                                      screen                          # screenshot
@@ -15,7 +15,7 @@ Usage - sources:
                                                      'rtsp://example.com/media.mp4'  # RTSP, RTMP, HTTP stream
 
 Usage - formats:
-    $ python detect.py --weights yolov5s.pt                 # PyTorch
+    $ python predict.py --weights yolov5s.pt                 # PyTorch
                                  yolov5s.torchscript        # TorchScript
                                  yolov5s.onnx               # ONNX Runtime or OpenCV DNN with --dnn
                                  yolov5s_openvino_model     # OpenVINO
