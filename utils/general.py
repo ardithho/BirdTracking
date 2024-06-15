@@ -140,33 +140,6 @@ def orbSiftKM(img):
     return img
 
 
-def orbMatch(imga, imgb):
-    orb = cv2.ORB_create()
-    imga = cv2.resize(imga, None, fx=0.6, fy=0.6, interpolation=cv2.INTER_CUBIC)
-    imgb = cv2.resize(imgb, None, fx=0.6, fy=0.6, interpolation=cv2.INTER_CUBIC)
-    kpa, desa = orb.detectAndCompute(imga, None)
-    kpb, desb = orb.detectAndCompute(imgb, None)
-    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-    if desa is not None and desb is not None:
-        matches = list(bf.match(desa, desb))
-        matches.sort(key=lambda x: x.distance)
-        matches = matches[:int(len(matches) * 20)]
-        img = cv2.drawMatches(imga, kpa, imgb, kpb, matches, None, flags=cv2.DRAW_MATCHES_FLAGS_NOT_DRAW_SINGLE_POINTS)
-    else:
-        img = cv2.hconcat([imga, imgb])
-    return img
-
-
-def orbSamePos(imga, imgb):
-    orb = cv2.ORB_create()
-    kpa, desa = orb.detectAndCompute(imga, None)
-    kpb, desb = orb.detectAndCompute(imgb, None)
-    ptsa = [kp.pt for kp in kpa]
-    kps = [kp for kp in kpb if kp.pt in ptsa]
-    img = cv2.drawKeypoints(imga, kps, None, color=(0, 255, 255), flags=0)
-    return img
-
-
 def orbOverlapping(imga, imgb):
     orb = cv2.ORB_create()
     kpa, desa = orb.detectAndCompute(imga, None)
@@ -326,7 +299,7 @@ def hogFeatures(img):
 
 
 def detectCorners(img):
-    img_copy = img.copy()
+    im0 = img.copy()
     grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     grey = cv2.medianBlur(grey, 5)
     dst = cv2.cornerHarris(grey, 5, 5, 0.2)
@@ -344,16 +317,16 @@ def detectCorners(img):
         corners = km[0].astype('uint64')
 
         for cnr in corners:
-            cv2.circle(img_copy, cnr[::-1], 4, (255, 200, 0), -1)
-    return img_copy
+            cv2.circle(im0, cnr[::-1], 4, (255, 200, 0), -1)
+    return im0
 
 
 def getContours(img):
-    img_copy = img.copy()
+    im0 = img.copy()
     grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     contours, _ = cv2.findContours(grey, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    cv2.drawContours(img_copy, contours, -1, (0, 255, 255), 3)
-    return img_copy
+    cv2.drawContours(im0, contours, -1, (0, 255, 255), 3)
+    return im0
 
 
 def angle(pivot, point):
