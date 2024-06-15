@@ -20,7 +20,7 @@ feat_model = Predictor(ROOT / 'weights/feat.pt')
 def detect_features(img, boxes):
     feats = []
     for xyxy in boxes.xyxy:
-        x0, y0, x1, y1 = list(map(int, xyxy))
+        x0, y0, x1, y1 = list(map(round, xyxy))
         feats.append(feat_model.predictions(source=img[y0:y1, x0:x1])[0].boxes.cpu().numpy())
     return feats
 

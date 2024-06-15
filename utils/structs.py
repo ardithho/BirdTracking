@@ -70,9 +70,9 @@ class Birds:
         if len(birds) > 0:
             self.ids = {}
             if len(birds) == 2:
-                x0, y0, x1, y1 = list(map(int, birds[0].xyxy))
+                x0, y0, x1, y1 = list(map(round, birds[0].xyxy))
                 ratio0 = mask_ratio(cheek_mask(frame[y0:y1, x0:x1]))
-                x0, y0, x1, y1 = list(map(int, birds[1].xyxy))
+                x0, y0, x1, y1 = list(map(round, birds[1].xyxy))
                 ratio1 = mask_ratio(cheek_mask(frame[y0:y1, x0:x1]))
                 if ratio0 > ratio1:
                     self.ids['m'] = birds[0].id
