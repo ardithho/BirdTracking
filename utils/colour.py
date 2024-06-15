@@ -53,8 +53,8 @@ def denormalise_rgb(norm):
     return arr
 
 
-def get_colours(img, n):
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+def get_colours(im, n):
+    hsv = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
     mod = hsv.reshape(hsv.shape[0] * hsv.shape[1], 3)
     clf = KMeans(n_clusters=n)
     labels = clf.fit_predict(mod)
@@ -76,8 +76,8 @@ def pie(hsv_colours, counts):
     plt.show()
 
 
-def colour_mask(img):
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+def colour_mask(im, kernel_size=5):
+    hsv = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
     # orange cheeks (+feet
     lowo = np.array([0, 140, 100])
     higho = np.array([40, 255, 255])
@@ -92,22 +92,21 @@ def colour_mask(img):
     maskb = cv2.inRange(hsv, lowb, highb)
     mask = cv2.bitwise_or(masko, maskr)
     mask = maskr
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel(5))
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel(kernel_size))
     # mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel(5))
-    colMask = cv2.bitwise_and(img, img, mask=mask)
-    return colMask
+    return cv2.bitwise_and(im, im, mask=mask)
 
 
-def hue_mask(img, hue):
+def hue_mask(im, hue):
     low = np.array([hue - 3, 200, 200])
     high = np.array([hue + 3, 255, 255])
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    hsv = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv, low, high)
     return mask
 
 
-def bill_mask(img):
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+def bill_mask(im, kernel_size=5):
+    hsv = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
     low1 = np.array([0, 60, 60])
     high1 = np.array([10, 255, 255])
     mask1 = cv2.inRange(hsv, low1, high1)
@@ -115,14 +114,29 @@ def bill_mask(img):
     high2 = np.array([180, 255, 255])
     mask2 = cv2.inRange(hsv, low2, high2)
     mask = cv2.bitwise_or(mask1, mask2)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel(5))
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel(kernel_size))
     # mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel(3))
 
     contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     if len(contours) > 1:
         contours = sorted(contours, key=lambda x: cv2.contourArea(x), reverse=True)[:1]
-        mask = np.zeros(img.shape[:2], np.uint8)
+        mask = np.zeros(im.shape[:2], np.uint8)
         cv2.drawContours(mask, contours, 0, 255, -1)
 
-    return cv2.bitwise_and(img, img, mask=mask)
+    return cv2.bitwise_and(im, im, mask=mask)
 
+
+def cheek_mask(im, kernel_size=5):
+    hsv = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
+    # orange cheeks
+    low = np.array([0, 140, 100])
+    high = np.array([40, 255, 255])
+    mask = cv2.inRange(hsv, low, high)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel(kernel_size))
+
+    contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    if len(contours) > 1:
+        contours = sorted(contours, key=lambda x: cv2.contourArea(x), reverse=True)[:1]
+        mask = np.zeros(im.shape[:2], np.uint8)
+        cv2.drawContours(mask, contours, 0, 255, -1)
+    return mask
