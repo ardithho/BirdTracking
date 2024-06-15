@@ -1,3 +1,17 @@
+from utils.sorter import sort_feat, to_dict
+
+
+CLS_DICT = {'bill': 0,
+            'left_eye': 1,
+            'left_tear_mark': 2,
+            'right_eye': 3,
+            'right_tear_mark': 4}
+
+FEAT_DICT = {'bill': CLS_DICT['bill'],
+             'eyes': [CLS_DICT['left_eye'], CLS_DICT['right_eye']],
+             'tear_marks': [CLS_DICT['left_tear_mark'], CLS_DICT['right_tear_mark']]}
+
+
 class Feature:
     def __init__(self, feat, xy, xyn):
         self.cls = feat.cls
@@ -15,7 +29,7 @@ class Bird:
         self.xyxy = head.xyxy
         self.xyxyn = head.xyxyn
         self.featsUnsorted = self.globalise(feats)
-        self.feats = {}
+        self.feats = self.sort()
 
     def globalise(self, feats):
         globalised = []
@@ -26,7 +40,10 @@ class Bird:
         return globalised
 
     def sort(self):
-        pass
+        bill = [feat for feat in self.featsUnsorted if feat.cls == FEAT_DICT['bill']][0]
+        eyes = [feat for feat in self.featsUnsorted if feat.cls in FEAT_DICT['eyes']]
+        tear_marks = [feat for feat in self.featsUnsorted if feat.cls in FEAT_DICT['tear_marks']]
+        return to_dict(sort_feat(bill, eyes, tear_marks))
 
 
 class Birds:

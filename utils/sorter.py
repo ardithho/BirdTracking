@@ -242,3 +242,11 @@ def to_txt(img, bill, eyes, tear_marks, start=(0, 0)):
         if tear_marks[i]:
             tear_marks[i] = [(start[j]+tear_marks[i][j])/shape[1-j] for j in range(2)]
     return bill, eyes, tear_marks
+
+
+def to_dict(bill, eyes, tear_marks):
+    return {'bill': bill,
+            'left_eye': eyes[0],
+            'left_tear_mark': tear_marks[0],
+            'right_eye': eyes[1],
+            'right_tear_mark': tear_marks[1]}

@@ -38,7 +38,7 @@ def load_dataset_feat(api_key='jyKUZIKA3yySfSqRdXqI',
 
 def load_dataset_pose(api_key='jyKUZIKA3yySfSqRdXqI',
                       workspace='bird-tracking-yvxlp',
-                      project_name='bird-keypoints-full', version=1):
+                      project_name='bird-keypoints', version=1):
     """
     Load the dataset for pose estimation.
     """
