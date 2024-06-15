@@ -2,6 +2,7 @@ import cv2
 from yolov8.predict import Predictor, detect_features
 from yolov8.track import Tracker
 from utils.sync import sync
+from utils.structs import Bird, Birds
 
 from ultralytics.data.utils import IMG_FORMATS, VID_FORMATS
 
@@ -22,6 +23,8 @@ capR = cv2.VideoCapture(vidR)
 capL.set(cv2.CAP_PROP_POS_FRAMES, offsetL)
 capR.set(cv2.CAP_PROP_POS_FRAMES, offsetR)
 
+birdsL = Birds()
+birdsR = Birds()
 prev_frames = None
 while capL.isOpened() and capR.isOpened():
     for i in range(STRIDE):
@@ -36,4 +39,7 @@ while capL.isOpened() and capR.isOpened():
         headR = tracker.tracks(frameR)[0].boxes.cpu().numpy()
         featL = detect_features(frameL, headL)
         featR = detect_features(frameR, headR)
+        birdsL.update([Bird(head, feat) for head, feat in zip(headL, featL)], frameL)
+        birdsR.update([Bird(head, feat) for head, feat in zip(headR, featR)], frameR)
+
         prev_frames = {'l': frameL, 'r': frameR}

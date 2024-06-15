@@ -1,11 +1,11 @@
 import cv2
 import math
-from general import billMask, euc_dist, angle
+from general import bill_mask, euc_dist, angle
 
 
 def bound_feat(img, bill, bill_conf, eyes, tear_marks):
     if bill:
-        mask = billMask(img)
+        mask = bill_mask(img)
         grey = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
         contours, _ = cv2.findContours(grey, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         if len(contours) >= 1 and cv2.contourArea(contours[0]) > 0:

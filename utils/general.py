@@ -1,13 +1,8 @@
-import cv2
-import numpy as np
 import math
 import random
-import matplotlib.pyplot as plt
-from matplotlib.colors import hsv_to_rgb
 from utils.colour import *
 from itertools import combinations
 from sklearn.cluster import KMeans, k_means
-from collections import Counter
 from skimage import feature, exposure
 
 
@@ -358,128 +353,6 @@ def getContours(img):
     grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     contours, _ = cv2.findContours(grey, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     cv2.drawContours(img_copy, contours, -1, (0, 255, 255), 3)
-    return img_copy
-
-
-def getColours(img, n):
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    mod = hsv.reshape(hsv.shape[0] * hsv.shape[1], 3)
-    clf = KMeans(n_clusters=n)
-    labels = clf.fit_predict(mod)
-    counts = Counter(labels)
-    del counts[list(counts.keys())[0]]  # delete largest count
-    while len(counts) > 10:
-        del counts[list(counts.keys())[0]]
-    centre_colours = clf.cluster_centers_
-    hsv_colours = [centre_colours[i] for i in counts.keys()]
-    return hsv_colours, counts
-
-
-def pie(hsv_colours, counts):
-    norm_hsv = normalise_hsv(hsv_colours)
-    rgb_colours = denormalise_rgb([hsv_to_rgb(norm_hsv[i]) for i in range(len(norm_hsv))])
-    hex_colours = [rgb2hex(colour) for colour in rgb_colours]
-    plt.figure(figsize=(8, 6))
-    plt.pie(counts.values(), labels=hex_colours, colors=hex_colours)
-    plt.show()
-
-
-def colourMask(img):
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    # orange cheeks (+feet
-    lowo = np.array([0, 140, 100])
-    higho = np.array([40, 255, 255])
-    masko = cv2.inRange(hsv, lowo, higho)
-    # red bill
-    lowr = np.array([0, 150, 100])
-    highr = np.array([5, 255, 255])
-    maskr = cv2.inRange(hsv, lowr, highr)
-    # black tear marks
-    lowb = np.array([0, 0, 0])
-    highb = np.array([180, 255, 50])
-    maskb = cv2.inRange(hsv, lowb, highb)
-    mask = cv2.bitwise_or(masko, maskr)
-    mask = maskr
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel(5))
-    # mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel(5))
-    colMask = cv2.bitwise_and(img, img, mask=mask)
-    return colMask
-
-
-def hueMask(img, hue):
-    low = np.array([hue - 3, 200, 200])
-    high = np.array([hue + 3, 255, 255])
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    mask = cv2.inRange(hsv, low, high)
-    return mask
-
-
-def billMask(img):
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    low1 = np.array([0, 60, 60])
-    high1 = np.array([10, 255, 255])
-    mask1 = cv2.inRange(hsv, low1, high1)
-    low2 = np.array([170, 60, 60])
-    high2 = np.array([180, 255, 255])
-    mask2 = cv2.inRange(hsv, low2, high2)
-    mask = cv2.bitwise_or(mask1, mask2)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel(5))
-    # mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel(3))
-
-    contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    if len(contours) > 1:
-        contours = sorted(contours, key=lambda x: cv2.contourArea(x), reverse=True)[:1]
-        mask = np.zeros(img.shape[:2], np.uint8)
-        cv2.drawContours(mask, contours, 0, 255, -1)
-
-    colMask = cv2.bitwise_and(img, img, mask=mask)
-    return colMask
-
-
-def trackHead(img):
-    img_copy = img.copy()
-    mask = billMask(img)
-    orb = cv2.ORB_create(nfeatures=10)
-    kp, des = orb.detectAndCompute(mask, None)
-    if len(kp) > 0:
-        pt = significantKP(kp)
-
-        grey = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
-        contours, _ = cv2.findContours(grey, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        cnt = contours[0]
-        M = cv2.moments(cnt)
-        centroid = (int(M['m10'] / M['m00']), int(M['m01'] / M['m00']))
-
-        # bounding rect
-        ratio = 3
-        dist = euc_dist(pt, centroid) * 2
-        length = dist * ratio
-        x, y, w, h = cv2.boundingRect(cnt)
-        w += length
-        h += length
-        dx = centroid[0] - pt[0]
-        dy = centroid[1] - pt[1]
-        if dx >= 0 and dy != 0 and abs(dx/dy) < 1:
-            x -= w * (1 - abs(dx/dy)) / 2
-        elif dx < 0:
-            if dy != 0 and abs(dx/dy) < 1:
-                x += w * (1 - abs(dx/dy)) / 2 - w
-            else:
-                x -= length
-        if dy >= 0 and dx != 0 and abs(dy/dx) < 1:
-            y -= h * (1 - abs(dy/dx)) / 2
-        elif dy < 0:
-            if dx != 0 and abs(dy/dx) < 1:
-                y += h * (1 - abs(dy/dx)) / 2 - h
-            else:
-                y -= length
-        x = round(x)
-        y = round(y)
-        w = round(w)
-        h = round(h)
-        cv2.rectangle(img_copy, (x, y), (x+w, y+h), (0, 255, 0), 2)
-        cv2.line(img_copy, pt, centroid, (0, 255, 255), 2)
-        cv2.circle(img_copy, pt, 4, (255, 0, 255), -1)
     return img_copy
 
 
