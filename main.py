@@ -10,7 +10,6 @@ STRIDE = 30
 
 tracker = Tracker('yolov8/weights/head.pt')
 predictor_head = Predictor('yolov8/weights/head.pt')
-predictor_feat = Predictor('yolov8/weights/feat.pt')
 
 vidL = 'data/vid/fps120/K203_K238/GOPRO2/GH010039.MP4'
 vidR = 'data/vid/fps120/K203_K238/GOPRO1/GH010045.MP4'

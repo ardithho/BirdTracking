@@ -14,7 +14,7 @@ class Bird:
         self.xywhn = head.xywhn
         self.xyxy = head.xyxy
         self.xyxyn = head.xyxyn
-        self.feats_unsorted = self.globalise(feats)
+        self.featsUnsorted = self.globalise(feats)
         self.feats = {}
 
     def globalise(self, feats):
@@ -38,8 +38,8 @@ class Cache:
         self.cache = [None] * self.size
         self.ptr = 0
 
-    def update(self, bird):
-        self.cache[self.ptr] = bird
+    def update(self, obj):
+        self.cache[self.ptr] = obj
         self.ptr = (self.ptr + 1) % self.size
 
     def interpolate(self):
