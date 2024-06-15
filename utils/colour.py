@@ -76,6 +76,10 @@ def pie(hsv_colours, counts):
     plt.show()
 
 
+def mask_ratio(mask):
+    return np.count_nonzero(mask) / (mask.shape[0] * mask.shape[1])
+
+
 def colour_mask(im, kernel_size=5):
     hsv = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
     # orange cheeks (+feet

@@ -1,4 +1,5 @@
 from utils.sorter import sort_feat, to_dict
+from utils.colour import cheek_mask, mask_ratio
 
 
 CLS_DICT = {'bill': 0,
@@ -65,8 +66,29 @@ class Birds:
                 self.current[sex] = None
                 self.caches[sex].update(None)
 
-    def sort(self, birds, frame):
-        self.ids = {}
+    def sort(self, birds, frame, thres=0.1):
+        if len(birds) > 0:
+            self.ids = {}
+            if len(birds) == 2:
+                x0, y0, x1, y1 = list(map(int, birds[0].xyxy))
+                ratio0 = mask_ratio(cheek_mask(frame[y0:y1, x0:x1]))
+                x0, y0, x1, y1 = list(map(int, birds[1].xyxy))
+                ratio1 = mask_ratio(cheek_mask(frame[y0:y1, x0:x1]))
+                if ratio0 > ratio1:
+                    self.ids['m'] = birds[0].id
+                    self.ids['f'] = birds[1].id
+                else:
+                    self.ids['m'] = birds[1].id
+                    self.ids['f'] = birds[0].id
+            else:
+                x0, y0, x1, y1 = list(map(int, birds[0].xyxy))
+                ratio = mask_ratio(cheek_mask(frame[y0:y1, x0:x1]))
+                if ratio > thres:
+                    self.ids['m'] = birds[0].id
+                    self.ids['f'] = birds[0].id + 1
+                else:
+                    self.ids['m'] = birds[0].id + 1
+                    self.ids['f'] = birds[0].id
 
     def __getitem__(self, sex):
         return self.current[sex]
