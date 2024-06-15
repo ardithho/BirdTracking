@@ -25,11 +25,34 @@ class Bird:
             globalised.append(Feature(feat, xy, xyn))
         return globalised
 
+    def sort(self):
+        pass
+
 
 class Birds:
     def __init__(self):
-        self.m = None
-        self.f = None
+        self.current = {}
+        self.caches = {'m': Cache(), 'f': Cache()}
+        self.ids = None
+
+    def update(self, birds, frame):
+        if self.ids is None:
+            self.sort(birds, frame)
+        unseen = ['m', 'f']
+        for bird in birds:
+            self.current[self.ids[bird.id]] = bird
+            self.caches[self.ids[bird.id]].update(bird)
+            unseen.pop(self.ids[bird.id])
+        if len(unseen) > 0:
+            for sex in unseen:
+                self.current[sex] = None
+                self.caches[sex].update(None)
+
+    def sort(self, birds, frame):
+        self.ids = {}
+
+    def __getitem__(self, sex):
+        return self.current[sex]
 
 
 class Cache:
