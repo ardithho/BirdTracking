@@ -24,7 +24,6 @@ capL.set(cv2.CAP_PROP_POS_FRAMES, offsetL)
 capR.set(cv2.CAP_PROP_POS_FRAMES, offsetR)
 
 prev_frames = None
-prev_boxes = None
 while capL.isOpened() and capR.isOpened():
     for i in range(STRIDE):
         _ = capL.grab()
@@ -38,4 +37,4 @@ while capL.isOpened() and capR.isOpened():
         headR = tracker.tracks(frameR)[0].boxes.cpu().numpy()
         featL = detect_features(frameL, headL)
         featR = detect_features(frameR, headR)
-        prev_frames = {'l': frameL,  'r': frameR}
+        prev_frames = {'l': frameL, 'r': frameR}

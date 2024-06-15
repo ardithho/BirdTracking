@@ -1,5 +1,5 @@
 from ultralytics import YOLO
-from parser import parse_opt, ROOT
+from parser import parser, parse_opt, ROOT
 
 
 class Predictor:
@@ -18,11 +18,11 @@ class Predictor:
 
 feat_model = Predictor(ROOT / 'weights/feat.pt')
 def detect_features(img, boxes):
-    feat = []
+    feats = []
     for xyxy in boxes.xyxy:
         x0, y0, x1, y1 = list(map(int, xyxy))
-        feat.append(feat_model.predictions(source=img[y0:y1, x0:x1])[0].boxes.cpu().numpy())
-    return feat
+        feats.append(feat_model.predictions(source=img[y0:y1, x0:x1])[0].boxes.cpu().numpy())
+    return feats
 
 
 def run(
@@ -80,5 +80,5 @@ def main(opt):
 
 
 if __name__ == '__main__':
-    opt = parse_opt()
+    opt = parse_opt(parser)
     main(opt)

@@ -1,5 +1,5 @@
 from ultralytics import YOLO
-from parser import parse_opt, ROOT
+from parser import parser, parse_opt, ROOT
 
 
 class Tracker:
@@ -73,5 +73,6 @@ def main(opt):
 
 
 if __name__ == '__main__':
-    opt = parse_opt(track=True)
+    parser.add_argument('--stream', action='store_true', help='treat the input source as a continuous video stream')
+    opt = parse_opt(parser)
     main(opt)
