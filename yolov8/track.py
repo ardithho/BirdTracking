@@ -12,8 +12,8 @@ class Tracker:
     def track(self, **kwargs):
         self.model.track(**kwargs)
 
-    def tracks(self, stream=True, persist=True, **kwargs):
-        return self.model.tracks(stream=stream, persist=persist, **kwargs)
+    def tracks(self, source, stream=True, persist=True, **kwargs):
+        return self.model.track(source, stream=stream, persist=persist, **kwargs)
 
 
 def run(

@@ -34,8 +34,8 @@ while capL.isOpened() and capR.isOpened():
     retL, frameL = capL.retrieve()
     retR, frameR = capR.retrieve()
     if retL and retR:
-        headL = predictor_head.predictions(frameL)[0].boxes.cpu().numpy()
-        headR = predictor_head.predictions(frameR)[0].boxes.cpu().numpy()
+        headL = tracker.tracks(frameL)[0].boxes.cpu().numpy()
+        headR = tracker.tracks(frameR)[0].boxes.cpu().numpy()
         featL = detect_features(frameL, headL)
         featR = detect_features(frameR, headR)
         prev_frames = {'l': frameL,  'r': frameR}
