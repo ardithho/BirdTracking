@@ -16,8 +16,8 @@ PROJECT_ROOT = Path(os.path.relpath(PROJECT_ROOT, Path.cwd()))  # relative
 
 # initialise parser
 parser = argparse.ArgumentParser()
-parser.add_argument('--weights', type=str, default=ROOT / 'weights/full.pt', help='model path or triton URL')
-parser.add_argument('--source', type=str, default=ROOT / 'data/images', help='file/dir/URL/glob/screen/0(webcam)')
+parser.add_argument('--weights', type=str, default=ROOT / 'weights/pose.pt', help='model path or triton URL')
+parser.add_argument('--source', type=str, default=PROJECT_ROOT / 'data/images', help='file/dir/URL/glob/screen/0(webcam)')
 parser.add_argument('--conf', type=float, default=0.25, help='confidence threshold')
 parser.add_argument('--iou', type=float, default=0.7, help='NMS IoU threshold')
 parser.add_argument('--imgsz', '--img', '--img-size', nargs='+', type=int, default=640, help='inference size')
@@ -36,7 +36,7 @@ parser.add_argument('--save-conf', action='store_true', help='save confidences i
 parser.add_argument('--save-crop', action='store_true', help='save cropped prediction boxes')
 parser.add_argument('--show-labels', default=True, action='store_true', help='show labels')
 parser.add_argument('--show-conf', default=True, action='store_true', help='show confidences')
-parser.add_argument('--boxes', default=True, action='store_true', help='show bounding boxes')
+parser.add_argument('--show-boxes', default=True, action='store_true', help='show bounding boxes')
 parser.add_argument('--line-width', default=3, type=int, help='bounding box thickness (pixels)')
 
 

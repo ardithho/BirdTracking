@@ -1,5 +1,5 @@
 from ultralytics import YOLO
-from parser import parser, parse_opt, ROOT
+from .utils import parser, parse_opt, ROOT, PROJECT_ROOT
 
 
 class Predictor:
@@ -27,7 +27,7 @@ def detect_features(img, boxes):
 
 def run(
         weights=ROOT / 'weights/pose.pt',  # model path or triton URL
-        source=ROOT / 'data/images',  # file/dir/URL/glob/screen/0(webcam)
+        source=PROJECT_ROOT / 'data/images',  # file/dir/URL/glob/screen/0(webcam)
         conf=0.25,  # confidence threshold
         iou=0.7,  # NMS IOU threshold
         imgsz=640,  # inference size
@@ -46,7 +46,7 @@ def run(
         save_crop=False,  # save cropped prediction boxes
         show_labels=True,  # show labels
         show_conf=True,  # show confidences
-        boxes=True,  # show boxes
+        show_boxes=True,  # show boxes
         line_width=3  # bounding box thickness (pixels)
 ):
     model = Predictor(weights)
@@ -70,7 +70,7 @@ def run(
         save_crop=save_crop,
         show_labels=show_labels,
         show_conf=show_conf,
-        boxes=boxes,
+        show_boxes=show_boxes,
         line_width=line_width
     )
 

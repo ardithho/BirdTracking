@@ -1,5 +1,5 @@
 from ultralytics import YOLO
-from parser import parser, parse_opt, ROOT
+from .utils import parser, parse_opt, ROOT
 
 
 class Tracker:
@@ -37,7 +37,7 @@ def run(
         save_crop=False,  # save cropped prediction boxes
         show_labels=True,  # show labels
         show_conf=True,  # show confidences
-        boxes=True,  # show boxes
+        show_boxes=True,  # show boxes
         line_width=3,  # bounding box thickness (pixels)
         stream=False  # treat the input source as a continuous video stream
 ):
@@ -62,7 +62,7 @@ def run(
         save_crop=save_crop,
         show_labels=show_labels,
         show_conf=show_conf,
-        boxes=boxes,
+        show_boxes=show_boxes,
         line_width=line_width,
         stream=stream
     )
