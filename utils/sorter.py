@@ -247,6 +247,6 @@ def to_txt(img, bill, eyes, tear_marks, start=(0, 0)):
 def to_dict(bill, eyes, tear_marks):
     return {'bill': bill,
             'left_eye': eyes[0],
-            'left_tear_mark': tear_marks[0],
+            'left_tear': tear_marks[0],
             'right_eye': eyes[1],
-            'right_tear_mark': tear_marks[1]}
+            'right_tear': tear_marks[1]}

@@ -38,6 +38,11 @@ def estimate_essential_mat(prev_frame, curr_frame, prev_mask=None, curr_mask=Non
     return cv2.findEssentialMat(src_pts, dst_pts)
 
 
+def estimate_vio(prev_frame, curr_frame, prev_mask=None, curr_mask=None):
+    src_pts, dst_pts = find_matching_pts(curr_frame, prev_frame, curr_mask, prev_mask)
+    return cv2.recoverPose(cv2.findEssentialMat(src_pts, dst_pts), src_pts, dst_pts)
+
+
 if __name__ == '__main__':
     cap = cv2.VideoCapture('../data/vid/fps120/K203_K238/GOPRO2/GH010039.MP4')
     if cap.isOpened():
