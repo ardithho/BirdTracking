@@ -105,7 +105,7 @@ def stereo_essential_mat(frameL, frameR, size=(4, 7)):
         return None, None
 
     if sizeL != sizeR:
-        imgptsR = remap(imgptsR, sizeR)
+        imgptsR = remap_(imgptsR, sizeR)
     e, mask = cv2.findEssentialMat(imgptsL[0], imgptsR[0])
     return e, mask
 
