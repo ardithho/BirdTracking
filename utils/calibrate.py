@@ -5,9 +5,9 @@ import os
 from utils.general import kernel
 
 
-def contour_valid(img, contour, area_thresh=0.0025, centre_thresh=0.2):
-    h, w = img.shape[:2]
-    area = cv2.contourArea(contour) > math.prod(img.shape[:2])*area_thresh
+def contour_valid(im, contour, area_thresh=0.0025, centre_thresh=0.2):
+    h, w = im.shape[:2]
+    area = cv2.contourArea(contour) > math.prod(im.shape[:2]) * area_thresh
     M = cv2.moments(contour)
     cX = int(M["m10"] / M["m00"])
     cY = int(M["m01"] / M["m00"])
@@ -15,18 +15,18 @@ def contour_valid(img, contour, area_thresh=0.0025, centre_thresh=0.2):
     return area and centre
 
 
-def get_mask(img):
-    grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+def get_mask(im):
+    grey = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
     _, thw = cv2.threshold(grey, 200, 255, cv2.THRESH_BINARY)
     _, thb = cv2.threshold(grey, 50, 255, cv2.THRESH_BINARY_INV)
     combined = cv2.bitwise_or(thw, thb)
     combined = cv2.morphologyEx(combined, cv2.MORPH_CLOSE, kernel(5))
     combined = cv2.morphologyEx(combined, cv2.MORPH_OPEN, kernel(5))
     contours, hierarchy = cv2.findContours(combined, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    cnts = [contour for contour in contours if contour_valid(img, contour)]
+    cnts = [contour for contour in contours if contour_valid(im, contour)]
     cnts = sorted(cnts, key=lambda x: cv2.contourArea(x), reverse=True)
 
-    mask = np.zeros(img.shape[:2], np.uint8)
+    mask = np.zeros(im.shape[:2], np.uint8)
     cv2.drawContours(mask, cnts[:1], 0, 255, -1)
     chessboard = cv2.bitwise_and(grey, grey, mask=mask)
     _, binary_mask = cv2.threshold(chessboard, 150, 255, cv2.THRESH_BINARY)
@@ -56,15 +56,15 @@ def draw_corners(img, size=(4, 7)):
     return img
 
 
-def find_points(img, size=(4, 7)):
+def find_points(im, size=(4, 7)):
     flags = (cv2.CALIB_CB_ADAPTIVE_THRESH
              + cv2.CALIB_CB_FAST_CHECK
              + cv2.CALIB_CB_NORMALIZE_IMAGE
              + cv2.CALIB_USE_INTRINSIC_GUESS)
-    ret, corners = cv2.findChessboardCorners(img, size, flags)
+    ret, corners = cv2.findChessboardCorners(im, size, flags)
     if not ret:
         size = size[::-1]
-        ret, corners = cv2.findChessboardCorners(img, size, flags)
+        ret, corners = cv2.findChessboardCorners(im, size, flags)
     if ret:
         objpt = np.zeros((math.prod(size), 3), np.float32)
         objpt[:, :2] = np.mgrid[0:size[0], 0:size[1]].T.reshape(-1, 2)
@@ -74,12 +74,12 @@ def find_points(img, size=(4, 7)):
     return None, None, None
 
 
-def calibrate(img, size=(4, 7)):
-    mask = get_mask(img)
+def calibrate(im, size=(4, 7)):
+    mask = get_mask(im)
     objpts, imgpts, _ = find_points(mask, size)
     if imgpts is not None:
         # calibration
-        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpts, imgpts, img.shape[::-1], None, None)
+        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpts, imgpts, im.shape[1::-1], None, None)
         if ret:
             return mtx, dist
     return None, None
@@ -92,6 +92,10 @@ def remap(pts, size):
         for c in range(h):
             ret[r][c] = pts[c][w-r-1]
     return ret
+
+
+def remap_(pts):
+    return np.flip(pts.T, axis=1)
 
 
 def stereo_essential_mat(frameL, frameR, size=(4, 7)):
