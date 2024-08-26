@@ -74,6 +74,20 @@ def find_points(im, size=(4, 7)):
     return None, None, None
 
 
+def find_corners(im, size=(4, 7)):
+    flags = (cv2.CALIB_CB_ADAPTIVE_THRESH
+             + cv2.CALIB_CB_FAST_CHECK
+             + cv2.CALIB_CB_NORMALIZE_IMAGE
+             + cv2.CALIB_USE_INTRINSIC_GUESS)
+    ret, corners = cv2.findChessboardCorners(im, size, flags)
+    if not ret:
+        size = size[::-1]
+        ret, corners = cv2.findChessboardCorners(im, size, flags)
+    if ret:
+        return corners, size
+    return None, None
+
+
 def calibrate(im, size=(4, 7)):
     mask = get_mask(im)
     objpts, imgpts, _ = find_points(mask, size)

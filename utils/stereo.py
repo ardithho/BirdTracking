@@ -1,6 +1,7 @@
 import math
 import cv2
 import numpy as np
+from calibrate import find_corners
 
 
 class Camera:
@@ -57,11 +58,34 @@ class Stereo:
     def __init__(self, vidL, vidR, skip=1800, stride=30):
         self.camL = Camera(vidL)
         self.camR = Camera(vidR)
+        self.e = None
         self.sync(skip=skip, stride=stride)
         self.calibrate()
 
     def sync(self, skip, stride):
+        if self.camL.flash >= 0 and self.camR.flash >= 0:
+            self.offsetL = self.camL.flash + skip
+            self.offsetR = self.camR.flash + skip
+            self.camL.cap.set(cv2.CAP_PROP_POS_FRAMES, self.offsetL)
+            self.camR.cap.set(cv2.CAP_PROP_POS_FRAMES, self.offsetR)
+            while self.camL.cap.isOpened() and self.camR.cap.isOpened():
+                for i in range(stride):
+                    _ = self.camL.cap.grab()
+                    _ = self.camR.cap.grab()
+                    self.offsetL += 1
+                    self.offsetR += 1
+                retL, frameL = self.camL.cap.retrieve()
+                retR, frameR = self.camR.cap.retrieve()
+                if retL and retR:
+                    if self.e is None:
+                        self.calibrate(frameL, frameR)
+                        if self.e is not None:
+                            break
+                else:
+                    break
+                self.camL.cap.release()
+                self.camR.cap.release()
+
+    def calibrate(self, frameL, frameR):
         pass
 
-    def calibrate(self):
-        pass
