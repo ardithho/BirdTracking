@@ -3,6 +3,8 @@ import math
 from general import bill_mask, euc_dist, angle
 
 
+# filter eyes and tear marks that is within a distance to the bill tip
+# distance is determined by the size of the bill
 def bound_feat(img, bill, bill_conf, eyes, tear_marks):
     if bill:
         mask = bill_mask(img)
@@ -13,7 +15,7 @@ def bound_feat(img, bill, bill_conf, eyes, tear_marks):
             M = cv2.moments(cnt)
             centroid = (int(M['m10'] / M['m00']), int(M['m01'] / M['m00']))
 
-            # bounding rect
+            # bounding rect for features to be included
             ratio = 3
             dist = euc_dist(bill, centroid) * 2
             length = dist * ratio
@@ -55,7 +57,8 @@ def bound_feat(img, bill, bill_conf, eyes, tear_marks):
     return bill, eyes, tear_marks
 
 
-def sort_lr(pivot, eye, tear_mark):  # determine left right of a pair of features
+# determine left right of a pair of features
+def sort_lr(pivot, eye, tear_mark):
     eye_angle = angle(pivot, eye)
     tear_angle = angle(pivot, tear_mark)
     if abs(tear_angle - eye_angle) < math.pi:
@@ -67,7 +70,8 @@ def sort_lr(pivot, eye, tear_mark):  # determine left right of a pair of feature
     return 'right'
 
 
-def sort_feat(bill, eyes, tear_marks):  # sort left right features
+# sort left right features
+def sort_feat(bill, eyes, tear_marks):
     if len(eyes) == 0 and len(tear_marks) == 0:
         eyes = [None, None]  # L, R
         tear_marks = [None, None]  # L, R
@@ -155,7 +159,8 @@ def sort_feat(bill, eyes, tear_marks):  # sort left right features
     return bill, eyes, tear_marks
 
 
-def match_labels(target, labels, dist):  # check for overlapping labels
+# check for overlapping labels
+def match_labels(target, labels, dist):
     match = False
     i = 0
     while not match and i < len(labels):
@@ -166,7 +171,8 @@ def match_labels(target, labels, dist):  # check for overlapping labels
     return match
 
 
-def process_labels(labels, n, img_shape):  # remove overlapping labels and return best n
+# remove overlapping labels and return best n labels
+def process_labels(labels, n, img_shape):
     i = 0
     count = 0
     out_labels = []
