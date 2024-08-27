@@ -1,7 +1,8 @@
 import math
 import cv2
 import numpy as np
-from calibrate import find_corners, get_mask, remap
+from utils.general import kernel
+from utils.calibrate import find_corners, get_mask, remap
 
 
 class Camera:
@@ -17,7 +18,6 @@ class Camera:
         self.dist = None
 
     def first_flash(self, kernel_size=5, save=False):
-        kernel = np.ones((kernel_size, kernel_size), np.uint8)
         count = 0
         while self.cap.isOpened():
             ret, frame = self.cap.read()
@@ -29,7 +29,7 @@ class Camera:
                 high = np.array([0, 0, 255])
                 hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
                 mask = cv2.inRange(hsv, low, high)
-                mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+                mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel(kernel_size))
 
                 contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
                 if len(contours) >= 1:

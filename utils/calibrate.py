@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 import math
-import os
 from utils.general import kernel
 
 
@@ -56,24 +55,6 @@ def draw_corners(img, size=(4, 7)):
     return img
 
 
-def find_points(im, size=(4, 7)):
-    flags = (cv2.CALIB_CB_ADAPTIVE_THRESH
-             + cv2.CALIB_CB_FAST_CHECK
-             + cv2.CALIB_CB_NORMALIZE_IMAGE
-             + cv2.CALIB_USE_INTRINSIC_GUESS)
-    ret, corners = cv2.findChessboardCorners(im, size, flags)
-    if not ret:
-        size = size[::-1]
-        ret, corners = cv2.findChessboardCorners(im, size, flags)
-    if ret:
-        objpt = np.zeros((math.prod(size), 3), np.float32)
-        objpt[:, :2] = np.mgrid[0:size[0], 0:size[1]].T.reshape(-1, 2)
-        objpts = [objpt]
-        imgpts = [corners]
-        return objpts, imgpts, size
-    return None, None, None
-
-
 def find_corners(im, size=(4, 7)):
     flags = (cv2.CALIB_CB_ADAPTIVE_THRESH
              + cv2.CALIB_CB_FAST_CHECK
@@ -88,40 +69,6 @@ def find_corners(im, size=(4, 7)):
     return None, None
 
 
-def calibrate(im, size=(4, 7)):
-    mask = get_mask(im)
-    objpts, imgpts, _ = find_points(mask, size)
-    if imgpts is not None:
-        # calibration
-        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpts, imgpts, im.shape[1::-1], None, None)
-        if ret:
-            return mtx, dist
-    return None, None
-
-
 def remap(pts, size):
     h, w = size
     return np.asarray([pts[(i%h)*w+(w-1-i//h)] for i in range(h*w)])
-
-
-def stereo_essential_mat(frameL, frameR, size=(4, 7)):
-    _, imgptsL, sizeL = find_points(frameL, size)
-    _, imgptsR, sizeR = find_points(frameR, size)
-    if imgptsL is None or imgptsR is None:
-        return None, None
-
-    if sizeL != sizeR:
-        imgptsR = remap(imgptsR, sizeR)
-    e, mask = cv2.findEssentialMat(imgptsL[0], imgptsR[0])
-    return e, mask
-
-
-if __name__ == '__main__':
-    img_dir = '../data/calibration/K203_K238/chessboard'
-    frame_no = 2189
-    frameL = cv2.imread(os.path.join(img_dir, f'l/{frame_no}.jpg'))
-    frameR = cv2.imread(os.path.join(img_dir, f'r/{frame_no}.jpg'))
-    e, mask = stereo_essential_mat(frameL, frameR)
-    print(e)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
