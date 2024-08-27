@@ -101,15 +101,11 @@ def calibrate(im, size=(4, 7)):
 
 def remap(pts, size):
     h, w = size
-    ret = [[0 for _ in range(h)] for _ in range(w)]
+    ret = np.zeros((w, h))
     for r in range(w):
         for c in range(h):
             ret[r][c] = pts[c][w-r-1]
     return ret
-
-
-def remap_(pts):
-    return np.flip(pts.T, axis=1)
 
 
 def stereo_essential_mat(frameL, frameR, size=(4, 7)):
@@ -119,7 +115,7 @@ def stereo_essential_mat(frameL, frameR, size=(4, 7)):
         return None, None
 
     if sizeL != sizeR:
-        imgptsR = remap_(imgptsR, sizeR)
+        imgptsR = remap(imgptsR, sizeR)
     e, mask = cv2.findEssentialMat(imgptsL[0], imgptsR[0])
     return e, mask
 
