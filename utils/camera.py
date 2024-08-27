@@ -75,8 +75,8 @@ class Stereo:
                 for i in range(stride):
                     _ = self.camL.cap.grab()
                     _ = self.camR.cap.grab()
-                    self.offsetL += 1
-                    self.offsetR += 1
+                self.offsetL += stride
+                self.offsetR += stride
                 retL, frameL = self.camL.cap.retrieve()
                 retR, frameR = self.camR.cap.retrieve()
                 if retL and retR:

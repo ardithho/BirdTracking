@@ -30,8 +30,8 @@ while capL.isOpened() and capR.isOpened():
     for i in range(STRIDE):
         _ = capL.grab()
         _ = capR.grab()
-        stereo.offsetL += 1
-        stereo.offsetR += 1
+    stereo.offsetL += STRIDE
+    stereo.offsetR += STRIDE
     retL, frameL = capL.retrieve()
     retR, frameR = capR.retrieve()
     if retL and retR:
