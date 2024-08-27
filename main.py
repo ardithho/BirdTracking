@@ -1,7 +1,7 @@
 import cv2
 from yolov8.predict import Predictor, detect_features
 from yolov8.track import Tracker
-from utils.sync import sync
+from utils.camera import Stereo
 from utils.structs import Bird, Birds
 
 from ultralytics.data.utils import IMG_FORMATS, VID_FORMATS
@@ -16,12 +16,12 @@ vidL = 'data/vid/fps120/K203_K238/GOPRO2/GH010039.MP4'
 vidR = 'data/vid/fps120/K203_K238/GOPRO1/GH010045.MP4'
 
 # sync videos and calibrate cameras
-offsetL, offsetR, e, _ = sync(vidL, vidR, stride=STRIDE)
+stereo = Stereo(vidL, vidR, stride=STRIDE)
 capL = cv2.VideoCapture(vidL)
 capR = cv2.VideoCapture(vidR)
 # skip chessboard calibration frames
-capL.set(cv2.CAP_PROP_POS_FRAMES, offsetL)
-capR.set(cv2.CAP_PROP_POS_FRAMES, offsetR)
+capL.set(cv2.CAP_PROP_POS_FRAMES, stereo.offsetL)
+capR.set(cv2.CAP_PROP_POS_FRAMES, stereo.offsetR)
 
 birdsL = Birds()
 birdsR = Birds()
@@ -30,8 +30,8 @@ while capL.isOpened() and capR.isOpened():
     for i in range(STRIDE):
         _ = capL.grab()
         _ = capR.grab()
-        offsetL += 1
-        offsetR += 1
+        stereo.offsetL += 1
+        stereo.offsetR += 1
     retL, frameL = capL.retrieve()
     retR, frameR = capR.retrieve()
     if retL and retR:

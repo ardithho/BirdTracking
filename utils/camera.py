@@ -61,6 +61,8 @@ class Stereo:
         self.camR = Camera(vidR)
         self.size = size
         self.e = None
+        self.offsetL = 0
+        self.offsetR = 0
         self.sync(skip=skip, stride=stride)
 
     def sync(self, skip, stride):
