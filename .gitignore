@@ -31,7 +31,6 @@ yolov8/yolov8n.pt
 
 createLabels.py
 headPose.py
-headTracker.py
 headTraining.py
 mainCV.py
 mainYOLO.py

@@ -283,52 +283,6 @@ def ptInCircle(p, D):
     return False
 
 
-def edgeCanny(img):
-    grey = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-    grey = cv2.GaussianBlur(grey, (5, 5), 0)
-    edges = cv2.Canny(grey, 100, 200)
-    return edges
-
-
-def hogFeatures(img):
-    grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    H, hogImg = feature.hog(grey, orientations=8, pixels_per_cell=(8, 8), cells_per_block=(2, 2), transform_sqrt=True, block_norm="L1", visualize=True)
-    hogImg = exposure.rescale_intensity(hogImg, out_range=(0, 255))
-    hogImg = hogImg.astype('uint8')
-    return hogImg
-
-
-def detectCorners(img):
-    im0 = img.copy()
-    grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    grey = cv2.medianBlur(grey, 5)
-    dst = cv2.cornerHarris(grey, 5, 5, 0.2)
-    dst_norm = np.empty(dst.shape, dtype=np.float32)
-    cv2.normalize(dst, dst_norm, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
-    dst_norm_scaled = cv2.convertScaleAbs(dst_norm)
-    v = np.percentile(dst_norm_scaled, 99.5)
-    # img[dst_norm_scaled > v] = (255, 0, 255)
-
-    points = np.argwhere(dst_norm_scaled > v)
-
-    if len(points) > 0:
-        n = int(math.sqrt(len(np.unique(points))))
-        km = k_means(points, n_clusters=n)
-        corners = km[0].astype('uint64')
-
-        for cnr in corners:
-            cv2.circle(im0, cnr[::-1], 4, (255, 200, 0), -1)
-    return im0
-
-
-def getContours(img):
-    im0 = img.copy()
-    grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    contours, _ = cv2.findContours(grey, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    cv2.drawContours(im0, contours, -1, (0, 255, 255), 3)
-    return im0
-
-
 def angle(pivot, point):
     if point[0] == pivot[0]:
         return 3*math.pi/2 if point[1] < pivot[1] else math.pi/2
