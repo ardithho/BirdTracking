@@ -33,6 +33,13 @@ class Bird:
         self.feats = self.sort()
 
     def globalise(self, feats):
+        '''
+        Re-localise feature points to image coordinates from box coordinates
+        Args:
+            feats: YOLO Result
+        Returns:
+            globalised features
+        '''
         globalised = []
         for feat in feats:
             xy = self.xyxy[:2] + self.xywh[2:] * feat.xywh[:2]
@@ -101,6 +108,7 @@ class Cache:
         self.ptr = 0
 
     def update(self, obj):
+        # Add detection from new frame to (circular) queue
         self.cache[self.ptr] = obj
         self.ptr = (self.ptr + 1) % self.size
 

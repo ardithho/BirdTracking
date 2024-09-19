@@ -1,4 +1,6 @@
 import math
+from textwrap import indent
+
 import cv2
 import numpy as np
 from utils.general import kernel
@@ -9,14 +11,14 @@ class Camera:
     def __init__(self, path, skip=0):
         self.cap = cv2.VideoCapture(path)
         self.skip = skip
-        self.h = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-        self.w = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+        self.h = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        self.w = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.skip)
         self.flash = -1
         self.first_flash()
         self.objpts = []
         self.imgpts = []
-        self.mtx = None
+        self.k = None
         self.dist = None
 
     def first_flash(self, kernel_size=5):
@@ -51,7 +53,7 @@ class Camera:
             self.imgpts.append(corners)
 
     def calibrate(self):
-        self.mtx, self.dist, _, _ = cv2.calibrateCamera(
+        _, self.k, self.dist, _, _ = cv2.calibrateCamera(
             self.objpts, self.imgpts, (self.w, self.h),
             None, None)
 
@@ -67,8 +69,8 @@ class Stereo:
         self.sync(stride=stride)
 
     def sync(self, stride):
-        print('Syncing cameras...')
         if self.camL.flash >= 0 and self.camR.flash >= 0:
+            print('Syncing cameras...')
             self.offsetL = self.camL.flash
             self.offsetR = self.camR.flash
             self.camL.cap.set(cv2.CAP_PROP_POS_FRAMES, self.offsetL)
@@ -85,23 +87,33 @@ class Stereo:
                     if self.e is None:
                         self.calibrate(frameL, frameR)
                         if self.e is not None:
+                            print('Synced cameras.')
                             self.camL.calibrate()
                             self.camR.calibrate()
                             break
                 else:
                     break
-            self.camL.cap.release()
-            self.camR.cap.release()
+        else:
+            print('Camera sync failed.')
+        self.camL.cap.release()
+        self.camR.cap.release()
 
-    def calibrate(self, frameL, frameR):
+    def calibrate(self, frameL, frameR, show=False):
         cnrL, sizeL = find_corners(get_mask(frameL), self.size)
         cnrR, sizeR = find_corners(get_mask(frameR), self.size)
         self.camL.add_chessboard_pts(cnrL, sizeL)
         self.camR.add_chessboard_pts(cnrR, sizeR)
+        if show:
+            cv2.drawChessboardCorners(frameL, sizeL, cnrL, cnrL is not None)
+            cv2.drawChessboardCorners(frameR, sizeR, cnrR, cnrR is not None)
+            cv2.imshow('chessboard',
+                       cv2.resize(cv2.vconcat([frameL, frameR]), None, fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC))
+            cv2.waitKey(1)
         if cnrL is not None and cnrR is not None:
+            print('Calibrating cameras...')
             if sizeL != sizeR:
                 cnrR = remap(cnrR, sizeR)
-                self.e, mask = cv2.findEssentialMat(cnrL, cnrR)
+            self.e, mask = cv2.findEssentialMat(cnrL, cnrR)
 
 
 if __name__ == '__main__':
@@ -116,4 +128,6 @@ if __name__ == '__main__':
     # sync videos and calibrate cameras
     stereo = Stereo(vidL, vidR, stride=STRIDE)
     with open(ROOT / 'data/mtx.yaml', 'w') as f:
-        f.write(yaml.dump({'k': stereo.camL.mtx}))
+        data = {'k': stereo.camL.k.flatten().tolist(),
+                'dist': stereo.camL.dist.flatten().tolist()}
+        f.write(yaml.dump(data, sort_keys=False))
