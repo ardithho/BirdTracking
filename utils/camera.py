@@ -6,10 +6,12 @@ from utils.calibrate import find_corners, get_mask, remap
 
 
 class Camera:
-    def __init__(self, path):
+    def __init__(self, path, skip=0):
         self.cap = cv2.VideoCapture(path)
+        self.skip = skip
         self.h = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
         self.w = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+        self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.skip)
         self.flash = -1
         self.first_flash()
         self.objpts = []
@@ -17,7 +19,8 @@ class Camera:
         self.mtx = None
         self.dist = None
 
-    def first_flash(self, kernel_size=5, save=False):
+    def first_flash(self, kernel_size=5):
+        print('Detecting camera flash...')
         count = 0
         while self.cap.isOpened():
             ret, frame = self.cap.read()
@@ -33,12 +36,10 @@ class Camera:
 
                 contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
                 if len(contours) >= 1:
-                    self.flash = count
-                    if save:
-                        cv2.imwrite(f'data/img/sync/frame_{count}.jpg', frame)
-                        cv2.imwrite(f'data/img/sync/mask_{count}.jpg', mask)
+                    self.flash = count + self.skip
                     break
             else:
+                print('not ret')
                 self.cap.release()
                 break
 
@@ -56,19 +57,20 @@ class Camera:
 
 
 class Stereo:
-    def __init__(self, vidL, vidR, skip=1800, stride=30, size=(4, 7)):
-        self.camL = Camera(vidL)
-        self.camR = Camera(vidR)
+    def __init__(self, vidL, vidR, skip=1500, stride=30, size=(4, 7)):
+        self.camL = Camera(vidL, skip)
+        self.camR = Camera(vidR, skip)
         self.size = size
         self.e = None
         self.offsetL = 0
         self.offsetR = 0
-        self.sync(skip=skip, stride=stride)
+        self.sync(stride=stride)
 
-    def sync(self, skip, stride):
+    def sync(self, stride):
+        print('Syncing cameras...')
         if self.camL.flash >= 0 and self.camR.flash >= 0:
-            self.offsetL = self.camL.flash + skip
-            self.offsetR = self.camR.flash + skip
+            self.offsetL = self.camL.flash
+            self.offsetR = self.camR.flash
             self.camL.cap.set(cv2.CAP_PROP_POS_FRAMES, self.offsetL)
             self.camR.cap.set(cv2.CAP_PROP_POS_FRAMES, self.offsetR)
             while self.camL.cap.isOpened() and self.camR.cap.isOpened():
@@ -88,16 +90,30 @@ class Stereo:
                             break
                 else:
                     break
-                self.camL.cap.release()
-                self.camR.cap.release()
+            self.camL.cap.release()
+            self.camR.cap.release()
 
     def calibrate(self, frameL, frameR):
         cnrL, sizeL = find_corners(get_mask(frameL), self.size)
         cnrR, sizeR = find_corners(get_mask(frameR), self.size)
         self.camL.add_chessboard_pts(cnrL, sizeL)
         self.camR.add_chessboard_pts(cnrR, sizeR)
-        if cnrL and cnrR:
+        if cnrL is not None and cnrR is not None:
             if sizeL != sizeR:
                 cnrR = remap(cnrR, sizeR)
                 self.e, mask = cv2.findEssentialMat(cnrL, cnrR)
 
+
+if __name__ == '__main__':
+    import yaml
+    from pathlib import Path
+
+    ROOT = Path(__file__).parent.parent
+    STRIDE = 30
+    vidL = str(ROOT / 'data/vid/fps120/K203_K238/GOPRO2/GH010039.MP4')
+    vidR = str(ROOT / 'data/vid/fps120/K203_K238/GOPRO1/GH010045.MP4')
+
+    # sync videos and calibrate cameras
+    stereo = Stereo(vidL, vidR, stride=STRIDE)
+    with open(ROOT / 'data/mtx.yaml', 'w') as f:
+        f.write(yaml.dump({'k': stereo.camL.mtx}))

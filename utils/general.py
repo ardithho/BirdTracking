@@ -2,8 +2,7 @@ import math
 import random
 from utils.colour import *
 from itertools import combinations
-from sklearn.cluster import KMeans, k_means
-from skimage import feature, exposure
+from sklearn.cluster import KMeans
 
 
 def imgDiff(img, sub):
