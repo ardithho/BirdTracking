@@ -1,6 +1,4 @@
 import math
-from textwrap import indent
-
 import cv2
 import numpy as np
 from utils.general import kernel
@@ -18,6 +16,7 @@ class Camera:
         self.first_flash()
         self.objpts = []
         self.imgpts = []
+        self.mpts = []
         self.k = None
         self.dist = None
 
@@ -52,6 +51,9 @@ class Camera:
             self.objpts.append(o)
             self.imgpts.append(corners)
 
+    def add_matched_pts(self, corners):
+        self.mpts += corners
+
     def calibrate(self):
         _, self.k, self.dist, _, _ = cv2.calibrateCamera(
             self.objpts, self.imgpts, (self.w, self.h),
@@ -59,46 +61,45 @@ class Camera:
 
 
 class Stereo:
-    def __init__(self, vidL, vidR, skip=1500, stride=30, size=(4, 7)):
+    def __init__(self, vidL, vidR, skip=1500, stride=30,  timeout=5400, size=(4, 7)):
         self.camL = Camera(vidL, skip)
         self.camR = Camera(vidR, skip)
         self.size = size
         self.e = None
         self.offsetL = 0
         self.offsetR = 0
-        self.sync(stride=stride)
+        self.sync(stride=stride, timeout=timeout)
 
-    def sync(self, stride):
+    def sync(self, stride, timeout):
         if self.camL.flash >= 0 and self.camR.flash >= 0:
             print('Syncing cameras...')
             self.offsetL = self.camL.flash
             self.offsetR = self.camR.flash
             self.camL.cap.set(cv2.CAP_PROP_POS_FRAMES, self.offsetL)
             self.camR.cap.set(cv2.CAP_PROP_POS_FRAMES, self.offsetR)
-            while self.camL.cap.isOpened() and self.camR.cap.isOpened():
+            count = 0
+            while count < timeout and self.camL.cap.isOpened() and self.camR.cap.isOpened():
                 for i in range(stride):
                     _ = self.camL.cap.grab()
                     _ = self.camR.cap.grab()
                 self.offsetL += stride
                 self.offsetR += stride
+                count += stride
                 retL, frameL = self.camL.cap.retrieve()
                 retR, frameR = self.camR.cap.retrieve()
                 if retL and retR:
-                    if self.e is None:
-                        self.calibrate(frameL, frameR)
-                        if self.e is not None:
-                            print('Synced cameras.')
-                            self.camL.calibrate()
-                            self.camR.calibrate()
-                            break
+                    self.find_chessboard(frameL, frameR)
                 else:
                     break
+            self.camL.calibrate()
+            self.camR.calibrate()
+            self.calibrate()
         else:
             print('Camera sync failed.')
         self.camL.cap.release()
         self.camR.cap.release()
 
-    def calibrate(self, frameL, frameR, show=False):
+    def find_chessboard(self, frameL, frameR, show=False):
         cnrL, sizeL = find_corners(get_mask(frameL), self.size)
         cnrR, sizeR = find_corners(get_mask(frameR), self.size)
         self.camL.add_chessboard_pts(cnrL, sizeL)
@@ -110,10 +111,14 @@ class Stereo:
                        cv2.resize(cv2.vconcat([frameL, frameR]), None, fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC))
             cv2.waitKey(1)
         if cnrL is not None and cnrR is not None:
-            print('Calibrating cameras...')
             if sizeL != sizeR:
                 cnrR = remap(cnrR, sizeR)
-            self.e, mask = cv2.findEssentialMat(cnrL, cnrR)
+            self.camL.add_matched_pts(cnrL)
+            self.camR.add_matched_pts(cnrR)
+
+    def calibrate(self):
+        print('Calibrating cameras...')
+        self.e, mask = cv2.findEssentialMat(self.camL.mpts, self.camR.mpts, self.camL.k)
 
 
 if __name__ == '__main__':
