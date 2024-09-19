@@ -44,7 +44,7 @@ class Bird:
         bill = [feat for feat in self.featsUnsorted if feat.cls == FEAT_DICT['bill']][0]
         eyes = [feat for feat in self.featsUnsorted if feat.cls in FEAT_DICT['eyes']]
         tear_marks = [feat for feat in self.featsUnsorted if feat.cls in FEAT_DICT['tear_marks']]
-        return to_dict(sort_feat(bill, eyes, tear_marks))
+        return to_dict(*sort_feat(bill, eyes, tear_marks))
 
 
 class Birds:
