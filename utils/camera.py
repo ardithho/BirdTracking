@@ -52,16 +52,22 @@ class Camera:
             self.imgpts.append(corners)
 
     def add_matched_pts(self, corners):
-        self.mpts += corners
+        self.mpts.append(corners.squeeze)
 
     def calibrate(self):
         _, self.k, self.dist, _, _ = cv2.calibrateCamera(
             self.objpts, self.imgpts, (self.w, self.h),
             None, None)
 
+    def undistort(self, im):
+        return cv2.undistort(im, self.k, self.dist)
+
+    def undistort_pts(self, pts):
+        return cv2.undistortImagePoints(pts, self.k, self.dist)
+
 
 class Stereo:
-    def __init__(self, vidL, vidR, skip=1500, stride=30,  timeout=5400, size=(4, 7)):
+    def __init__(self, vidL, vidR, skip=1500, stride=30, timeout=5400, size=(4, 7)):
         self.camL = Camera(vidL, skip)
         self.camR = Camera(vidR, skip)
         self.size = size
@@ -72,7 +78,7 @@ class Stereo:
 
     def sync(self, stride, timeout):
         if self.camL.flash >= 0 and self.camR.flash >= 0:
-            print('Syncing cameras...')
+            print('Calibrating cameras...')
             self.offsetL = self.camL.flash
             self.offsetR = self.camR.flash
             self.camL.cap.set(cv2.CAP_PROP_POS_FRAMES, self.offsetL)
@@ -93,6 +99,7 @@ class Stereo:
                     break
             self.camL.calibrate()
             self.camR.calibrate()
+            print('Syncing cameras...')
             self.calibrate()
         else:
             print('Camera sync failed.')
@@ -118,7 +125,10 @@ class Stereo:
 
     def calibrate(self):
         print('Calibrating cameras...')
-        self.e, mask = cv2.findEssentialMat(self.camL.mpts, self.camR.mpts, self.camL.k)
+        self.e, mask = cv2.findEssentialMat(
+            self.camL.undistort_pts(np.concatenate(self.camL.mpts)),
+            self.camR.undistort_pts(np.concatenate(self.camR.mpts)),
+            self.camL.k)
 
 
 if __name__ == '__main__':
