@@ -1,8 +1,7 @@
-import math
 import cv2
 import numpy as np
 from utils.general import kernel
-from utils.calibrate import find_corners, get_mask, remap
+from utils.calibrate import find_corners, get_mask, remap, obj_pts
 
 
 class Camera:
@@ -46,9 +45,7 @@ class Camera:
 
     def add_chessboard_pts(self, corners, size):
         if corners is not None and size is not None:
-            o = np.zeros((math.prod(size), 3), np.float32)
-            o[:, :2] = np.mgrid[0:size[0], 0:size[1]].T.reshape(-1, 2)
-            self.objpts.append(o)
+            self.objpts.append(obj_pts(*size))
             self.imgpts.append(corners)
 
     def add_matched_pts(self, corners):
@@ -71,9 +68,13 @@ class Stereo:
         self.camL = Camera(vidL, skip)
         self.camR = Camera(vidR, skip)
         self.size = size
+        self.rmat = None
+        self.tvec = None
         self.e = None
+        self.f = None
         self.offsetL = 0
         self.offsetR = 0
+        self.objpts = []
         self.sync(stride=stride, timeout=timeout)
 
     def sync(self, stride, timeout):
@@ -100,7 +101,7 @@ class Stereo:
             self.camL.calibrate()
             self.camR.calibrate()
             print('Syncing cameras...')
-            self.calibrate()
+            self.calibrate_()
         else:
             print('Camera sync failed.')
         self.camL.cap.release()
@@ -122,6 +123,7 @@ class Stereo:
                 cnrR = remap(cnrR, sizeR)
             self.camL.add_matched_pts(cnrL)
             self.camR.add_matched_pts(cnrR)
+            self.objpts.append(sizeL)
 
     def calibrate(self):
         print('Calibrating cameras...')
@@ -129,6 +131,11 @@ class Stereo:
             self.camL.undistort_pts(np.concatenate(self.camL.mpts)),
             self.camR.undistort_pts(np.concatenate(self.camR.mpts)),
             self.camL.k)
+
+    def calibrate_(self):
+        self.camL.k, self.camL.dist, self.camR.k, self.camR.dist, self.rmat, self.tvec, self.e, self.f \
+            = cv2.stereoCalibrate(
+            self.objpts, self.camL.mpts, self.camR.mpts, (self.camL.w, self.camL.h))
 
 
 if __name__ == '__main__':

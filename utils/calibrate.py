@@ -72,3 +72,9 @@ def find_corners(im, size=(4, 7)):
 def remap(pts, size):
     h, w = size
     return np.asarray([pts[(i%h)*w+(w-1-i//h)] for i in range(h*w)])
+
+
+def obj_pts(c, r):
+    o = np.zeros((math.prod((c, r)), 3), np.float32)
+    o[:, :2] = np.mgrid[0:c, 0:r].T.reshape(-1, 2)
+    return o
