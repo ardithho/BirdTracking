@@ -16,6 +16,7 @@ class Camera:
         self.objpts = []
         self.imgpts = []
         self.mpts = []
+        self.mpts_ = []
         self.k = None
         self.dist = None
 
@@ -49,7 +50,8 @@ class Camera:
             self.imgpts.append(corners)
 
     def add_matched_pts(self, corners):
-        self.mpts.append(corners.squeeze)
+        self.mpts.append(corners)
+        self.mpts_.append(corners.squeeze)
 
     def calibrate(self):
         _, self.k, self.dist, _, _ = cv2.calibrateCamera(
@@ -72,6 +74,7 @@ class Stereo:
         self.tvec = None
         self.e = None
         self.f = None
+        self.calibrated = False
         self.offsetL = 0
         self.offsetR = 0
         self.objpts = []
@@ -101,7 +104,7 @@ class Stereo:
             self.camL.calibrate()
             self.camR.calibrate()
             print('Syncing cameras...')
-            self.calibrate_()
+            self.calibrate()
         else:
             print('Camera sync failed.')
         self.camL.cap.release()
@@ -123,19 +126,23 @@ class Stereo:
                 cnrR = remap(cnrR, sizeR)
             self.camL.add_matched_pts(cnrL)
             self.camR.add_matched_pts(cnrR)
-            self.objpts.append(sizeL)
-
-    def calibrate(self):
-        print('Calibrating cameras...')
-        self.e, mask = cv2.findEssentialMat(
-            self.camL.undistort_pts(np.concatenate(self.camL.mpts)),
-            self.camR.undistort_pts(np.concatenate(self.camR.mpts)),
-            self.camL.k)
+            self.objpts.append(obj_pts(*sizeL))
 
     def calibrate_(self):
-        self.camL.k, self.camL.dist, self.camR.k, self.camR.dist, self.rmat, self.tvec, self.e, self.f \
+        print('Calibrating cameras...')
+        self.e, mask = cv2.findEssentialMat(
+            self.camL.undistort_pts(np.concatenate(self.camL.mpts_)),
+            self.camR.undistort_pts(np.concatenate(self.camR.mpts_)),
+            self.camL.k)
+
+    def calibrate(self):
+        self.calibrated, self.camL.k, self.camL.dist, self.camR.k, self.camR.dist, self.rmat, self.tvec, self.e, self.f \
             = cv2.stereoCalibrate(
-            self.objpts, self.camL.mpts, self.camR.mpts, (self.camL.w, self.camL.h))
+            self.objpts, self.camL.mpts, self.camR.mpts,
+            self.camL.k, self.camL.dist,
+            self.camR.k, self.camR.dist,
+            (self.camL.w, self.camL.h),
+            self.rmat, self.tvec, self.e, self.f)
 
 
 if __name__ == '__main__':
@@ -150,6 +157,12 @@ if __name__ == '__main__':
     # sync videos and calibrate cameras
     stereo = Stereo(vidL, vidR, stride=STRIDE)
     with open(ROOT / 'data/mtx.yaml', 'w') as f:
-        data = {'k': stereo.camL.k.flatten().tolist(),
-                'dist': stereo.camL.dist.flatten().tolist()}
+        data = {'kL': stereo.camL.k.flatten().tolist(),
+                'distL': stereo.camL.dist.flatten().tolist(),
+                'kR': stereo.camR.k.flatten().tolist(),
+                'distR': stereo.camR.dist.flatten().tolist(),
+                'R': stereo.rmat.flatten().tolist(),
+                'T': stereo.tvec.tolist(),
+                'E': stereo.e.flatten().tolist(),
+                'F': stereo.f.flatten().tolist()}
         f.write(yaml.dump(data, sort_keys=False))
