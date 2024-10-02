@@ -19,6 +19,9 @@ class Sim:
         self.vis.poll_events()
         self.vis.update_renderer()
 
+    def close(self):
+        self.vis.destroy_window()
+
 
 sim = Sim()
 
