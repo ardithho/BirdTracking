@@ -70,10 +70,10 @@ class Stereo:
         self.camL = Camera(vidL, skip)
         self.camR = Camera(vidR, skip)
         self.size = size
-        self.rmat = None
-        self.tvec = None
-        self.e = None
-        self.f = None
+        self.R = None
+        self.T = None
+        self.E = None
+        self.F = None
         self.calibrated = False
         self.offsetL = 0
         self.offsetR = 0
@@ -130,19 +130,19 @@ class Stereo:
 
     def calibrate_(self):
         print('Calibrating cameras...')
-        self.e, mask = cv2.findEssentialMat(
+        self.E, mask = cv2.findEssentialMat(
             self.camL.undistort_pts(np.concatenate(self.camL.mpts_)),
             self.camR.undistort_pts(np.concatenate(self.camR.mpts_)),
             self.camL.k)
 
     def calibrate(self):
-        self.calibrated, self.camL.k, self.camL.dist, self.camR.k, self.camR.dist, self.rmat, self.tvec, self.e, self.f \
+        self.calibrated, self.camL.k, self.camL.dist, self.camR.k, self.camR.dist, self.R, self.T, self.E, self.F \
             = cv2.stereoCalibrate(
             self.objpts, self.camL.mpts, self.camR.mpts,
             self.camL.k, self.camL.dist,
             self.camR.k, self.camR.dist,
             (self.camL.w, self.camL.h),
-            self.rmat, self.tvec, self.e, self.f)
+            self.R, self.T, self.E, self.F)
 
 
 if __name__ == '__main__':
@@ -161,8 +161,8 @@ if __name__ == '__main__':
                 'distL': stereo.camL.dist.flatten().tolist(),
                 'kR': stereo.camR.k.flatten().tolist(),
                 'distR': stereo.camR.dist.flatten().tolist(),
-                'R': stereo.rmat.flatten().tolist(),
-                'T': stereo.tvec.tolist(),
-                'E': stereo.e.flatten().tolist(),
-                'F': stereo.f.flatten().tolist()}
+                'R': stereo.R.flatten().tolist(),
+                'T': stereo.T.tolist(),
+                'E': stereo.E.flatten().tolist(),
+                'F': stereo.F.flatten().tolist()}
         f.write(yaml.dump(data, sort_keys=False))

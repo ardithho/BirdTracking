@@ -39,9 +39,10 @@ def estimate_essential_mat(prev_frame, curr_frame, prev_mask=None, curr_mask=Non
 
 
 # visual odometry
-def estimate_vio(prev_frame, curr_frame, prev_mask=None, curr_mask=None):
+def estimate_vio(prev_frame, curr_frame, prev_mask=None, curr_mask=None, k=None, dist=None):
+    # return: retval, E, R, t, mask
     src_pts, dst_pts = find_matching_pts(curr_frame, prev_frame, curr_mask, prev_mask)
-    return cv2.recoverPose(cv2.findEssentialMat(src_pts, dst_pts), src_pts, dst_pts)
+    return cv2.recoverPose(src_pts, dst_pts, k, dist, k, dist)
 
 
 if __name__ == '__main__':
