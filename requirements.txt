@@ -54,5 +54,4 @@ setuptools>=65.5.1 # Snyk vulnerability fix
 
 open3d~=0.17.0
 flask~=3.0.0
-tensorflow~=2.14.0
 roboflow~=0.2.5
