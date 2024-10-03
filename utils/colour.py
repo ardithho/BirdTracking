@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import hsv_to_rgb
 from collections import Counter
 from sklearn.cluster import KMeans
-from general import kernel
+from .general import kernel
 
 
 def bgr2hex(colour):
@@ -94,11 +94,16 @@ def colour_mask(im, kernel_size=5):
     lowb = np.array([0, 0, 0])
     highb = np.array([180, 255, 50])
     maskb = cv2.inRange(hsv, lowb, highb)
-    mask = cv2.bitwise_or(masko, maskr)
-    mask = maskr
+    # grey face
+    lowg = np.array([0, 0, 0])
+    highg = np.array([180, 40, 80])
+    maskg = cv2.inRange(hsv, lowg, highg)
+    # mask = cv2.bitwise_or(masko, maskr)
+    # mask = maskr
+    mask = masko | maskr | maskb | maskg
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel(kernel_size))
     # mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel(5))
-    return cv2.bitwise_and(im, im, mask=mask)
+    return mask
 
 
 def hue_mask(im, hue):
