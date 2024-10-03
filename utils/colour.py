@@ -83,7 +83,7 @@ def mask_ratio(mask):
 def colour_mask(im, kernel_size=5):
     hsv = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
     # orange cheeks (+feet
-    lowo = np.array([0, 140, 100])
+    lowo = np.array([0, 140, 80])
     higho = np.array([40, 255, 255])
     masko = cv2.inRange(hsv, lowo, higho)
     # red bill
@@ -96,9 +96,8 @@ def colour_mask(im, kernel_size=5):
     maskb = cv2.inRange(hsv, lowb, highb)
     # grey face
     lowg = np.array([0, 0, 0])
-    highg = np.array([180, 40, 80])
+    highg = np.array([180, 50, 80])
     maskg = cv2.inRange(hsv, lowg, highg)
-    # mask = cv2.bitwise_or(masko, maskr)
     # mask = maskr
     mask = masko | maskr | maskb | maskg
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel(kernel_size))
