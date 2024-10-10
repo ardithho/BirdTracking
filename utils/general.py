@@ -1,6 +1,7 @@
 import math
 import random
-from utils.colour import *
+import cv2
+import numpy as np
 from itertools import combinations
 from sklearn.cluster import KMeans
 

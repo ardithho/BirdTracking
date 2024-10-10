@@ -1,11 +1,14 @@
 import yaml
 import cv2
+import numpy as np
 
 
-HEAD_CFG = yaml.safe_load('data/blender/config.yaml')
+cfg_path = 'data/blender/config.yaml'
+with open(cfg_path, 'r') as f:
+    HEAD_CFG = yaml.safe_load(f)
 
 
-def solvePnP(bird, k):
-    head_pts = [HEAD_CFG[k] for k, v in bird.feats.items() if v is not None]
-    feat_pts = [v for k, v in bird.feats.items() if v is not None]
-    return cv2.solvePnPRansac(head_pts, feat_pts, k, None)
+def solvePnP(bird, k, dist=None):
+    head_pts = np.array([HEAD_CFG[k] for k, v in bird.feats.items() if v is not None], dtype=np.float32)
+    feat_pts = np.array([v for k, v in bird.feats.items() if v is not None], dtype=np.float32)
+    return cv2.solvePnPRansac(head_pts, feat_pts, k, dist)

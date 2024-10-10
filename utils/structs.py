@@ -1,3 +1,4 @@
+import numpy as np
 from utils.sorter import sort_feat, to_dict
 from utils.colour import cheek_mask, mask_ratio
 
@@ -23,12 +24,12 @@ class Feature:
 
 class Bird:
     def __init__(self, head, feats):
-        self.conf = head.conf
-        self.id = head.id
-        self.xywh = head.xywh
-        self.xywhn = head.xywhn
-        self.xyxy = head.xyxy
-        self.xyxyn = head.xyxyn
+        self.conf = head.conf[0]
+        self.id = int(head.id[0])
+        self.xywh = head.xywh[0]
+        self.xywhn = head.xywhn[0]
+        self.xyxy = head.xyxy[0]
+        self.xyxyn = head.xyxyn[0]
         self.featsUnsorted = self.globalise(feats)
         self.feats = self.sort()
 
@@ -42,15 +43,15 @@ class Bird:
         '''
         globalised = []
         for feat in feats:
-            xy = self.xyxy[:2] + self.xywh[2:] * feat.xywh[:2]
-            xyn = self.xyxyn[:2] + self.xywhn[2:] * feat.xywhn[:2]
+            xy = self.xyxy[:2] + self.xywh[2:] * feat.xywh[0, :2]
+            xyn = self.xyxyn[:2] + self.xywhn[2:] * feat.xywhn[0, :2]
             globalised.append(Feature(feat, xy, xyn))
         return globalised
 
     def sort(self):
-        bill = [feat for feat in self.featsUnsorted if feat.cls == FEAT_DICT['bill']][0]
-        eyes = [feat for feat in self.featsUnsorted if feat.cls in FEAT_DICT['eyes']]
-        tear_marks = [feat for feat in self.featsUnsorted if feat.cls in FEAT_DICT['tear_marks']]
+        bill = [feat.xy for feat in self.featsUnsorted if feat.cls == FEAT_DICT['bill']][0]
+        eyes = [feat.xy for feat in self.featsUnsorted if feat.cls in FEAT_DICT['eyes']]
+        tear_marks = [feat.xy for feat in self.featsUnsorted if feat.cls in FEAT_DICT['tear_marks']]
         return to_dict(*sort_feat(bill, eyes, tear_marks))
 
 
@@ -67,7 +68,7 @@ class Birds:
         for bird in birds:
             self.current[self.ids[bird.id]] = bird
             self.caches[self.ids[bird.id]].update(bird)
-            unseen.pop(self.ids[bird.id])
+            unseen.remove(self.ids[bird.id])
         if len(unseen) > 0:
             for sex in unseen:
                 self.current[sex] = None
@@ -77,25 +78,25 @@ class Birds:
         if len(birds) > 0:
             self.ids = {}
             if len(birds) == 2:
-                x0, y0, x1, y1 = list(map(round, birds[0].xyxy))
+                x0, y0, x1, y1 = np.rint(birds[0].xyxy).astype(np.uint32)
                 ratio0 = mask_ratio(cheek_mask(frame[y0:y1, x0:x1]))
-                x0, y0, x1, y1 = list(map(round, birds[1].xyxy))
+                x0, y0, x1, y1 = np.rint(birds[1].xyxy).astype(np.uint32)
                 ratio1 = mask_ratio(cheek_mask(frame[y0:y1, x0:x1]))
                 if ratio0 > ratio1:
-                    self.ids['m'] = birds[0].id
-                    self.ids['f'] = birds[1].id
+                    self.ids[birds[0].id] = 'm'
+                    self.ids[birds[1].id] = 'f'
                 else:
-                    self.ids['m'] = birds[1].id
-                    self.ids['f'] = birds[0].id
+                    self.ids[birds[1].id] = 'm'
+                    self.ids[birds[0].id] = 'f'
             else:
-                x0, y0, x1, y1 = list(map(int, birds[0].xyxy))
+                x0, y0, x1, y1 = np.rint(birds[0].xyxy).astype(np.uint32)
                 ratio = mask_ratio(cheek_mask(frame[y0:y1, x0:x1]))
                 if ratio > thres:
-                    self.ids['m'] = birds[0].id
-                    self.ids['f'] = birds[0].id + 1
+                    self.ids[birds[0].id] = 'm'
+                    self.ids[birds[0].id+1] = 'f'
                 else:
-                    self.ids['m'] = birds[0].id + 1
-                    self.ids['f'] = birds[0].id
+                    self.ids[birds[0].id+1] = 'm'
+                    self.ids[birds[0].id] = 'f'
 
     def __getitem__(self, sex):
         return self.current[sex]

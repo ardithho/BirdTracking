@@ -1,6 +1,7 @@
 import cv2
 import math
-from general import bill_mask, euc_dist, angle
+from .general import euc_dist, angle
+from .colour import bill_mask
 
 
 # filter eyes and tear marks that is within a distance to the bill tip
@@ -78,7 +79,7 @@ def sort_feat(bill, eyes, tear_marks):
     elif len(eyes) == 0:
         eyes = [None, None]
         if len(tear_marks) == 1:
-            if bill:
+            if bill is not None:
                 if tear_marks[0][0] >= bill[0]:
                     tear_marks.append(None)
                 else:
@@ -91,7 +92,7 @@ def sort_feat(bill, eyes, tear_marks):
     elif len(tear_marks) == 0:
         tear_marks = [None, None]
         if len(eyes) == 1:
-            if bill:
+            if bill is not None:
                 if eyes[0][0] >= bill[0]:
                     eyes.append(None)
                 else:
@@ -102,7 +103,7 @@ def sort_feat(bill, eyes, tear_marks):
             if eyes[0][0] < eyes[1][0]:
                 eyes = [eyes[1], eyes[0]]
     elif len(eyes) == 1 and len(tear_marks) == 1:
-        if bill:
+        if bill is not None:
             if sort_lr(bill, eyes[0], tear_marks[0]) == 'left':
                 eyes.append(None)
                 tear_marks.append(None)

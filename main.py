@@ -1,8 +1,12 @@
 import cv2
+import numpy as np
+import yaml
 from yolov8.predict import Predictor, detect_features
 from yolov8.track import Tracker
 from utils.camera import Stereo
 from utils.structs import Bird, Birds
+from utils.reconstruct import solvePnP
+from utils.sim import *
 
 from ultralytics.data.utils import IMG_FORMATS, VID_FORMATS
 
@@ -15,6 +19,7 @@ predictor_head = Predictor('yolov8/weights/head.pt')
 vidL = 'data/vid/fps120/K203_K238/GOPRO2/GH010039.MP4'
 vidR = 'data/vid/fps120/K203_K238/GOPRO1/GH010045.MP4'
 
+'''
 # sync videos and calibrate cameras
 stereo = Stereo(vidL, vidR, stride=STRIDE)
 capL = cv2.VideoCapture(vidL)
@@ -43,3 +48,41 @@ while capL.isOpened() and capR.isOpened():
         birdsR.update([Bird(head, feat) for head, feat in zip(headR, featR)], frameR)
 
         prev_frames = {'l': frameL, 'r': frameR}
+'''
+
+mtx_path = 'data/mtx.yaml'
+with open(mtx_path, 'r') as f:
+    mtx = yaml.safe_load(f)
+    k = np.asarray(mtx['kR']).reshape(3, 3)
+    dist = np.asarray(mtx['distR'])
+
+cap = cv2.VideoCapture('data/vid/fps120/K203_K238_1_GH040045.mp4')
+birds = Birds()
+prev_frame = None
+T = np.eye(4)
+prev_T = np.eye(4)
+
+while cap.isOpened():
+    for i in range(STRIDE):
+        _ = cap.grab()
+    ret, frame = cap.retrieve()
+    if ret:
+        print('Detecting head...')
+        head = list(tracker.tracks(frame))[0].boxes.cpu().numpy()
+        print('Detecting features...')
+        feat = detect_features(frame, head)
+        print('Sorting features...')
+        birds.update([Bird(head, feat) for head, feat in zip(head, feat)], frame)
+        print('Reconstructing head pose...')
+        R, t = solvePnP(birds['f'], k, dist)
+        T[:3, :3] = T[:3, :3].T @ R
+        T[:3, 3] = t.T - T[:3, 3]
+        cv2.imshow('frame', frame)
+        sim.update(T)
+        prev_frame = frame
+        if cv2.waitKey(1) == ord('q'):
+            break
+
+cap.release()
+cv2.destroyAllWindows()
+sim.close()
