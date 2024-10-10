@@ -63,8 +63,11 @@ T = np.eye(4)
 prev_T = np.eye(4)
 
 while cap.isOpened():
-    for i in range(STRIDE):
-        _ = cap.grab()
+    for i in range(4):
+        if cap.isOpened():
+            _ = cap.grab()
+        else:
+            break
     ret, frame = cap.retrieve()
     if ret:
         print('Detecting head...')
@@ -78,12 +81,14 @@ while cap.isOpened():
         if bird is not None:
             pnp, r, t, _ = solvePnP(bird, k, dist)
             if pnp:
+                print(r, t)
                 R, _ = cv2.Rodrigues(r)
                 T[:3, :3] = prev_T[:3, :3].T @ R
-                T[:3, 3] = t.T - prev_T[:3, 3]
+                # T[:3, 3] = t.T - prev_T[:3, 3]
+                print(T)
                 prev_T[:3, :3] = R
-                prev_T[:3, 3] = t.T
-        cv2.imshow('frame', frame)
+                # prev_T[:3, 3] = t.T
+        cv2.imshow('frame', cv2.resize(frame, None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC))
         sim.update(T)
         prev_frame = frame
         if cv2.waitKey(1) == ord('q'):
