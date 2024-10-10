@@ -74,9 +74,12 @@ while cap.isOpened():
         print('Sorting features...')
         birds.update([Bird(head, feat) for head, feat in zip(head, feat)], frame)
         print('Reconstructing head pose...')
-        R, t = solvePnP(birds['f'], k, dist)
-        T[:3, :3] = T[:3, :3].T @ R
-        T[:3, 3] = t.T - T[:3, 3]
+        pnp, R, t = solvePnP(birds['f'], k, dist)
+        if pnp:
+            T[:3, :3] = prev_T[:3, :3].T @ R
+            T[:3, 3] = t.T - prev_T[:3, 3]
+            prev_T[:3, 3] = R
+            prev_T[:3, :3] = t
         cv2.imshow('frame', frame)
         sim.update(T)
         prev_frame = frame

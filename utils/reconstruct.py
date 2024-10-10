@@ -11,4 +11,6 @@ with open(cfg_path, 'r') as f:
 def solvePnP(bird, k, dist=None):
     head_pts = np.array([HEAD_CFG[k] for k, v in bird.feats.items() if v is not None], dtype=np.float32)
     feat_pts = np.array([v for k, v in bird.feats.items() if v is not None], dtype=np.float32)
-    return cv2.solvePnPRansac(head_pts, feat_pts, k, dist)
+    if head_pts.shape[0] >= 4:
+        return cv2.solvePnPRansac(head_pts, feat_pts, k, dist)
+    return False, None, None
