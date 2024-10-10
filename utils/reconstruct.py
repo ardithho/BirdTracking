@@ -13,4 +13,4 @@ def solvePnP(bird, k, dist=None):
     feat_pts = np.array([v for k, v in bird.feats.items() if v is not None], dtype=np.float32)
     if head_pts.shape[0] >= 4:
         return cv2.solvePnPRansac(head_pts, feat_pts, k, dist)
-    return False, None, None
+    return False, None, None, None

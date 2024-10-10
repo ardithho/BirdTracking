@@ -1,6 +1,7 @@
 import numpy as np
 from utils.sorter import sort_feat, to_dict
 from utils.colour import cheek_mask, mask_ratio
+from utils.box import iou
 
 
 CLS_DICT = {'bill': 0,
@@ -25,11 +26,13 @@ class Feature:
 class Bird:
     def __init__(self, head, feats):
         self.conf = head.conf[0]
-        self.id = int(head.id[0])
+        self.id = int(head.id[0]) if head.id is not None else -1
         self.xywh = head.xywh[0]
         self.xywhn = head.xywhn[0]
         self.xyxy = head.xyxy[0]
         self.xyxyn = head.xyxyn[0]
+        self.area = self.xywh[2] * self.xywh[3]
+        self.arean = self.xywhn[2] * self.xywhn[3]
         self.featsUnsorted = self.globalise(feats)
         self.feats = self.sort()
 
@@ -49,19 +52,24 @@ class Bird:
         return globalised
 
     def sort(self):
-        bill = [feat.xy for feat in self.featsUnsorted if feat.cls == FEAT_DICT['bill']][0]
+        bill = [feat.xy for feat in self.featsUnsorted if feat.cls == FEAT_DICT['bill']]
+        bill = bill[0] if len(bill) > 0 else None
         eyes = [feat.xy for feat in self.featsUnsorted if feat.cls in FEAT_DICT['eyes']]
         tear_marks = [feat.xy for feat in self.featsUnsorted if feat.cls in FEAT_DICT['tear_marks']]
         return to_dict(*sort_feat(bill, eyes, tear_marks))
 
 
 class Birds:
-    def __init__(self):
+    def __init__(self, tracked=False, iou=0.7):
         self.current = {}
         self.caches = {'m': Cache(), 'f': Cache()}
         self.ids = None
+        self.tracked = tracked
+        self.iou = iou
 
     def update(self, birds, frame):
+        if not self.tracked:
+            birds = self.track(birds)
         if self.ids is None:
             self.sort(birds, frame)
         unseen = ['m', 'f']
@@ -73,6 +81,37 @@ class Birds:
             for sex in unseen:
                 self.current[sex] = None
                 self.caches[sex].update(None)
+
+    def track(self, birds):
+        if self.ids is None:
+            for i in range(len(birds)):
+                birds[i].id = i
+            return birds
+        if len(birds) >= 1:
+            ious = [[0, 0] for _ in range(len(birds))]
+            max_ids = [0 for _ in range(len(birds))]
+            for i in range(len(birds)):
+                for id in self.ids.keys():
+                    bird = self.current[self.ids[id]]
+                    if bird is not None:
+                        ious[i][id] = iou(birds[i], bird)
+                        if ious[i][id] > max(ious[i]):
+                            max_ids[i] = id
+            if len(birds) == 1:
+                birds[0].id = max_ids[0]
+                return birds
+            if max_ids[0] != max_ids[1]:
+                for i in range(len(birds)):
+                    birds[i].id = max_ids[i]
+                return birds
+            if ious[0][max_ids[0]] > ious[1][max_ids[0]]:
+                birds[0].id = max_ids[0]
+                birds[1].id = 1 - max_ids[0]
+            else:
+                birds[0].id = 1 - max_ids[0]
+                birds[1].id = max_ids[0]
+            return birds
+        return birds
 
     def sort(self, birds, frame, thres=0.1):
         if len(birds) > 0:

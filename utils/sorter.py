@@ -137,7 +137,7 @@ def sort_feat(bill, eyes, tear_marks):
                 tear_marks = [tear_marks[1], tear_marks[0]]
                 eyes.insert(0, None)
         else:
-            pivot = bill if bill else tear_marks[0]
+            pivot = bill if bill is not None else tear_marks[0]
             if sort_lr(pivot, eyes[0], tear_marks[1]) == 'left':
                 tear_marks = [tear_marks[1], tear_marks[0]]
                 eyes.append(None)
