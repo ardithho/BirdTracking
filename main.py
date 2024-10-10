@@ -81,11 +81,9 @@ while cap.isOpened():
         if bird is not None:
             pnp, r, t, _ = solvePnP(bird, k, dist)
             if pnp:
-                print(r, t)
                 R, _ = cv2.Rodrigues(r)
                 T[:3, :3] = prev_T[:3, :3].T @ R
                 # T[:3, 3] = t.T - prev_T[:3, 3]
-                print(T)
                 prev_T[:3, :3] = R
                 # prev_T[:3, 3] = t.T
         cv2.imshow('frame', cv2.resize(frame, None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC))
