@@ -7,7 +7,7 @@ from .colour import bill_mask
 # filter eyes and tear marks that is within a distance to the bill tip
 # distance is determined by the size of the bill
 def bound_feat(img, bill, bill_conf, eyes, tear_marks):
-    if bill:
+    if bill is not None:
         mask = bill_mask(img)
         grey = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
         contours, _ = cv2.findContours(grey, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -115,14 +115,14 @@ def sort_feat(bill, eyes, tear_marks):
             tear_marks.append(None)
     elif len(eyes) > len(tear_marks):
         if euc_dist(eyes[0], tear_marks[0]) <= euc_dist(eyes[1], tear_marks[0]):
-            pivot = bill if bill else eyes[1]
+            pivot = bill if bill is not None else eyes[1]
             if sort_lr(pivot, eyes[0], tear_marks[0]) == 'left':
                 tear_marks.append(None)
             else:
                 eyes = [eyes[1], eyes[0]]
                 tear_marks.insert(0, None)
         else:
-            pivot = bill if bill else eyes[0]
+            pivot = bill if bill is not None else eyes[0]
             if sort_lr(pivot, eyes[1], tear_marks[0]) == 'left':
                 eyes = [eyes[1], eyes[0]]
                 tear_marks.append(None)
@@ -130,7 +130,7 @@ def sort_feat(bill, eyes, tear_marks):
                 tear_marks.insert(0, None)
     elif len(eyes) < len(tear_marks):
         if euc_dist(eyes[0], tear_marks[0]) <= euc_dist(eyes[0], tear_marks[1]):
-            pivot = bill if bill else tear_marks[1]
+            pivot = bill if bill is not None else tear_marks[1]
             if sort_lr(pivot, eyes[0], tear_marks[0]) == 'left':
                 eyes.append(None)
             else:
@@ -152,8 +152,8 @@ def sort_feat(bill, eyes, tear_marks):
                 tear_marks = [tear_marks[1], tear_marks[0]]
         elif euc_dist(eyes[0], tear_marks[1]) < euc_dist(eyes[0], tear_marks[0]):
             tear_marks = [tear_marks[1], tear_marks[0]]
-        pivotL = bill if bill else eyes[1]
-        pivotR = bill if bill else eyes[0]
+        pivotL = bill if bill is not None else eyes[1]
+        pivotR = bill if bill is not None else eyes[0]
         if sort_lr(pivotL, eyes[0], tear_marks[0]) == 'right' and sort_lr(pivotR, eyes[1], tear_marks[1]) == 'left':
             eyes = [eyes[1], eyes[0]]
             tear_marks = [tear_marks[1], tear_marks[0]]
@@ -210,7 +210,7 @@ def filter_feat(img, det, classes):
 
 def plot_feat(img, bill, eyes, tear_marks, start=(0, 0)):
     line_colours = [(0, 255, 0), (0, 0, 255)]  # L, R
-    if bill:
+    if bill is not None:
         bill = [round(start[i]+bill[i]) for i in range(2)]
         for i in range(2):
             eye = eyes[i]
@@ -241,7 +241,7 @@ def plot_feat(img, bill, eyes, tear_marks, start=(0, 0)):
 
 def to_txt(img, bill, eyes, tear_marks, start=(0, 0)):
     shape = img.shape[:2]
-    if bill:
+    if bill is not None:
         bill = [(start[i] + bill[i])/shape[1-i] for i in range(2)]
     for i in range(2):
         if eyes[i]:

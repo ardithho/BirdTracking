@@ -74,13 +74,15 @@ while cap.isOpened():
         print('Sorting features...')
         birds.update([Bird(head, feat) for head, feat in zip(head, feat)], frame)
         print('Reconstructing head pose...')
-        pnp, r, t, _ = solvePnP(birds['f'], k, dist)
-        if pnp:
-            R, _ = cv2.Rodrigues(r)
-            T[:3, :3] = prev_T[:3, :3].T @ R
-            T[:3, 3] = t.T - prev_T[:3, 3]
-            prev_T[:3, :3] = R
-            prev_T[:3, 3] = t.T
+        bird = birds['m'] if birds['m'] is not None else birds['f']
+        if bird is not None:
+            pnp, r, t, _ = solvePnP(bird, k, dist)
+            if pnp:
+                R, _ = cv2.Rodrigues(r)
+                T[:3, :3] = prev_T[:3, :3].T @ R
+                T[:3, 3] = t.T - prev_T[:3, 3]
+                prev_T[:3, :3] = R
+                prev_T[:3, 3] = t.T
         cv2.imshow('frame', frame)
         sim.update(T)
         prev_frame = frame

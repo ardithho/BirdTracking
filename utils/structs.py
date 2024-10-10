@@ -68,6 +68,7 @@ class Birds:
         self.iou = iou
 
     def update(self, birds, frame):
+        birds = birds[:2]
         if not self.tracked:
             birds = self.track(birds)
         if self.ids is None:
