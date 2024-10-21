@@ -86,8 +86,9 @@ while cap.isOpened():
                 # T[:3, 3] = t.T - prev_T[:3, 3]
                 prev_T[:3, :3] = R
                 # prev_T[:3, 3] = t.T
+                sim.update(T)
         cv2.imshow('frame', cv2.resize(frame, None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC))
-        sim.update(T)
+
         prev_frame = frame
         if cv2.waitKey(1) == ord('q'):
             break

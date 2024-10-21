@@ -27,5 +27,13 @@ sim = Sim()
 
 
 if __name__ == '__main__':
+    import numpy as np
+    T = np.eye(4)
+    rad = 160 * np.pi / 180
+    T[0, 0] = np.cos(rad)
+    T[0, 2] = np.sin(rad)
+    T[2, 0] = -np.sin(rad)
+    T[2, 2] = np.cos(rad)
+    sim.update(T)
     o3d.visualization.draw_geometries([sim.mesh])
 
