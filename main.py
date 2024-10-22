@@ -1,11 +1,11 @@
 import cv2
 import numpy as np
-import yaml
+
 from yolov8.predict import Predictor, detect_features
 from yolov8.track import Tracker
 from utils.camera import Stereo
 from utils.structs import Bird, Birds
-from utils.reconstruct import solvePnP
+from utils.reconstruct import solvePnP, triangulate
 from utils.sim import *
 
 from ultralytics.data.utils import IMG_FORMATS, VID_FORMATS
@@ -19,7 +19,7 @@ predictor_head = Predictor('yolov8/weights/head.pt')
 vidL = 'data/vid/fps120/K203_K238/GOPRO2/GH010039.MP4'
 vidR = 'data/vid/fps120/K203_K238/GOPRO1/GH010045.MP4'
 
-cfg_path = 'data/cfg.yaml'
+cfg_path = 'data/calibration/cfg.yaml'
 
 # sync videos and calibrate cameras
 # stereo = Stereo(vidL=vidL, vidR=vidR, stride=STRIDE)
@@ -33,6 +33,8 @@ capR.set(cv2.CAP_PROP_POS_FRAMES, stereo.offsetR)
 birdsL = Birds()
 birdsR = Birds()
 prev_frames = None
+T = np.eye(4)
+prev_T = np.eye(4)
 while capL.isOpened() and capR.isOpened():
     for i in range(STRIDE):
         _ = capL.grab()
@@ -49,7 +51,23 @@ while capL.isOpened() and capR.isOpened():
         birdsL.update([Bird(head, feat) for head, feat in zip(headL, featL)], frameL)
         birdsR.update([Bird(head, feat) for head, feat in zip(headR, featR)], frameR)
 
+        birdL = birdsL['m'] if birdsL['m'] is not None else birdsL['f']
+        birdR = birdsR['m'] if birdsR['m'] is not None else birdsR['f']
+        if birdL is not None and birdR is not None:
+            transform = triangulate(birdL, birdR, stereo)
+            R = transform[:3, :3]
+            T[:3, :3] = prev_T[:3, :3].T @ R
+            # T[:3, 3] = t.T - prev_T[:3, 3]
+            prev_T[:3, :3] = R
+            # prev_T[:3, 3] = t.T
+            sim.update(T)
+
         prev_frames = {'l': frameL, 'r': frameR}
+
+capL.release()
+capR.release()
+cv2.destroyAllWindows()
+sim.close()
 
 
 # with open(cfg_path, 'r') as f:

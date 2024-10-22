@@ -5,7 +5,7 @@ from utils.calibrate import find_corners, get_mask, remap, obj_pts
 
 
 class Camera:
-    def __init__(self, path, skip=0, flash=-1, k=None, dist=None):
+    def __init__(self, path, skip=0, flash=-1, k=None, dist=None, ext=None, p=None):
         self.path = path
         self.cap = cv2.VideoCapture(path)
         self.skip = skip
@@ -19,11 +19,10 @@ class Camera:
             self.imgpts = []
             self.mpts = []
             self.mpts_ = []
-            self.k = None
-            self.dist = None
-        else:
-            self.k = k
-            self.dist = dist
+        self.k = k
+        self.dist = dist
+        self.ext = np.concatenate([np.eye(3), np.zeros((3, 1))], axis=1) if ext is None else ext
+        self.p = p
 
     def first_flash(self, kernel_size=5):
         print('Detecting camera flash...')
@@ -76,9 +75,11 @@ class Stereo:
             with open(path, 'r') as f:
                 cfg = yaml.safe_load(f)
                 self.camL = Camera(cfg['pathL'], skip=skip, flash=cfg['flashL'],
-                                   k=np.asarray(cfg['kL']).reshape(3, 3), dist=np.asarray(cfg['distL']))
+                                   k=np.array(cfg['kL']).reshape(3, 3), dist=np.array(cfg['distL']),
+                                   ext=np.array(cfg['extL']).reshape(3, 4), p=np.array(cfg['pL']).reshape(3, 4))
                 self.camL = Camera(cfg['pathR'], skip=skip, flash=cfg['flashR'],
-                                   k=np.asarray(cfg['kR']).reshape(3, 3), dist=np.asarray(cfg['distR']))
+                                   k=np.array(cfg['kR']).reshape(3, 3), dist=np.array(cfg['distR']),
+                                   ext=np.array(cfg['extR']).reshape(3, 4), p=np.array(cfg['pR']).reshape(3, 4))
                 self.R = np.asarray(cfg['R']).reshape(3, 3)
                 self.T = np.asarray(cfg['T']).reshape(3, 1)
                 self.E = np.asarray(cfg['E']).reshape(3, 3)
@@ -147,13 +148,6 @@ class Stereo:
             self.camR.add_matched_pts(cnrR)
             self.objpts.append(obj_pts(*sizeL))
 
-    def calibrate_(self):
-        print('Calibrating cameras...')
-        self.E, mask = cv2.findEssentialMat(
-            self.camL.undistort_pts(np.concatenate(self.camL.mpts_)),
-            self.camR.undistort_pts(np.concatenate(self.camR.mpts_)),
-            self.camL.k)
-
     def calibrate(self):
         self.calibrated, self.camL.k, self.camL.dist, self.camR.k, self.camR.dist, self.R, self.T, self.E, self.F \
             = cv2.stereoCalibrate(
@@ -162,17 +156,24 @@ class Stereo:
             self.camR.k, self.camR.dist,
             (self.camL.w, self.camL.h),
             self.R, self.T, self.E, self.F)
+        self.camL.p = self.camL.k @ self.camL.ext
+        self.camR.ext = np.concatenate([self.R, self.T], axis=1)
+        self.camR.p = self.camR.k @ self.camR.ext
 
     def save(self, path):
         with open(path, 'w') as f:
             data = {'pathL': self.camL.path,
                     'kL': self.camL.k.flatten().tolist(),
                     'distL': self.camL.dist.flatten().tolist(),
+                    'extL': self.camL.ext.flatten().tolist(),
+                    'pL': self.camL.p.flatten().tolist(),
                     'flashL': self.camL.flash,
                     'offsetL': self.offsetL,
                     'pathR': self.camR.path,
                     'kR': self.camR.k.flatten().tolist(),
                     'distR': self.camR.dist.flatten().tolist(),
+                    'extR': self.camR.ext.flatten().tolist(),
+                    'pR': self.camR.p.flatten().tolist(),
                     'flashR': self.camR.flash,
                     'offsetR': self.offsetR,
                     'R': self.R.flatten().tolist(),

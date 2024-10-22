@@ -9,7 +9,7 @@ from utils.colour import colour_mask
 
 model_head = Predictor('yolov8/weights/head.pt')
 vid_path = 'data/vid/fps120/K203_K238_1_GH040045.mp4'
-mtx_path = 'data/mtx.yaml'
+mtx_path = 'data/calibration/cfg.yaml'
 
 backgroundModel = np.zeros((1, 65), np.float64)
 foregroundModel = np.zeros((1, 65), np.float64)
