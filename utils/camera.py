@@ -5,20 +5,25 @@ from utils.calibrate import find_corners, get_mask, remap, obj_pts
 
 
 class Camera:
-    def __init__(self, path, skip=0):
+    def __init__(self, path, skip=0, flash=-1, k=None, dist=None):
+        self.path = path
         self.cap = cv2.VideoCapture(path)
         self.skip = skip
         self.h = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.w = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.skip)
-        self.flash = -1
-        self.first_flash()
-        self.objpts = []
-        self.imgpts = []
-        self.mpts = []
-        self.mpts_ = []
-        self.k = None
-        self.dist = None
+        self.flash = flash
+        if k is None:
+            self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.skip)
+            self.first_flash()
+            self.objpts = []
+            self.imgpts = []
+            self.mpts = []
+            self.mpts_ = []
+            self.k = None
+            self.dist = None
+        else:
+            self.k = k
+            self.dist = dist
 
     def first_flash(self, kernel_size=5):
         print('Detecting camera flash...')
@@ -66,19 +71,33 @@ class Camera:
 
 
 class Stereo:
-    def __init__(self, vidL, vidR, skip=1500, stride=30, timeout=5400, size=(4, 7)):
-        self.camL = Camera(vidL, skip)
-        self.camR = Camera(vidR, skip)
-        self.size = size
-        self.R = None
-        self.T = None
-        self.E = None
-        self.F = None
-        self.calibrated = False
-        self.offsetL = 0
-        self.offsetR = 0
-        self.objpts = []
-        self.sync(stride=stride, timeout=timeout)
+    def __init__(self, path=None, vidL=None, vidR=None, skip=1500, stride=30, timeout=5400, size=(4, 7)):
+        if path is not None:
+            with open(path, 'r') as f:
+                cfg = yaml.safe_load(f)
+                self.camL = Camera(cfg['pathL'], skip=skip, flash=cfg['flashL'],
+                                   k=np.asarray(cfg['kL']).reshape(3, 3), dist=np.asarray(cfg['distL']))
+                self.camL = Camera(cfg['pathR'], skip=skip, flash=cfg['flashR'],
+                                   k=np.asarray(cfg['kR']).reshape(3, 3), dist=np.asarray(cfg['distR']))
+                self.R = np.asarray(cfg['R']).reshape(3, 3)
+                self.T = np.asarray(cfg['T']).reshape(3, 1)
+                self.E = np.asarray(cfg['E']).reshape(3, 3)
+                self.F = np.asarray(cfg['F']).reshape(3, 3)
+                self.offsetL = cfg['offsetL']
+                self.offsetR = cfg['offsetR']
+        else:
+            self.camL = Camera(vidL, skip)
+            self.camR = Camera(vidR, skip)
+            self.size = size
+            self.R = None
+            self.T = None
+            self.E = None
+            self.F = None
+            self.calibrated = False
+            self.offsetL = 0
+            self.offsetR = 0
+            self.objpts = []
+            self.sync(stride=stride, timeout=timeout)
 
     def sync(self, stride, timeout):
         if self.camL.flash >= 0 and self.camR.flash >= 0:
@@ -144,6 +163,24 @@ class Stereo:
             (self.camL.w, self.camL.h),
             self.R, self.T, self.E, self.F)
 
+    def save(self, path):
+        with open(path, 'w') as f:
+            data = {'pathL': self.camL.path,
+                    'kL': self.camL.k.flatten().tolist(),
+                    'distL': self.camL.dist.flatten().tolist(),
+                    'flashL': self.camL.flash,
+                    'offsetL': self.offsetL,
+                    'pathR': self.camR.path,
+                    'kR': self.camR.k.flatten().tolist(),
+                    'distR': self.camR.dist.flatten().tolist(),
+                    'flashR': self.camR.flash,
+                    'offsetR': self.offsetR,
+                    'R': self.R.flatten().tolist(),
+                    'T': self.T.tolist(),
+                    'E': self.E.flatten().tolist(),
+                    'F': self.F.flatten().tolist()}
+            f.write(yaml.dump(data, sort_keys=False))
+
 
 if __name__ == '__main__':
     import yaml
@@ -155,14 +192,5 @@ if __name__ == '__main__':
     vidR = str(ROOT / 'data/vid/fps120/K203_K238/GOPRO1/GH010045.MP4')
 
     # sync videos and calibrate cameras
-    stereo = Stereo(vidL, vidR, stride=STRIDE)
-    with open(ROOT / 'data/mtx.yaml', 'w') as f:
-        data = {'kL': stereo.camL.k.flatten().tolist(),
-                'distL': stereo.camL.dist.flatten().tolist(),
-                'kR': stereo.camR.k.flatten().tolist(),
-                'distR': stereo.camR.dist.flatten().tolist(),
-                'R': stereo.R.flatten().tolist(),
-                'T': stereo.T.tolist(),
-                'E': stereo.E.flatten().tolist(),
-                'F': stereo.F.flatten().tolist()}
-        f.write(yaml.dump(data, sort_keys=False))
+    stereo = Stereo(vidL=vidL, vidR=vidR, stride=STRIDE)
+    stereo.save(ROOT / 'data/cfg.yaml')

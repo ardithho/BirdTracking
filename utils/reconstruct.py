@@ -14,3 +14,7 @@ def solvePnP(bird, k, dist=None):
     if head_pts.shape[0] >= 4:
         return cv2.solvePnPRansac(head_pts, feat_pts, k, dist)
     return False, None, None, None
+
+
+def extrapolate(birdL, birdR, stereo):
+    pass
