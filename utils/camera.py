@@ -78,7 +78,7 @@ class Stereo:
                 self.camL = Camera(cfg['pathL'], skip=skip, flash=cfg['flashL'],
                                    k=np.array(cfg['kL']).reshape(3, 3), dist=np.array(cfg['distL']),
                                    ext=np.array(cfg['extL']).reshape(3, 4), p=np.array(cfg['pL']).reshape(3, 4))
-                self.camL = Camera(cfg['pathR'], skip=skip, flash=cfg['flashR'],
+                self.camR = Camera(cfg['pathR'], skip=skip, flash=cfg['flashR'],
                                    k=np.array(cfg['kR']).reshape(3, 3), dist=np.array(cfg['distR']),
                                    ext=np.array(cfg['extR']).reshape(3, 4), p=np.array(cfg['pR']).reshape(3, 4))
                 self.R = np.asarray(cfg['R']).reshape(3, 3)

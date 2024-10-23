@@ -13,7 +13,7 @@ class Tracker:
         self.model.track(**kwargs)
 
     def tracks(self, source, save=False, stream=True, persist=True, verbose=False, **kwargs):
-        return self.model.track(source, save=save, stream=stream, persist=persist, verbose=verbose, **kwargs)
+        return list(self.model.track(source, save=save, stream=stream, persist=persist, verbose=verbose, **kwargs))
 
 
 def run(

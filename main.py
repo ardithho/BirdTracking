@@ -27,8 +27,8 @@ stereo = Stereo(path=cfg_path)
 capL = cv2.VideoCapture(vidL)
 capR = cv2.VideoCapture(vidR)
 # skip chessboard calibration frames
-capL.set(cv2.CAP_PROP_POS_FRAMES, stereo.offsetL)
-capR.set(cv2.CAP_PROP_POS_FRAMES, stereo.offsetR)
+capL.set(cv2.CAP_PROP_POS_FRAMES, stereo.offsetL+1800)
+capR.set(cv2.CAP_PROP_POS_FRAMES, stereo.offsetR+1800)
 
 birdsL = Birds()
 birdsR = Birds()
@@ -44,24 +44,32 @@ while capL.isOpened() and capR.isOpened():
     retL, frameL = capL.retrieve()
     retR, frameR = capR.retrieve()
     if retL and retR:
+        print('Detecting heads...')
         headL = tracker.tracks(frameL)[0].boxes.cpu().numpy()
         headR = tracker.tracks(frameR)[0].boxes.cpu().numpy()
+        print('Detecting features...')
         featL = detect_features(frameL, headL)
         featR = detect_features(frameR, headR)
+        print('Sorting features...')
         birdsL.update([Bird(head, feat) for head, feat in zip(headL, featL)], frameL)
         birdsR.update([Bird(head, feat) for head, feat in zip(headR, featR)], frameR)
 
         birdL = birdsL['m'] if birdsL['m'] is not None else birdsL['f']
         birdR = birdsR['m'] if birdsR['m'] is not None else birdsR['f']
         if birdL is not None and birdR is not None:
+            print('Reconstructing head pose...')
             transform = triangulate(birdL, birdR, stereo)
-            R = transform[:3, :3]
-            T[:3, :3] = prev_T[:3, :3].T @ R
-            # T[:3, 3] = t.T - prev_T[:3, 3]
-            prev_T[:3, :3] = R
-            # prev_T[:3, 3] = t.T
-            sim.update(T)
-
+            if transform is not None:
+                R = transform[:3, :3]
+                T[:3, :3] = prev_T[:3, :3].T @ R
+                # T[:3, 3] = t.T - prev_T[:3, 3]
+                prev_T[:3, :3] = R
+                # prev_T[:3, 3] = t.T
+                sim.update(T)
+        display = cv2.hconcat([cv2.resize(frameL, None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC),
+                               cv2.resize(frameR, None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC)])
+        cv2.imshow('display', display)
+        cv2.waitKey(1)
         prev_frames = {'l': frameL, 'r': frameR}
 
 capL.release()
@@ -90,7 +98,7 @@ sim.close()
 #     ret, frame = cap.retrieve()
 #     if ret:
 #         print('Detecting head...')
-#         head = list(tracker.tracks(frame))[0].boxes.cpu().numpy()
+#         head = tracker.tracks(frame)[0].boxes.cpu().numpy()
 #         print('Detecting features...')
 #         feat = detect_features(frame, head)
 #         print('Sorting features...')
