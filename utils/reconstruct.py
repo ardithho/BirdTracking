@@ -20,10 +20,10 @@ def solvePnP(bird, k, dist=None):
 def triangulate(birdL, birdR, stereo):
     visible = [k for k in CLS_DICT.keys() if birdL.feats[k] is not None and birdR.feats[k] is not None]
     if len(visible) == 0:
-        return None
+        return 0, None, None
     head_pts = np.array([HEAD_CFG[k] for k in visible])
-    feat_ptsL = np.array([birdL.feats[k] for k in visible])
-    feat_ptsR = np.array([birdR.feats[k] for k in visible])
-    print(feat_ptsL, feat_ptsR)
+    feat_ptsL = np.array([birdL.feats[k] for k in visible]).T
+    feat_ptsR = np.array([birdR.feats[k] for k in visible]).T
     feat_pts = cv2.triangulatePoints(stereo.camL.p, stereo.camR.p, feat_ptsL, feat_ptsR)
-    return cv2.estimateAffine3D(head_pts, feat_pts)
+    print(cv2.convertPointsFromHomogeneous(feat_pts.T))
+    return cv2.estimateAffine3D(head_pts, cv2.convertPointsFromHomogeneous(feat_pts.T))

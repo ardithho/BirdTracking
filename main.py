@@ -58,8 +58,8 @@ while capL.isOpened() and capR.isOpened():
         birdR = birdsR['m'] if birdsR['m'] is not None else birdsR['f']
         if birdL is not None and birdR is not None:
             print('Reconstructing head pose...')
-            transform = triangulate(birdL, birdR, stereo)
-            if transform is not None:
+            tri, transform, _ = triangulate(birdL, birdR, stereo)
+            if tri:
                 R = transform[:3, :3]
                 T[:3, :3] = prev_T[:3, :3].T @ R
                 # T[:3, 3] = t.T - prev_T[:3, 3]

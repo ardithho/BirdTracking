@@ -46,7 +46,7 @@ class Bird:
         '''
         globalised = []
         for feat in feats:
-            xy = self.xyxy[:2] + self.xywh[2:] * feat.xywh[0, :2]
+            xy = self.xyxy[:2] + feat.xywh[0, :2]
             xyn = self.xyxyn[:2] + self.xywhn[2:] * feat.xywhn[0, :2]
             globalised.append(Feature(feat, xy, xyn))
         return globalised
