@@ -6,9 +6,9 @@ from .colour import bill_mask
 
 # filter eyes and tear marks that is within a distance to the bill tip
 # distance is determined by the size of the bill
-def bound_feat(img, bill, bill_conf, eyes, tear_marks):
+def bound_feat(im, bill, bill_conf, eyes, tear_marks):
     if bill is not None:
-        mask = bill_mask(img)
+        mask = bill_mask(im)
         grey = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
         contours, _ = cv2.findContours(grey, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         if len(contours) >= 1 and cv2.contourArea(contours[0]) > 0:
@@ -173,13 +173,13 @@ def match_labels(target, labels, dist):
 
 
 # remove overlapping labels and return best n labels
-def process_labels(labels, n, img_shape):
+def process_labels(labels, n, im_shape):
     i = 0
     count = 0
     out_labels = []
     while count < n and i < len(labels):
         label = labels[i]
-        label = [round(label[1+i] * img_shape[1-i]) for i in range(2)]
+        label = [round(label[1+i] * im_shape[1 - i]) for i in range(2)]
         if not match_labels(label, out_labels, 3):
             out_labels.append(label)
             count += 1
@@ -187,13 +187,13 @@ def process_labels(labels, n, img_shape):
     return out_labels
 
 
-def filter_feat(img, det, classes):
+def filter_feat(im, det, classes):
     bill_labels = sorted([label for label in det if label[0] == classes[0] and label[-1] >= 0.1], key=lambda x: x[-1],
                           reverse=True)
     if bill_labels:
         # choose bill with the highest confidence
         bill_label = bill_labels[0]
-        bill = [round(bill_label[1 + i] * img.shape[1 - i]) for i in range(2)]
+        bill = [round(bill_label[1 + i] * im.shape[1 - i]) for i in range(2)]
         bill_conf = bill_label[-1]
     else:
         bill = None
@@ -201,46 +201,46 @@ def filter_feat(img, det, classes):
 
     # sort by confidence
     eyes_labels = sorted([label for label in det if label[0] in classes[1] and label[-1] >= 0.1], key=lambda x: x[-1])
-    eyes = process_labels(eyes_labels, 2, img.shape[:2])
+    eyes = process_labels(eyes_labels, 2, im.shape[:2])
 
     tear_labels = sorted([label for label in det if label[0] in classes[2] and label[-1] >= 0.1], key=lambda x: x[-1])
-    tear_marks = process_labels(tear_labels, 2, img.shape[:2])
-    return sort_feat(*bound_feat(img, bill, bill_conf, eyes, tear_marks))
+    tear_marks = process_labels(tear_labels, 2, im.shape[:2])
+    return sort_feat(*bound_feat(im, bill, bill_conf, eyes, tear_marks))
 
 
-def plot_feat(img, bill, eyes, tear_marks, start=(0, 0)):
+def plot_feat(im, bill, eyes, tear_marks, start=(0, 0)):
     line_colours = [(0, 255, 0), (0, 0, 255)]  # L, R
     if bill is not None:
         bill = [round(start[i]+bill[i]) for i in range(2)]
         for i in range(2):
             eye = eyes[i]
-            if eye:
+            if eye is not None:
                 eye = [round(start[i]+eye[i]) for i in range(2)]
-                cv2.line(img, eye, bill, line_colours[i], 2)
-                cv2.circle(img, eye, 4, (0, 255, 255), -1)
+                cv2.line(im, eye, bill, line_colours[i], 2)
+                cv2.circle(im, eye, 4, (0, 255, 255), -1)
             tear_mark = tear_marks[i]
-            if tear_mark:
+            if tear_mark is not None:
                 tear_mark = [round(start[i]+tear_mark[i]) for i in range(2)]
-                cv2.line(img, tear_mark, bill, line_colours[i], 2)
-                cv2.circle(img, tear_mark, 4, (0, 150, 255), -1)
-        cv2.circle(img, bill, 4, (255, 255, 0), -1)
+                cv2.line(im, tear_mark, bill, line_colours[i], 2)
+                cv2.circle(im, tear_mark, 4, (0, 150, 255), -1)
+        cv2.circle(im, bill, 4, (255, 255, 0), -1)
     else:
         for i in range(2):
             eye = eyes[i]
-            if eye:
+            if eye is not None:
                 eye = [round(start[i]+eye[i]) for i in range(2)]
-                cv2.circle(img, eye, 4, (0, 255, 255), -1)
-                cv2.circle(img, eye, 5, line_colours[i], 2)
+                cv2.circle(im, eye, 4, (0, 255, 255), -1)
+                cv2.circle(im, eye, 5, line_colours[i], 2)
             tear_mark = tear_marks[i]
-            if tear_mark:
+            if tear_mark is not None:
                 tear_mark = [round(start[i]+tear_mark[i]) for i in range(2)]
-                cv2.circle(img, tear_mark, 4, (0, 150, 255), -1)
-                cv2.circle(img, tear_mark, 5, line_colours[i], 2)
-    return img
+                cv2.circle(im, tear_mark, 4, (0, 150, 255), -1)
+                cv2.circle(im, tear_mark, 5, line_colours[i], 2)
+    return im
 
 
-def to_txt(img, bill, eyes, tear_marks, start=(0, 0)):
-    shape = img.shape[:2]
+def to_txt(im, bill, eyes, tear_marks, start=(0, 0)):
+    shape = im.shape[:2]
     if bill is not None:
         bill = [(start[i] + bill[i])/shape[1-i] for i in range(2)]
     for i in range(2):
