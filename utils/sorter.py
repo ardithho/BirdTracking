@@ -3,7 +3,6 @@ import math
 
 from .general import euc_dist, angle, cosine
 from .colour import bill_mask
-from .box import iou
 
 
 # filter eyes and tear marks that is within a distance to the bill tip
