@@ -1,4 +1,5 @@
 import open3d as o3d
+import numpy as np
 from pathlib import Path
 
 
@@ -18,6 +19,10 @@ class Sim:
         self.vis.update_geometry(self.mesh)
         self.vis.poll_events()
         self.vis.update_renderer()
+
+    @property
+    def screen(self):
+        return np.uint8(np.asarray(self.vis.capture_screen_float_buffer(False)) * 255)
 
     def close(self):
         self.vis.destroy_window()

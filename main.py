@@ -80,48 +80,4 @@ cv2.destroyAllWindows()
 sim.close()
 
 
-# with open(cfg_path, 'r') as f:
-#     cfg = yaml.safe_load(f)
-#     k = np.asarray(cfg['kR']).reshape(3, 3)
-#     dist = np.asarray(cfg['distR'])
-#
-# cap = cv2.VideoCapture('data/vid/fps120/K203_K238_1_GH040045.mp4')
-# birds = Birds()
-# prev_frame = None
-# T = np.eye(4)
-# prev_T = np.eye(4)
-#
-# while cap.isOpened():
-#     for i in range(4):
-#         if cap.isOpened():
-#             _ = cap.grab()
-#         else:
-#             break
-#     ret, frame = cap.retrieve()
-#     if ret:
-#         print('Detecting head...')
-#         head = tracker.tracks(frame)[0].boxes.cpu().numpy()
-#         print('Detecting features...')
-#         feat = detect_features(frame, head)
-#         print('Sorting features...')
-#         birds.update([Bird(head, feat) for head, feat in zip(head, feat)], frame)
-#         print('Reconstructing head pose...')
-#         bird = birds['m'] if birds['m'] is not None else birds['f']
-#         if bird is not None:
-#             pnp, r, t, _ = solvePnP(bird, k, dist)
-#             if pnp:
-#                 R, _ = cv2.Rodrigues(r)
-#                 T[:3, :3] = prev_T[:3, :3].T @ R
-#                 # T[:3, 3] = t.T - prev_T[:3, 3]
-#                 prev_T[:3, :3] = R
-#                 # prev_T[:3, 3] = t.T
-#                 sim.update(T)
-#         cv2.imshow('frame', cv2.resize(frame, None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC))
-#
-#         prev_frame = frame
-#         if cv2.waitKey(1) == ord('q'):
-#             break
-#
-# cap.release()
-# cv2.destroyAllWindows()
-# sim.close()
+
