@@ -1,6 +1,5 @@
 import cv2
 import numpy as np
-from fontTools.varLib.interpolatableHelpers import transform_from_stats
 
 from yolov8.predict import Predictor, detect_features
 from yolov8.track import Tracker

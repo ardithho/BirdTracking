@@ -54,7 +54,8 @@ from yolov5.utils.general import (LOGGER, Profile, check_file, check_img_size, c
 from yolov5.utils.plots import Annotator, colors, save_one_box, xyxy2save
 from yolov5.utils.torch_utils import select_device, smart_inference_mode
 from yolov5.utils.augmentations import letterbox
-from utils.general import filter_feat, plot_feat, to_txt
+from utils.sorter import filter_feat, to_txt
+from utils.plot import plot_feat
 
 
 @smart_inference_mode()

@@ -1,5 +1,5 @@
-import numpy as np
-from utils.sorter import sort_feat, plot_feat, to_dict, process_labels
+from utils.sorter import sort_feat, to_dict, process_labels
+from utils.plot import *
 from utils.colour import cheek_mask, mask_ratio
 from utils.box import iou
 
@@ -140,10 +140,12 @@ class Birds:
 
     def plot(self, frame):
         if self['m'] is not None:
+            frame = plot_box(frame, self['m'].xyxy, (255, 0, 0))
             frame = plot_feat(frame, self['m'].feats['bill'],
                               [self['m'].feats['left_eye'], self['m'].feats['right_eye']],
                               [self['m'].feats['left_tear'], self['m'].feats['right_tear']])
         if self['f'] is not None:
+            frame = plot_box(frame, self['f'].xyxy, (255, 0, 255))
             frame = plot_feat(frame, self['f'].feats['bill'],
                               [self['f'].feats['left_eye'], self['f'].feats['right_eye']],
                               [self['f'].feats['left_tear'], self['f'].feats['right_tear']])

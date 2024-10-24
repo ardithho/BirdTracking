@@ -12,8 +12,8 @@ class Tracker:
     def track(self, **kwargs):
         self.model.track(**kwargs)
 
-    def tracks(self, source, save=False, stream=True, persist=True, verbose=False, **kwargs):
-        return list(self.model.track(source, save=save, stream=stream, persist=persist, verbose=verbose, **kwargs))
+    def tracks(self, source, save=False, stream=True, persist=True, verbose=False, iou=0.4, **kwargs):
+        return list(self.model.track(source, save=save, stream=stream, persist=persist, verbose=verbose, iou=iou, **kwargs))
 
 
 def run(
