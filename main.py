@@ -1,5 +1,4 @@
 import cv2
-import numpy as np
 
 from yolov8.predict import Predictor, detect_features
 from yolov8.track import Tracker
