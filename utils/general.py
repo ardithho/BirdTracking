@@ -284,12 +284,11 @@ def ptInCircle(p, D):
 
 
 def angle(pivot, point):
-    if point[0] == pivot[0]:
-        return 3*math.pi/2 if point[1] < pivot[1] else math.pi/2
-    ratio = (point[1] - pivot[1]) / (point[0] - pivot[0])
-    rad = math.atan(ratio)
-    if point[1] < pivot[1]:
-        rad += math.pi
-    if len([1 for i in range(2) if point[i] < pivot[i]]) == 1:
-        rad += math.pi
-    return rad
+    return np.arctan2(*(point - pivot))
+
+
+# cosine similarity
+def cosine(pivot, p1, p2):
+    v1 = p1 - pivot
+    v2 = p2 - pivot
+    return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))

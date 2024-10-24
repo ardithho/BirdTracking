@@ -25,5 +25,4 @@ def triangulate(birdL, birdR, stereo):
     feat_ptsL = np.array([birdL.feats[k] for k in visible]).T
     feat_ptsR = np.array([birdR.feats[k] for k in visible]).T
     feat_pts = cv2.triangulatePoints(stereo.camL.p, stereo.camR.p, feat_ptsL, feat_ptsR)
-    print(cv2.convertPointsFromHomogeneous(feat_pts.T))
     return cv2.estimateAffine3D(head_pts, cv2.convertPointsFromHomogeneous(feat_pts.T))

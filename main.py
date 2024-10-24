@@ -1,4 +1,6 @@
 import cv2
+import numpy as np
+from fontTools.varLib.interpolatableHelpers import transform_from_stats
 
 from yolov8.predict import Predictor, detect_features
 from yolov8.track import Tracker
@@ -34,6 +36,7 @@ birdsR = Birds()
 prev_frames = None
 T = np.eye(4)
 prev_T = np.eye(4)
+sim.update(T)
 while capL.isOpened() and capR.isOpened():
     for i in range(STRIDE):
         _ = capL.grab()
@@ -43,22 +46,19 @@ while capL.isOpened() and capR.isOpened():
     retL, frameL = capL.retrieve()
     retR, frameR = capR.retrieve()
     if retL and retR:
-        print('Detecting heads...')
         headL = tracker.tracks(frameL)[0].boxes.cpu().numpy()
         headR = tracker.tracks(frameR)[0].boxes.cpu().numpy()
-        print('Detecting features...')
         featL = detect_features(frameL, headL)
         featR = detect_features(frameR, headR)
-        print('Sorting features...')
         birdsL.update([Bird(head, feat) for head, feat in zip(headL, featL)], frameL)
         birdsR.update([Bird(head, feat) for head, feat in zip(headR, featR)], frameR)
 
         birdL = birdsL['m'] if birdsL['m'] is not None else birdsL['f']
         birdR = birdsR['m'] if birdsR['m'] is not None else birdsR['f']
         if birdL is not None and birdR is not None:
-            print('Reconstructing head pose...')
             tri, transform, _ = triangulate(birdL, birdR, stereo)
             if tri:
+                print(transform)
                 R = transform[:3, :3]
                 T[:3, :3] = prev_T[:3, :3].T @ R
                 # T[:3, 3] = t.T - prev_T[:3, 3]
@@ -68,7 +68,11 @@ while capL.isOpened() and capR.isOpened():
         display = cv2.hconcat([cv2.resize(birdsL.plot(frameL), None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC),
                                cv2.resize(birdsR.plot(frameR), None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC)])
         cv2.imshow('display', display)
-        cv2.waitKey(1)
+        key = cv2.waitKey(1)
+        if key == ord('q'):
+            break
+        elif key == ord('s'):
+            cv2.waitKey(0)
         prev_frames = {'l': frameL, 'r': frameR}
 
 capL.release()

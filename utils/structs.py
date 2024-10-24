@@ -1,5 +1,5 @@
 import numpy as np
-from utils.sorter import sort_feat, plot_feat, to_dict
+from utils.sorter import sort_feat, plot_feat, to_dict, process_labels
 from utils.colour import cheek_mask, mask_ratio
 from utils.box import iou
 
@@ -7,8 +7,8 @@ from utils.box import iou
 CLS_DICT = {'bill': 0,
             'left_eye': 1,
             'left_tear': 2,
-            'right_eye': 3,
-            'right_tear': 4}
+            'right_eye': 4,
+            'right_tear': 5}
 
 FEAT_DICT = {'bill': CLS_DICT['bill'],
              'eyes': [CLS_DICT['left_eye'], CLS_DICT['right_eye']],
@@ -54,8 +54,8 @@ class Bird:
     def sort(self):
         bill = [feat.xy for feat in self.featsUnsorted if feat.cls == FEAT_DICT['bill']]
         bill = bill[0] if len(bill) > 0 else None
-        eyes = [feat.xy for feat in self.featsUnsorted if feat.cls in FEAT_DICT['eyes']]
-        tear_marks = [feat.xy for feat in self.featsUnsorted if feat.cls in FEAT_DICT['tear_marks']]
+        eyes = process_labels([feat.xy for feat in self.featsUnsorted if feat.cls in FEAT_DICT['eyes']], 2)
+        tear_marks = process_labels([feat.xy for feat in self.featsUnsorted if feat.cls in FEAT_DICT['tear_marks']], 2)
         return to_dict(*sort_feat(bill, eyes, tear_marks))
 
 

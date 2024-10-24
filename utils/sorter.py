@@ -1,6 +1,9 @@
 import cv2
 import math
-from .general import euc_dist, angle
+
+from sympy.integrals.risch import NonElementaryIntegral
+
+from .general import euc_dist, angle, cosine
 from .colour import bill_mask
 
 
@@ -62,11 +65,7 @@ def bound_feat(im, bill, bill_conf, eyes, tear_marks):
 def sort_lr(pivot, eye, tear_mark):
     eye_angle = angle(pivot, eye)
     tear_angle = angle(pivot, tear_mark)
-    if abs(tear_angle - eye_angle) < math.pi:
-        if tear_angle >= eye_angle:
-            return 'left'
-        return 'right'
-    if tear_angle < eye_angle:
+    if (eye_angle-tear_angle) % (2*math.pi) < math.pi:
         return 'left'
     return 'right'
 
@@ -80,7 +79,7 @@ def sort_feat(bill, eyes, tear_marks):
         eyes = [None, None]
         if len(tear_marks) == 1:
             if bill is not None:
-                if tear_marks[0][0] >= bill[0]:
+                if angle(bill, tear_marks[0]) >= 0:
                     tear_marks.append(None)
                 else:
                     tear_marks.insert(0, None)
@@ -88,12 +87,12 @@ def sort_feat(bill, eyes, tear_marks):
                 tear_marks.append(None)
         else:
             if tear_marks[0][0] < tear_marks[1][0]:
-                tear_marks = [tear_marks[1], tear_marks[0]]
+                tear_marks = tear_marks[::-1]
     elif len(tear_marks) == 0:
         tear_marks = [None, None]
         if len(eyes) == 1:
             if bill is not None:
-                if eyes[0][0] >= bill[0]:
+                if angle(bill, eyes[0]) >= 0:
                     eyes.append(None)
                 else:
                     eyes.insert(0, None)
@@ -114,49 +113,73 @@ def sort_feat(bill, eyes, tear_marks):
             eyes.append(None)
             tear_marks.append(None)
     elif len(eyes) > len(tear_marks):
-        if euc_dist(eyes[0], tear_marks[0]) <= euc_dist(eyes[1], tear_marks[0]):
-            pivot = bill if bill is not None else eyes[1]
-            if sort_lr(pivot, eyes[0], tear_marks[0]) == 'left':
-                tear_marks.append(None)
+        if bill is not None:
+            if cosine(bill, eyes[0], tear_marks[0]) >= cosine(bill, eyes[1], tear_marks[0]):
+                if sort_lr(bill, eyes[0], tear_marks[0]) == 'left':
+                    tear_marks.append(None)
+                else:
+                    eyes = eyes[::-1]
+                    tear_marks.insert(0, None)
             else:
-                eyes = [eyes[1], eyes[0]]
-                tear_marks.insert(0, None)
+                if sort_lr(bill, eyes[1], tear_marks[0]) == 'left':
+                    eyes = eyes[::-1]
+                    tear_marks.append(None)
+                else:
+                    tear_marks.insert(0, None)
         else:
-            pivot = bill if bill is not None else eyes[0]
-            if sort_lr(pivot, eyes[1], tear_marks[0]) == 'left':
-                eyes = [eyes[1], eyes[0]]
-                tear_marks.append(None)
+            if euc_dist(eyes[0], tear_marks[0]) <= euc_dist(eyes[1], tear_marks[0]):
+                if sort_lr(eyes[1], eyes[0], tear_marks[0]) == 'left':
+                    tear_marks.append(None)
+                else:
+                    eyes = eyes[::-1]
+                    tear_marks.insert(0, None)
             else:
-                tear_marks.insert(0, None)
+                if sort_lr(eyes[0], eyes[1], tear_marks[0]) == 'left':
+                    eyes = eyes[::-1]
+                    tear_marks.append(None)
+                else:
+                    tear_marks.insert(0, None)
     elif len(eyes) < len(tear_marks):
-        if euc_dist(eyes[0], tear_marks[0]) <= euc_dist(eyes[0], tear_marks[1]):
-            pivot = bill if bill is not None else tear_marks[1]
-            if sort_lr(pivot, eyes[0], tear_marks[0]) == 'left':
-                eyes.append(None)
+        if bill is not None:
+            if cosine(bill, eyes[0], tear_marks[0]) >= cosine(bill, eyes[0], tear_marks[1]):
+                if sort_lr(bill, eyes[0], tear_marks[0]) == 'left':
+                    eyes.append(None)
+                else:
+                    tear_marks = tear_marks[::-1]
+                    eyes.insert(0, None)
             else:
-                tear_marks = [tear_marks[1], tear_marks[0]]
-                eyes.insert(0, None)
+                if sort_lr(bill, eyes[0], tear_marks[1]) == 'left':
+                    tear_marks = tear_marks[::-1]
+                    eyes.append(None)
+                else:
+                    eyes.insert(0, None)
         else:
-            pivot = bill if bill is not None else tear_marks[0]
-            if sort_lr(pivot, eyes[0], tear_marks[1]) == 'left':
-                tear_marks = [tear_marks[1], tear_marks[0]]
-                eyes.append(None)
+            if euc_dist(eyes[0], tear_marks[0]) <= euc_dist(eyes[0], tear_marks[1]):
+                if sort_lr(tear_marks[1], eyes[0], tear_marks[0]) == 'left':
+                    eyes.append(None)
+                else:
+                    tear_marks = tear_marks[::-1]
+                    eyes.insert(0, None)
             else:
-                eyes.insert(0, None)
+                if sort_lr(tear_marks[0], eyes[0], tear_marks[1]) == 'left':
+                    tear_marks = tear_marks[::-1]
+                    eyes.append(None)
+                else:
+                    eyes.insert(0, None)
     else:  # full set
         if all([euc_dist(eyes[0], tear_marks[i]) < euc_dist(eyes[1], tear_marks[i]) for i in range(2)]):
             if euc_dist(eyes[1], tear_marks[0]) < euc_dist(eyes[1], tear_marks[1]):
-                tear_marks = [tear_marks[1], tear_marks[0]]
+                tear_marks = tear_marks[::-1]
         elif all([euc_dist(eyes[1], tear_marks[i]) < euc_dist(eyes[0], tear_marks[i]) for i in range(2)]):
             if euc_dist(eyes[0], tear_marks[1]) < euc_dist(eyes[0], tear_marks[0]):
-                tear_marks = [tear_marks[1], tear_marks[0]]
+                tear_marks = tear_marks[::-1]
         elif euc_dist(eyes[0], tear_marks[1]) < euc_dist(eyes[0], tear_marks[0]):
-            tear_marks = [tear_marks[1], tear_marks[0]]
+            tear_marks = tear_marks[::-1]
         pivotL = bill if bill is not None else eyes[1]
         pivotR = bill if bill is not None else eyes[0]
         if sort_lr(pivotL, eyes[0], tear_marks[0]) == 'right' and sort_lr(pivotR, eyes[1], tear_marks[1]) == 'left':
-            eyes = [eyes[1], eyes[0]]
-            tear_marks = [tear_marks[1], tear_marks[0]]
+            eyes = eyes[::-1]
+            tear_marks = tear_marks[::-1]
     return bill, eyes, tear_marks
 
 
@@ -173,13 +196,14 @@ def match_labels(target, labels, dist):
 
 
 # remove overlapping labels and return best n labels
-def process_labels(labels, n, im_shape):
+def process_labels(labels, n, im_shape=None):
     i = 0
     count = 0
     out_labels = []
     while count < n and i < len(labels):
         label = labels[i]
-        label = [round(label[1+i] * im_shape[1 - i]) for i in range(2)]
+        if im_shape is not None:
+            label = [round(label[1+i] * im_shape[1-i]) for i in range(2)]
         if not match_labels(label, out_labels, 3):
             out_labels.append(label)
             count += 1
