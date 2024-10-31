@@ -1,3 +1,5 @@
+import numpy as np
+
 from utils.sorter import sort_feat, to_dict, process_labels
 from utils.plot import *
 from utils.colour import cheek_mask, mask_ratio
@@ -57,6 +59,12 @@ class Bird:
         eyes = process_labels([feat.xy for feat in self.featsUnsorted if feat.cls in FEAT_DICT['eyes']], 2)
         tear_marks = process_labels([feat.xy for feat in self.featsUnsorted if feat.cls in FEAT_DICT['tear_marks']], 2)
         return to_dict(*sort_feat(bill, eyes, tear_marks))
+
+    def mask(self, im_shape):
+        mask = np.zeros(im_shape, dtype=np.uint8)
+        x1, y1, x2, y2 = np.rint(self.xyxyn.reshape((2, 2)) * im_shape[::-1]).astype(np.uint32).flatten()
+        mask[y1:y2, x1:x2] = 255
+        return mask
 
 
 class Birds:

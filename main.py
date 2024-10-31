@@ -73,6 +73,8 @@ while capL.isOpened() and capR.isOpened():
         elif key == ord('s'):
             cv2.waitKey(0)
         prev_frames = {'l': frameL, 'r': frameR}
+    else:
+        break
 
 capL.release()
 capR.release()
