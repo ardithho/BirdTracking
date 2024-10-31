@@ -20,9 +20,18 @@ class Sim:
         self.vis.poll_events()
         self.vis.update_renderer()
 
+    def flip(self):
+        T = np.eye(4)
+        rad = 180 * np.pi / 180
+        T[0, 0] = np.cos(rad)
+        T[0, 2] = np.sin(rad)
+        T[2, 0] = -np.sin(rad)
+        T[2, 2] = np.cos(rad)
+        self.update(T)
+
     @property
     def screen(self):
-        return np.uint8(np.asarray(self.vis.capture_screen_float_buffer(False)) * 255)
+        return np.uint8(np.asarray(self.vis.capture_screen_float_buffer(False)) * 255)[46:-46]
 
     def close(self):
         self.vis.destroy_window()
