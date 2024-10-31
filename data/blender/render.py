@@ -1,5 +1,7 @@
 import bpy
 import os
+
+import cv2
 import yaml
 import numpy as np
 from pathlib import Path
@@ -50,6 +52,7 @@ for i in range(100):
     bpy.ops.render.render(write_still=True, use_viewport=True)
 
     T[:3, 3] = np.random.rand(3) * 0.005
-    T[:3, :3] = R.from_euler('xyz', np.random.randint(0, 5, 3), degrees=True).as_matrix()
+    # T[:3, :3] = R.from_euler('zyx', np.random.randint(0, 5, 3), degrees=True).as_matrix()
+    T[:3, :3] = cv2.Rodrigues(np.random.randint(0, 5, 3)*np.pi/180)[0]
 
 f.close()
