@@ -10,6 +10,7 @@ out_path = os.path.join(output_dir, 'render.mp4')
 w, h = (1920, 1080)
 writer = cv2.VideoWriter(out_path, cv2.VideoWriter_fourcc(*'MPEG'), 10, (w, h))
 renders = os.listdir(input_dir)
+renders.sort()
 with open(os.path.join(input_dir, 'transforms.txt'), 'r') as f:
     lines = f.readlines()
     transforms = [np.array(list(map(float, line.strip().split()[1:]))).reshape((4, 4)) for line in lines]

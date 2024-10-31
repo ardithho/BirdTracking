@@ -1,11 +1,13 @@
 import bpy
 import os
 import numpy as np
+from pathlib import Path
 from mathutils import Matrix
 from scipy.spatial.transform import Rotation as R
 
 
-output_dir = '/data/blender/renders'
+parent_dir = Path(__file__).parent.parent
+output_dir = os.path.join(parent_dir, 'renders')
 f = open(os.path.join(output_dir, 'transforms.txt'), 'w')
 
 bpy.ops.object.select_all(action='DESELECT')
@@ -19,7 +21,7 @@ head = bpy.context.active_object
 T = np.eye(4)
 for i in range(100):
     T[:3, 3] = np.random.rand(3) * 0.005
-    T[:3, :3] = R.from_euler('xyz', np.random.randint(0, 10, 3), degrees=True).as_matrix()
+    T[:3, :3] = R.from_euler('xyz', np.random.randint(0, 5, 3), degrees=True).as_matrix()
     print(T)
     f.write(' '.join([str(i+1), *map(str, T.flatten())]) + '\n')
     head.matrix_world @= Matrix(T)
