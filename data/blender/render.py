@@ -12,6 +12,8 @@ from scipy.spatial.transform import Rotation as R
 parent_dir = Path(__file__).parent.parent
 output_dir = os.path.join(parent_dir, 'renders')
 
+os.makedirs(output_dir, exist_ok=True)
+
 cam = bpy.data.objects["Camera"].data
 scene = bpy.context.scene
 assert scene.render.resolution_percentage == 100
