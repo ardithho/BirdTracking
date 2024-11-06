@@ -50,7 +50,7 @@ for i in range(100):
     f.write(' '.join([str(i+1), *map(str, T.flatten())]) + '\n')
     head.matrix_world @= Matrix(T)
     bpy.ops.object.transform_apply(location=True, rotation=True, scale=False)
-    bpy.context.scene.render.filepath = os.path.join(output_dir, '%03d.jpg' % (i+1))
+    scene.render.filepath = os.path.join(output_dir, '%03d.jpg' % (i+1))
     bpy.ops.render.render(write_still=True, use_viewport=True)
 
     T[:3, 3] = np.random.rand(3) * 0.005
