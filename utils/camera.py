@@ -78,12 +78,14 @@ class Stereo:
         if path is not None:
             with open(path, 'r') as f:
                 cfg = yaml.safe_load(f)
-                self.camL = Camera(cfg['pathL'], skip=skip, flash=cfg['flashL'] if 'flashL' in cfg.keys() else None,
+                self.camL = Camera(cfg['pathL'], skip=skip,
+                                   flash=cfg['flashL'] if 'flashL' in cfg.keys() else None,
                                    k=np.array(cfg['kL']).reshape(3, 3),
                                    dist=np.array(cfg['distL']) if cfg['distL'] in cfg.keys() else None,
                                    ext=np.array(cfg['extL']).reshape(3, 4),
                                    p=np.array(cfg['pL']).reshape(3, 4) if cfg['pL'] in cfg.keys() else None)
-                self.camR = Camera(cfg['pathR'], skip=skip, flash=cfg['flashR'] if 'flashR' in cfg.keys() else None,
+                self.camR = Camera(cfg['pathR'], skip=skip,
+                                   flash=cfg['flashR'] if 'flashR' in cfg.keys() else None,
                                    k=np.array(cfg['kR']).reshape(3, 3),
                                    dist=np.array(cfg['distR']) if 'distR' in cfg.keys() else None,
                                    ext=np.array(cfg['extR']).reshape(3, 4),

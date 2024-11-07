@@ -43,8 +43,10 @@ camR = bpy.data.objects["cam_r"]
 kL, extL = camera_data(camL.data)
 kR, extR = camera_data(camR.data)
 with open(os.path.join(output_dir, 'cam.yaml'), 'w') as f:
-    data = {'kL': kL.flatten().tolist(),
+    data = {'pathL': l_dir,
+            'kL': kL.flatten().tolist(),
             'extL': extL.flatten().tolist(),
+            'pathR': r_dir,
             'kR': kR.flatten().tolist(),
             'extR': extR.flatten().tolist()}
     f.write(yaml.dump(data, sort_keys=False))
