@@ -23,7 +23,10 @@ class Camera:
         self.k = k
         self.dist = dist if dist is not None else np.zeros(5)
         self.ext = np.concatenate([np.eye(3), np.zeros((3, 1))], axis=1) if ext is None else ext
-        self.p = p
+        if p is None and self.k is not None:
+            self.p = self.k @ self.ext
+        else:
+            self.p = p
 
     def first_flash(self, kernel_size=5):
         print('Detecting camera flash...')
