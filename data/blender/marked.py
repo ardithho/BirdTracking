@@ -11,8 +11,8 @@ from scipy.spatial.transform import Rotation as R
 
 parent_dir = Path(__file__).parent.parent
 output_dir = os.path.join(parent_dir, 'marked')
-l_dir = output_dir / 'l'
-r_dir = output_dir / 'r'
+l_dir = os.path.join(output_dir, 'l')
+r_dir = os.path.join(output_dir, 'r')
 os.makedirs(l_dir, exist_ok=True)
 os.makedirs(r_dir, exist_ok=True)
 
@@ -34,6 +34,8 @@ def camera_data(cam):
     # and shift_y is still a percentage of width
     cy = h * 0.5 + w * cam.shift_y
     k = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]])
+    cam_loc = bpy.data.objects["Camera"].location
+    cam_rot = bpy.data.objects["Camera"].rotation_euler
     ext = np.asarray(cam.matrix_world)[:3, :]
     return k, ext
 
