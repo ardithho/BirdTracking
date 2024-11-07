@@ -1,7 +1,7 @@
 import cv2
 import math
 
-from .general import euc_dist, angle, cosine
+from .general import euc_dist, angle, cosine, cnt_centroid
 from .colour import bill_mask
 
 
@@ -14,8 +14,7 @@ def bound_feat(im, bill, bill_conf, eyes, tear_marks):
         contours, _ = cv2.findContours(grey, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         if len(contours) >= 1 and cv2.contourArea(contours[0]) > 0:
             cnt = contours[0]
-            M = cv2.moments(cnt)
-            centroid = (int(M['m10'] / M['m00']), int(M['m01'] / M['m00']))
+            centroid = cnt_centroid(cnt)
 
             # bounding rect for features to be included
             ratio = 3
@@ -84,7 +83,8 @@ def sort_feat(bill, eyes, tear_marks):
             else:
                 tear_marks.append(None)
         else:
-            if tear_marks[0][0] < tear_marks[1][0]:
+            if (bill is not None and sort_lr(bill, *tear_marks) == 'right') or (bill is None and tear_marks[0][0] < tear_marks[1][0]):
+            # if tear_marks[0][0] < tear_marks[1][0]:
                 tear_marks = tear_marks[::-1]
     elif len(tear_marks) == 0:
         tear_marks = [None, None]
@@ -97,8 +97,9 @@ def sort_feat(bill, eyes, tear_marks):
             else:
                 eyes.append(None)
         else:
-            if eyes[0][0] < eyes[1][0]:
-                eyes = [eyes[1], eyes[0]]
+            if (bill is not None and sort_lr(bill, *eyes) == 'left') or (bill is None and eyes[0][0] < eyes[1][0]):
+            # if eyes[0][0] < eyes[1][0]:
+                eyes = eyes[::-1]
     elif len(eyes) == 1 and len(tear_marks) == 1:
         if bill is not None:
             if sort_lr(bill, eyes[0], tear_marks[0]) == 'left':
@@ -194,7 +195,7 @@ def match_labels(target, labels, dist):
 
 
 # remove overlapping labels and return best n labels
-def process_labels(labels, n, im_shape=None):
+def process_labels(labels, n, dist=3, im_shape=None):
     i = 0
     count = 0
     out_labels = []
@@ -202,7 +203,7 @@ def process_labels(labels, n, im_shape=None):
         label = labels[i]
         if im_shape is not None:
             label = [round(label[1+i] * im_shape[1-i]) for i in range(2)]
-        if not match_labels(label, out_labels, 3):
+        if not match_labels(label, out_labels, dist):
             out_labels.append(label)
             count += 1
         i += 1

@@ -2,6 +2,9 @@ import open3d as o3d
 import numpy as np
 import cv2
 from pathlib import Path
+
+from utils.general import cnt_centroid
+from .sorter import process_labels
 from .colour import bgr_mask
 from .structs import CLS_DICT
 from .box import Box
@@ -32,6 +35,7 @@ class Sim:
         T[2, 0] = -np.sin(rad)
         T[2, 2] = np.cos(rad)
         self.update(T)
+        return T
 
     @property
     def screen(self):
@@ -49,11 +53,10 @@ def extract_feature(im, colour, n, cls):
     mask = bgr_mask(im, colour)
     contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     if len(contours) >= 1:
-        contours = [cnt for cnt in contours if cv2.contourArea(cnt) > 0]
-        for i in range(min(n, len(contours))):
-            cnt = contours[i]
-            M = cv2.moments(cnt)
-            centroid = np.array((int(M['m10'] / M['m00']), int(M['m01'] / M['m00'])))  # x, y
+        centroids = [cnt_centroid(cnt) for cnt in contours if cv2.contourArea(cnt) > 0]
+        centroids = process_labels(centroids, n, dist=10)
+        for i in range(min(n, len(centroids))):
+            centroid = centroids[i]
             xywh = np.array([[*centroid, 0., 0.]])
             xywhn = np.array([[*centroid*im.shape[1::-1], 0., 0.]])
             feat = Box(cls, conf=1., xywh=xywh, xywhn=xywhn)

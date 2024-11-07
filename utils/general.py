@@ -283,6 +283,11 @@ def ptInCircle(p, D):
     return False
 
 
+def cnt_centroid(cnt):
+    M = cv2.moments(cnt)
+    return np.array((int(M['m10'] / M['m00']), int(M['m01'] / M['m00'])))  # x, y
+
+
 def angle(pivot, point):
     return np.arctan2(*(point - pivot))
 

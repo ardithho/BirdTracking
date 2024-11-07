@@ -111,7 +111,7 @@ def colour_mask(im, kernel_size=5):
 
 def bgr_mask(im, colour):
     hue = bgr2hsv(colour)[0]
-    return hue_mask(im, hue//2, v=150)
+    return hue_mask(im, hue//2, v=50)
 
 
 def hue_mask(im, hue, s=200, v=200):
