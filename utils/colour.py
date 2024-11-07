@@ -111,11 +111,11 @@ def colour_mask(im, kernel_size=5):
 
 def bgr_mask(im, colour):
     hue = bgr2hsv(colour)[0]
-    return hue_mask(im, hue)
+    return hue_mask(im, hue//2, v=150)
 
 
-def hue_mask(im, hue):
-    low = np.array([hue - 3, 200, 200])
+def hue_mask(im, hue, s=200, v=200):
+    low = np.array([hue - 3, s, v])
     high = np.array([hue + 3, 255, 255])
     hsv = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv, low, high)
