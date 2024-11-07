@@ -8,8 +8,12 @@ input_dir = os.path.join(parent_dir, 'marked')
 l_dir = os.path.join(input_dir, 'l')
 r_dir = os.path.join(input_dir, 'r')
 out_path = os.path.join(output_dir, 'marked.mp4')
-w, h = (1920*2, 1080)
-writer = cv2.VideoWriter(out_path, cv2.VideoWriter_fourcc(*'MPEG'), 10, (w, h))
+l_out_path = os.path.join(output_dir, 'marked_l.mp4')
+r_out_path = os.path.join(output_dir, 'marked_r.mp4')
+w, h = (1920, 1080)
+writer = cv2.VideoWriter(out_path, cv2.VideoWriter_fourcc(*'MPEG'), 10, (w*2, h))
+writer_l = cv2.VideoWriter(l_out_path, cv2.VideoWriter_fourcc(*'MPEG'), 10, (w, h))
+writer_r = cv2.VideoWriter(r_out_path, cv2.VideoWriter_fourcc(*'MPEG'), 10, (w, h))
 l_renders = [x for x in os.listdir(l_dir) if x.endswith('.png') or x.endswith('.jpg')]
 l_renders.sort()
 r_renders = [x for x in os.listdir(r_dir) if x.endswith('.png') or x.endswith('.jpg')]
@@ -20,6 +24,8 @@ for l_render, r_render in zip(l_renders, r_renders):
     r_render = cv2.imread(os.path.join(r_dir, r_render))
     render = cv2.hconcat([l_render, r_render])
     writer.write(render)
+    writer_l.write(l_render)
+    writer_r.write(r_render)
 
 writer.release()
 cv2.destroyAllWindows()

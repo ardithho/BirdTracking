@@ -17,7 +17,7 @@ def extract_boxes(boxes):
 
 
 class Box:
-    def __init__(self, cls, conf, id, xywh, xywhn, xyxy, xyxyn):
+    def __init__(self, cls, conf=0., id=None, xywh=None, xywhn=None, xyxy=None, xyxyn=None):
         self.cls = cls
         self.conf = conf
         self.id = id
@@ -25,5 +25,5 @@ class Box:
         self.xywhn = xywhn
         self.xyxy = xyxy
         self.xyxyn = xyxyn
-        self.area = xywh[2] * xywh[3]
-        self.arean = xywhn[2] * xywhn[3]
+        # self.area = xywh[2] * xywh[3]
+        # self.arean = xywhn[2] * xywhn[3]

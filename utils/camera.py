@@ -21,7 +21,7 @@ class Camera:
             self.mpts = []
             self.mpts_ = []
         self.k = k
-        self.dist = dist if dist is not None else np.zeros(5)
+        self.dist = dist
         self.ext = np.concatenate([np.eye(3), np.zeros((3, 1))], axis=1) if ext is None else ext
         if p is None and self.k is not None:
             self.p = self.k @ self.ext
@@ -81,15 +81,15 @@ class Stereo:
                 self.camL = Camera(cfg['pathL'], skip=skip,
                                    flash=cfg['flashL'] if 'flashL' in cfg.keys() else None,
                                    k=np.array(cfg['kL']).reshape(3, 3),
-                                   dist=np.array(cfg['distL']) if cfg['distL'] in cfg.keys() else None,
+                                   dist=np.array(cfg['distL']) if 'distL' in cfg.keys() else None,
                                    ext=np.array(cfg['extL']).reshape(3, 4),
-                                   p=np.array(cfg['pL']).reshape(3, 4) if cfg['pL'] in cfg.keys() else None)
+                                   p=np.array(cfg['pL']).reshape(3, 4) if 'pL' in cfg.keys() else None)
                 self.camR = Camera(cfg['pathR'], skip=skip,
                                    flash=cfg['flashR'] if 'flashR' in cfg.keys() else None,
                                    k=np.array(cfg['kR']).reshape(3, 3),
                                    dist=np.array(cfg['distR']) if 'distR' in cfg.keys() else None,
                                    ext=np.array(cfg['extR']).reshape(3, 4),
-                                   p=np.array(cfg['pR']).reshape(3, 4) if cfg['pR'] in cfg.keys() else None)
+                                   p=np.array(cfg['pR']).reshape(3, 4) if 'pR' in cfg.keys() else None)
                 self.R = np.asarray(cfg['R']).reshape(3, 3) if 'R' in cfg.keys() else None
                 self.T = np.asarray(cfg['T']).reshape(3, 1) if 'T' in cfg.keys() else None
                 self.E = np.asarray(cfg['E']).reshape(3, 3) if 'E' in cfg.keys() else None

@@ -1,6 +1,9 @@
 import open3d as o3d
 import numpy as np
+import cv2
 from pathlib import Path
+from .colour import bgr_mask
+from .structs import CLS_DICT
 from .box import Box
 
 
@@ -41,8 +44,28 @@ class Sim:
 sim = Sim()
 
 
+def extract_feature(im, colour, n, cls):
+    out = []
+    mask = bgr_mask(im, colour)
+    contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    if len(contours) >= 1:
+        contours = [cnt for cnt in contours if cv2.contourArea(cnt) > 0]
+        for i in range(min(n, len(contours))):
+            cnt = contours[i]
+            M = cv2.moments(cnt)
+            centroid = np.array((int(M['m10'] / M['m00']), int(M['m01'] / M['m00'])))  # x, y
+            xywh = np.array([[*centroid, 0., 0.]])
+            xywhn = np.array([[*centroid*im.shape[1::-1], 0., 0.]])
+            feat = Box(cls, conf=1., xywh=xywh, xywhn=xywhn)
+            out.append(feat)
+    return out
+
+
 def extract_features(im, colour_bill=(255, 0, 0), colour_eye=(255, 255, 0), colour_tear=(0, 255, 0)):
-    pass
+    bill = extract_feature(im, colour_bill, 1, CLS_DICT['bill'])
+    eyes = extract_feature(im, colour_eye, 2, CLS_DICT['left_eye'])
+    tear_marks = extract_feature(im, colour_tear, 2, CLS_DICT['left_tear'])
+    return [*bill, *eyes, *tear_marks]
 
 
 if __name__ == '__main__':
