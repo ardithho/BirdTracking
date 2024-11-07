@@ -32,6 +32,8 @@ def extrinsic_mat(cam):
 
     # Use matrix_world instead to account for all constraints
     location, rotation = cam.matrix_world.decompose()[0:2]
+    # location = cam.location
+    # rotation = cam.rotation_euler
     R_world2bcam = rotation.to_matrix().transposed()
 
     # Convert camera location to translation vector used in coordinate changes
@@ -52,14 +54,15 @@ def extrinsic_mat(cam):
 
 
 def camera_data(cam):
-    f_in_mm = cam.lens
+    data = cam.data
+    f_in_mm = data.lens
     resolution_x_in_px = scene.render.resolution_x
     resolution_y_in_px = scene.render.resolution_y
     scale = scene.render.resolution_percentage / 100
-    sensor_width_in_mm = cam.sensor_width
-    sensor_height_in_mm = cam.sensor_height
+    sensor_width_in_mm = data.sensor_width
+    sensor_height_in_mm = data.sensor_height
     pixel_aspect_ratio = scene.render.pixel_aspect_x / scene.render.pixel_aspect_y
-    if (cam.sensor_fit == 'VERTICAL'):
+    if (data.sensor_fit == 'VERTICAL'):
         # the sensor height is fixed (sensor fit is horizontal),
         # the sensor width is effectively changed with the pixel aspect ratio
         s_u = resolution_x_in_px * scale / sensor_width_in_mm / pixel_aspect_ratio
@@ -91,8 +94,8 @@ def camera_data(cam):
 
 camL = bpy.data.objects["cam_l"]
 camR = bpy.data.objects["cam_r"]
-kL, extL = camera_data(camL.data)
-kR, extR = camera_data(camR.data)
+kL, extL = camera_data(camL)
+kR, extR = camera_data(camR)
 with open(os.path.join(output_dir, 'cam.yaml'), 'w') as f:
     data = {'pathL': l_dir,
             'kL': kL.flatten().tolist(),

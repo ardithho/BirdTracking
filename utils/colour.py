@@ -19,6 +19,10 @@ def bgr2rgb(colour):
     return [colour[2], colour[1], colour[0]]
 
 
+def bgr2hsv(colour):
+    return cv2.cvtColor(np.array([[colour]], dtype=np.float32), cv2.COLOR_BGR2HSV)[0, 0]
+
+
 def normalise_hsv(arr):
     norm = arr.copy()
     for i in range(len(norm)):
@@ -106,8 +110,8 @@ def colour_mask(im, kernel_size=5):
 
 
 def bgr_mask(im, colour, kernel_size=5):
-    hsv = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
-    colour_hsv = cv2.cvtColor(colour, cv2.COLOR_BGR2HSV)
+    hue = bgr2hsv(colour)[0]
+    return hue_mask(im, hue)
 
 
 def hue_mask(im, hue):
