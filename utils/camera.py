@@ -204,4 +204,4 @@ if __name__ == '__main__':
 
     # sync videos and calibrate cameras
     stereo = Stereo(vidL=vidL, vidR=vidR, stride=STRIDE)
-    stereo.save(ROOT / 'data/calibrate/cfg.yaml')
+    stereo.save(ROOT / 'data/calibrate/cam.yaml')
