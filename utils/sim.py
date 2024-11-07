@@ -1,6 +1,7 @@
 import open3d as o3d
 import numpy as np
 from pathlib import Path
+from .box import Box
 
 
 ROOT = Path(__file__).parent.parent
@@ -38,6 +39,10 @@ class Sim:
 
 
 sim = Sim()
+
+
+def extract_features(im, colour_bill=(255, 0, 0), colour_eye=(255, 255, 0), colour_tear=(0, 255, 0)):
+    pass
 
 
 if __name__ == '__main__':
