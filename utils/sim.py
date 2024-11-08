@@ -20,6 +20,7 @@ class Sim:
         self.vis = o3d.visualization.Visualizer()
         self.vis.create_window()
         self.vis.add_geometry(self.mesh)
+        self.T = np.eye(4)
 
     def update(self, T):
         self.mesh.transform(T)
@@ -28,14 +29,12 @@ class Sim:
         self.vis.update_renderer()
 
     def flip(self):
-        T = np.eye(4)
         rad = 180 * np.pi / 180
-        T[0, 0] = np.cos(rad)
-        T[0, 2] = np.sin(rad)
-        T[2, 0] = -np.sin(rad)
-        T[2, 2] = np.cos(rad)
-        self.update(T)
-        return T
+        self.T[0, 0] = np.cos(rad)
+        self.T[0, 2] = np.sin(rad)
+        self.T[2, 0] = -np.sin(rad)
+        self.T[2, 2] = np.cos(rad)
+        self.update(self.T)
 
     @property
     def screen(self):
