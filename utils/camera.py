@@ -6,27 +6,27 @@ from utils.calibrate import find_corners, get_mask, remap, obj_pts
 
 
 class Camera:
-    def __init__(self, path, skip=0, flash=-1, k=None, dist=None, ext=None, p=None):
+    def __init__(self, path, skip=0, flash=-1, K=None, dist=None, ext=None, P=None):
         self.path = path
         self.cap = cv2.VideoCapture(path)
         self.skip = skip
         self.h = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.w = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.flash = flash
-        if k is None:
+        if K is None:
             self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.skip)
             self.first_flash()
             self.objpts = []
             self.imgpts = []
             self.mpts = []
             self.mpts_ = []
-        self.k = k
+        self.K = K
         self.dist = dist
         self.ext = np.concatenate([np.eye(3), np.zeros((3, 1))], axis=1) if ext is None else ext
-        if p is None and self.k is not None:
-            self.p = self.k @ self.ext
+        if P is None and self.K is not None:
+            self.P = self.K @ self.ext
         else:
-            self.p = p
+            self.P = P
 
     def first_flash(self, kernel_size=5):
         print('Detecting camera flash...')
@@ -62,15 +62,15 @@ class Camera:
         self.mpts_.append(corners.squeeze)
 
     def calibrate(self):
-        _, self.k, self.dist, _, _ = cv2.calibrateCamera(
+        _, self.K, self.dist, _, _ = cv2.calibrateCamera(
             self.objpts, self.imgpts, (self.w, self.h),
             None, None)
 
     def undistort(self, im):
-        return cv2.undistort(im, self.k, self.dist)
+        return cv2.undistort(im, self.K, self.dist)
 
     def undistort_pts(self, pts):
-        return cv2.undistortImagePoints(pts, self.k, self.dist)
+        return cv2.undistortImagePoints(pts, self.K, self.dist)
 
 
 class Stereo:
@@ -80,16 +80,16 @@ class Stereo:
                 cfg = yaml.safe_load(f)
                 self.camL = Camera(cfg['pathL'], skip=skip,
                                    flash=cfg['flashL'] if 'flashL' in cfg.keys() else None,
-                                   k=np.array(cfg['kL']).reshape(3, 3),
+                                   K=np.array(cfg['KL']).reshape(3, 3),
                                    dist=np.array(cfg['distL']) if 'distL' in cfg.keys() else None,
                                    ext=np.array(cfg['extL']).reshape(3, 4),
-                                   p=np.array(cfg['pL']).reshape(3, 4) if 'pL' in cfg.keys() else None)
+                                   P=np.array(cfg['PL']).reshape(3, 4) if 'PL' in cfg.keys() else None)
                 self.camR = Camera(cfg['pathR'], skip=skip,
                                    flash=cfg['flashR'] if 'flashR' in cfg.keys() else None,
-                                   k=np.array(cfg['kR']).reshape(3, 3),
+                                   K=np.array(cfg['KR']).reshape(3, 3),
                                    dist=np.array(cfg['distR']) if 'distR' in cfg.keys() else None,
                                    ext=np.array(cfg['extR']).reshape(3, 4),
-                                   p=np.array(cfg['pR']).reshape(3, 4) if 'pR' in cfg.keys() else None)
+                                   P=np.array(cfg['PR']).reshape(3, 4) if 'PR' in cfg.keys() else None)
                 self.R = np.asarray(cfg['R']).reshape(3, 3) if 'R' in cfg.keys() else None
                 self.T = np.asarray(cfg['T']).reshape(3, 1) if 'T' in cfg.keys() else None
                 self.E = np.asarray(cfg['E']).reshape(3, 3) if 'E' in cfg.keys() else None
@@ -159,31 +159,31 @@ class Stereo:
             self.objpts.append(obj_pts(*sizeL))
 
     def calibrate(self):
-        self.calibrated, self.camL.k, self.camL.dist, self.camR.k, self.camR.dist, self.R, self.T, self.E, self.F \
+        self.calibrated, self.camL.K, self.camL.dist, self.camR.K, self.camR.dist, self.R, self.T, self.E, self.F \
             = cv2.stereoCalibrate(
             self.objpts, self.camL.mpts, self.camR.mpts,
-            self.camL.k, self.camL.dist,
-            self.camR.k, self.camR.dist,
+            self.camL.K, self.camL.dist,
+            self.camR.K, self.camR.dist,
             (self.camL.w, self.camL.h),
             self.R, self.T, self.E, self.F)
-        self.camL.p = self.camL.k @ self.camL.ext
+        self.camL.P = self.camL.K @ self.camL.ext
         self.camR.ext = np.concatenate([self.R, self.T], axis=1)
-        self.camR.p = self.camR.k @ self.camR.ext
+        self.camR.P = self.camR.K @ self.camR.ext
 
     def save(self, path):
         with open(path, 'w') as f:
             data = {'pathL': self.camL.path,
-                    'kL': self.camL.k.flatten().tolist(),
+                    'KL': self.camL.K.flatten().tolist(),
                     'distL': self.camL.dist.flatten().tolist(),
                     'extL': self.camL.ext.flatten().tolist(),
-                    'pL': self.camL.p.flatten().tolist(),
+                    'PL': self.camL.P.flatten().tolist(),
                     'flashL': self.camL.flash,
                     'offsetL': self.offsetL,
                     'pathR': self.camR.path,
-                    'kR': self.camR.k.flatten().tolist(),
+                    'KR': self.camR.K.flatten().tolist(),
                     'distR': self.camR.dist.flatten().tolist(),
                     'extR': self.camR.ext.flatten().tolist(),
-                    'pR': self.camR.p.flatten().tolist(),
+                    'PR': self.camR.P.flatten().tolist(),
                     'flashR': self.camR.flash,
                     'offsetR': self.offsetR,
                     'R': self.R.flatten().tolist(),

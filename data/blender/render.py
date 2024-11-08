@@ -30,7 +30,7 @@ cx = w * (0.5 - cam.shift_x)
 cy = h * 0.5 + w * cam.shift_y
 k = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]])
 with open(os.path.join(output_dir, 'cam.yaml'), 'w') as f:
-    data = {'k': k.flatten().tolist()}
+    data = {'K': k.flatten().tolist()}
     f.write(yaml.dump(data, sort_keys=False))
 
 

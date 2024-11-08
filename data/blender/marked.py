@@ -102,13 +102,13 @@ kR, extR = camera_data(camR)
 kF, extF = camera_data(camF)
 with open(os.path.join(output_dir, 'cam.yaml'), 'w') as f:
     data = {'pathL': l_dir,
-            'kL': kL.flatten().tolist(),
+            'KL': kL.flatten().tolist(),
             'extL': extL.flatten().tolist(),
             'pathR': r_dir,
-            'kR': kR.flatten().tolist(),
+            'KR': kR.flatten().tolist(),
             'extR': extR.flatten().tolist(),
             'pathF': f_dir,
-            'kF': kF.flatten().tolist(),
+            'KF': kF.flatten().tolist(),
             'extF': extF.flatten().tolist()}
     f.write(yaml.dump(data, sort_keys=False))
 

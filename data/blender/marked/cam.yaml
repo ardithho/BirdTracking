@@ -1,5 +1,5 @@
 pathL: /home/ardith/Documents/BirdTracking/data/blender/marked/l
-kL:
+KL:
 - 2666.666666666667
 - 0.0
 - 960.0
@@ -23,7 +23,7 @@ extL:
 - 1.0913116454958072e-07
 - 20.000001907348633
 pathR: /home/ardith/Documents/BirdTracking/data/blender/marked/r
-kR:
+KR:
 - 2666.666666666667
 - 0.0
 - 960.0
@@ -47,7 +47,7 @@ extR:
 - -3.82608149607222e-08
 - 20.0
 pathF: /home/ardith/Documents/BirdTracking/data/blender/marked/f
-kF:
+KF:
 - 2666.666666666667
 - 0.0
 - 960.0
