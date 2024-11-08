@@ -12,8 +12,10 @@ parent_dir = Path(__file__).parent.parent
 output_dir = os.path.join(parent_dir, 'marked')
 l_dir = os.path.join(output_dir, 'l')
 r_dir = os.path.join(output_dir, 'r')
+f_dir = os.path.join(output_dir, 'f')
 os.makedirs(l_dir, exist_ok=True)
 os.makedirs(r_dir, exist_ok=True)
+os.makedirs(f_dir, exist_ok=True)
 
 scene = bpy.context.scene
 
@@ -92,17 +94,22 @@ def camera_data(cam):
     return k, ext
 
 
-camL = bpy.data.objects["cam_l"]
-camR = bpy.data.objects["cam_r"]
+camL = bpy.data.objects['cam_l']
+camR = bpy.data.objects['cam_r']
+camF = bpy.data.objects['cam_f']
 kL, extL = camera_data(camL)
 kR, extR = camera_data(camR)
+kF, extF = camera_data(camF)
 with open(os.path.join(output_dir, 'cam.yaml'), 'w') as f:
     data = {'pathL': l_dir,
             'kL': kL.flatten().tolist(),
             'extL': extL.flatten().tolist(),
             'pathR': r_dir,
             'kR': kR.flatten().tolist(),
-            'extR': extR.flatten().tolist()}
+            'extR': extR.flatten().tolist(),
+            'pathF': f_dir,
+            'kF': kF.flatten().tolist(),
+            'extF': extF.flatten().tolist()}
     f.write(yaml.dump(data, sort_keys=False))
 
 
@@ -119,17 +126,20 @@ head = bpy.context.active_object
 T = np.eye(4)
 for i in range(100):
     f.write(' '.join([str(i+1), *map(str, T.flatten())]) + '\n')
-    head.matrix_world @= Matrix(T)
+    head.matrix_world = Matrix(T) @ head.matrix_world
     bpy.ops.object.transform_apply(location=True, rotation=True, scale=False)
 
     scene.camera = camL
     scene.render.filepath = os.path.join(l_dir, '%03d.jpg' % (i+1))
     bpy.ops.render.render(write_still=True, use_viewport=True)
     scene.camera = camR
-    scene.render.filepath = os.path.join(r_dir, '%03d.jpg' % (i + 1))
+    scene.render.filepath = os.path.join(r_dir, '%03d.jpg' % (i+1))
+    bpy.ops.render.render(write_still=True, use_viewport=True)
+    scene.camera = camF
+    scene.render.filepath = os.path.join(f_dir, '%03d.jpg' % (i+1))
     bpy.ops.render.render(write_still=True, use_viewport=True)
 
-    T[:3, 3] = np.random.rand(3) * 0.005
+    # T[:3, 3] = np.random.rand(3) * 0.005
     # T[:3, :3] = R.from_euler('zyx', np.random.randint(0, 5, 3), degrees=True).as_matrix()
     T[:3, :3] = cv2.Rodrigues(np.random.randint(0, 5, 3)*np.pi/180)[0]
 
