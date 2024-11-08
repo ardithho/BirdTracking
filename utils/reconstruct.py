@@ -1,10 +1,13 @@
 import yaml
 import cv2
 import numpy as np
+from pathlib import Path
 
 from utils.structs import CLS_DICT
 
-cfg_path = 'data/blender/config.yaml'
+
+ROOT = Path(__file__).parent.parent
+cfg_path = ROOT / 'data/blender/config.yaml'
 with open(cfg_path, 'r') as f:
     HEAD_CFG = yaml.safe_load(f)
 
