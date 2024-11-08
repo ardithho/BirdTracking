@@ -6,6 +6,10 @@ from itertools import combinations
 from sklearn.cluster import KMeans
 
 
+DEG2RAD = np.pi / 180
+RAD2DEG = 180 / np.pi
+
+
 def imgDiff(img, sub):
     diff = cv2.absdiff(cv2.blur(img, (5, 5)), cv2.blur(sub, (5, 5)))
     _, thresh = cv2.threshold(diff, 50, 255, cv2.THRESH_BINARY)
