@@ -13,7 +13,8 @@ parent_dir = Path(__file__).parent.parent
 output_dir = os.path.join(parent_dir, 'renders')
 os.makedirs(output_dir, exist_ok=True)
 
-cam = bpy.data.objects["cam_f"].data
+cam_name = 'cam_f'
+cam = bpy.data.objects[cam_name].data
 scene = bpy.context.scene
 assert scene.render.resolution_percentage == 100
 assert cam.sensor_fit != 'VERTICAL'
@@ -44,15 +45,16 @@ for obj in mesh:
 bpy.ops.object.join()
 
 head = bpy.context.active_object
+scene.camera = bpy.data.objects[cam_name]
 T = np.eye(4)
 for i in range(100):
     f.write(' '.join([str(i+1), *map(str, T.flatten())]) + '\n')
-    head.matrix_world @= Matrix(T)
+    head.matrix_world = Matrix(T) @ head.matrix_world
     bpy.ops.object.transform_apply(location=True, rotation=True, scale=False)
     scene.render.filepath = os.path.join(output_dir, '%03d.jpg' % (i+1))
     bpy.ops.render.render(write_still=True, use_viewport=True)
 
-    T[:3, 3] = np.random.rand(3) * 0.005
+    # T[:3, 3] = np.random.rand(3) * 0.005
     # T[:3, :3] = R.from_euler('zyx', np.random.randint(0, 5, 3), degrees=True).as_matrix()
     T[:3, :3] = cv2.Rodrigues(np.random.randint(0, 5, 3)*np.pi/180)[0]
 

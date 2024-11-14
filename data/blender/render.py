@@ -47,7 +47,7 @@ head = bpy.context.active_object
 T = np.eye(4)
 for i in range(100):
     f.write(' '.join([str(i+1), *map(str, T.flatten())]) + '\n')
-    head.matrix_world @= Matrix(T)
+    head.matrix_world = Matrix(T) @ head.matrix_world
     bpy.ops.object.transform_apply(location=True, rotation=True, scale=False)
     scene.render.filepath = os.path.join(output_dir, '%03d.jpg' % (i+1))
     bpy.ops.render.render(write_still=True, use_viewport=True)
