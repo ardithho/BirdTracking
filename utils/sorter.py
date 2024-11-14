@@ -1,8 +1,8 @@
 import cv2
 import math
 
-from .general import euc_dist, angle, cosine, cnt_centroid
-from .colour import bill_mask
+from utils.general import euc_dist, angle, cosine, cnt_centroid
+from utils.colour import bill_mask
 
 
 # filter eyes and tear marks that is within a distance to the bill tip

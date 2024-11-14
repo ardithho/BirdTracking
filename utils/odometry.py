@@ -1,6 +1,9 @@
 import cv2
 import numpy as np
 
+from utils.general import RAD2DEG
+from utils.structs import CLS_DICT
+
 
 def extract_features(frame, mask=None):
     orb = cv2.ORB_create()
@@ -39,10 +42,28 @@ def estimate_essential_mat(prev_frame, curr_frame, prev_mask=None, curr_mask=Non
 
 
 # visual odometry
-def estimate_vio(prev_frame, curr_frame, prev_mask=None, curr_mask=None, k=None, dist=None):
+def estimate_vio(prev_frame, curr_frame, prev_mask=None, curr_mask=None, K=None, dist=None, thresh=.8):
     # return: retval, E, R, t, mask
     src_pts, dst_pts = find_matching_pts(prev_frame, curr_frame, prev_mask, curr_mask)
-    return cv2.recoverPose(src_pts, dst_pts, k, dist, k, dist, threshold=.5)
+    return cv2.recoverPose(src_pts, dst_pts, K, dist, K, dist, threshold=thresh)
+
+
+def bird_vio(prev_bird, curr_bird, K=None, dist=None, thresh=.8):
+    visible = [k for k in CLS_DICT.keys() if prev_bird.feats[k] is not None and curr_bird.feats[k] is not None]
+    if len(visible) < 5:
+        return False, None, None
+    prev_pts = np.array([prev_bird.feats[k] for k in visible]).reshape(-1, 1, 2)
+    curr_pts = np.array([curr_bird.feats[k] for k in visible]).reshape(-1, 1, 2)
+    E, _ = cv2.findEssentialMat(prev_pts, curr_pts, K)
+    Es = [E[i*3:(i+1)*3, :] for i in range(E.shape[0]//3)]
+    Rs = []
+    ts = []
+    for E in Es:
+        ret, R, t, _ = cv2.recoverPose(E, prev_pts, curr_pts, K)
+        if not np.any(np.abs(cv2.Rodrigues(R.T)[0] * RAD2DEG) > 5):
+            Rs.append(R)
+            ts.append(t)
+    return True, Rs, ts
 
 
 if __name__ == '__main__':

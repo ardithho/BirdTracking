@@ -1,7 +1,7 @@
 import numpy as np
 
 from utils.sorter import sort_feat, to_dict, process_labels
-from utils.plot import *
+from utils.plot import plot_box, plot_feat
 from utils.colour import cheek_mask, mask_ratio
 from utils.box import iou
 

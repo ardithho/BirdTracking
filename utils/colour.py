@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import hsv_to_rgb
 from collections import Counter
 from sklearn.cluster import KMeans
-from .general import kernel
+
+from utils.general import kernel
 
 
 def bgr2hex(colour):
