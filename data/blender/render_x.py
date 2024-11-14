@@ -38,7 +38,7 @@ with open(os.path.join(output_dir, 'cam.yaml'), 'w') as f:
 f = open(os.path.join(output_dir, 'transforms.txt'), 'w')
 
 bpy.ops.object.select_all(action='DESELECT')
-mesh = [m for m in bpy.context.scene.objects if m.type == 'MESH']
+mesh = [m for m in bpy.context.scene.objects if m.type == 'MESH' and 'marker' not in m.name]
 for obj in mesh:
     obj.select_set(state=True)
     bpy.context.view_layer.objects.active = obj
