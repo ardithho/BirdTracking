@@ -63,7 +63,19 @@ def bird_vio(prev_bird, curr_bird, K=None, dist=None, thresh=.8):
         if not np.any(np.abs(cv2.Rodrigues(R.T)[0] * RAD2DEG) > 5):
             Rs.append(R)
             ts.append(t)
-    return True, Rs, ts
+    return len(Rs), Rs, ts
+
+
+def draw_matches(im1, bird1, im2, bird2):
+    out = cv2.hconcat([im1, im2])
+    visible = [k for k in CLS_DICT.keys() if bird1.feats[k] is not None and bird2.feats[k] is not None]
+    for k in visible:
+        pt1 = bird1.feats[k].astype(int)
+        pt2 = bird2.feats[k].astype(int) + [im1.shape[1], 0]
+        cv2.line(out, pt1, pt2, (0, 255, 0), 2)
+        cv2.circle(out, pt1, 3, (0, 255, 255), -1)
+        cv2.circle(out, pt2, 3, (0, 255, 255), -1)
+    return out
 
 
 if __name__ == '__main__':
