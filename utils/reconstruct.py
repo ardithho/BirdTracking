@@ -16,7 +16,8 @@ def solvePnP(bird, K, dist=None):
     head_pts = np.array([HEAD_CFG[k] for k, v in bird.feats.items() if v is not None], dtype=np.float32)
     feat_pts = np.array([v for k, v in bird.feats.items() if v is not None], dtype=np.float32)
     if head_pts.shape[0] >= 4:
-        return cv2.solvePnPRansac(head_pts, feat_pts, K, dist)
+        return cv2.solvePnPRansac(head_pts, feat_pts, K, dist, reprojectionError=4.)
+        # return True, cv2.solvePnPRefineLM(head_pts, feat_pts, K, dist, None, None), None
     return False, None, None, None
 
 

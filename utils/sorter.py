@@ -83,8 +83,8 @@ def sort_feat(bill, eyes, tear_marks):
             else:
                 tear_marks.append(None)
         else:
-            if (bill is not None and sort_lr(bill, *tear_marks) == 'right') or (bill is None and tear_marks[0][0] < tear_marks[1][0]):
-            # if tear_marks[0][0] < tear_marks[1][0]:
+            if ((bill is not None and sort_lr(bill, *tear_marks) == 'right')
+                    or (bill is None and tear_marks[0][0] < tear_marks[1][0])):
                 tear_marks = tear_marks[::-1]
     elif len(tear_marks) == 0:
         tear_marks = [None, None]
@@ -97,8 +97,8 @@ def sort_feat(bill, eyes, tear_marks):
             else:
                 eyes.append(None)
         else:
-            if (bill is not None and sort_lr(bill, *eyes) == 'left') or (bill is None and eyes[0][0] < eyes[1][0]):
-            # if eyes[0][0] < eyes[1][0]:
+            if ((bill is not None and sort_lr(bill, *eyes) == 'left')
+                    or (bill is None and eyes[0][0] < eyes[1][0])):
                 eyes = eyes[::-1]
     elif len(eyes) == 1 and len(tear_marks) == 1:
         if bill is not None:
