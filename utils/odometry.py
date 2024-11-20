@@ -21,8 +21,8 @@ def find_matches(prev_frame, curr_frame, prev_mask=None, curr_mask=None, thresh=
     return filtered, kp1, kp2
 
 
-def find_matching_pts(prev_frame, curr_frame, prev_mask=None, curr_mask=None):
-    matches, kp1, kp2 = find_matches(prev_frame, curr_frame, prev_mask, curr_mask)
+def find_matching_pts(prev_frame, curr_frame, prev_mask=None, curr_mask=None, thresh=0.8):
+    matches, kp1, kp2 = find_matches(prev_frame, curr_frame, prev_mask, curr_mask, thresh)
 
     src_pts = np.float32([kp1[m.queryIdx].pt for m in matches]).reshape(-1, 1, 2)
     dst_pts = np.float32([kp2[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
@@ -34,18 +34,22 @@ def estimate_homography(prev_frame, curr_frame, prev_mask=None, curr_mask=None):
     return cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
 
 
-def estimate_essential_mat(prev_frame, curr_frame, prev_mask=None, curr_mask=None):
+def estimate_essential_mat(prev_frame, curr_frame, prev_mask=None, curr_mask=None, K=None, dist=None):
     # https://inst.eecs.berkeley.edu/~ee290t/fa19/lectures/lecture10-3-decomposing-F-matrix-into-Rotation-and-Translation.pdf
     # https://stackoverflow.com/questions/33906111/how-do-i-estimate-positions-of-two-cameras-in-opencv
     src_pts, dst_pts = find_matching_pts(curr_frame, prev_frame, curr_mask, prev_mask)
+    if K is not None:
+        return cv2.findEssentialMat(src_pts, dst_pts, K, dist, K, dist)
     return cv2.findEssentialMat(src_pts, dst_pts)
 
 
 # visual odometry
 def estimate_vio(prev_frame, curr_frame, prev_mask=None, curr_mask=None, K=None, dist=None, thresh=.8):
-    # return: retval, E, R, t, mask
-    src_pts, dst_pts = find_matching_pts(prev_frame, curr_frame, prev_mask, curr_mask)
-    return cv2.recoverPose(src_pts, dst_pts, K, dist, K, dist, threshold=thresh)
+    # return: retval, R, t, mask
+    src_pts, dst_pts = find_matching_pts(prev_frame, curr_frame, prev_mask, curr_mask, thresh)
+    # return cv2.recoverPose(src_pts, dst_pts, K, dist, K, dist, threshold=thresh)
+    E, mask = cv2.findEssentialMat(src_pts, dst_pts, K, dist, K, dist)
+    return cv2.recoverPose(E, src_pts, dst_pts, K, mask=mask)
 
 
 def bird_vio(prev_bird, curr_bird, K=None, dist=None, thresh=.8):
