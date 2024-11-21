@@ -48,7 +48,11 @@ def estimate_vio(prev_frame, curr_frame, prev_mask=None, curr_mask=None, K=None,
     # return: retval, R, t, mask
     src_pts, dst_pts = find_matching_pts(prev_frame, curr_frame, prev_mask, curr_mask, thresh)
     # return cv2.recoverPose(src_pts, dst_pts, K, dist, K, dist, threshold=thresh)
-    E, mask = cv2.findEssentialMat(src_pts, dst_pts, K, dist, K, dist)
+    return estimate_vio_pts(src_pts, dst_pts, K, dist)
+
+
+def estimate_vio_pts(src_pts, dst_pts, K, dist=None):
+    E, mask = cv2.findEssentialMat(src_pts, dst_pts, K, dist, K, dist, threshold=.8)
     return cv2.recoverPose(E, src_pts, dst_pts, K, mask=mask)
 
 
