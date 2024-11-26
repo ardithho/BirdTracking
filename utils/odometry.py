@@ -48,12 +48,31 @@ def estimate_vio(prev_frame, curr_frame, prev_mask=None, curr_mask=None, K=None,
     # return: retval, R, t, mask
     src_pts, dst_pts = find_matching_pts(prev_frame, curr_frame, prev_mask, curr_mask, thresh)
     # return cv2.recoverPose(src_pts, dst_pts, K, dist, K, dist, threshold=thresh)
-    return estimate_vio_pts(src_pts, dst_pts, K, dist)
+    if len(src_pts) > 0:
+        return estimate_vio_pts(src_pts, dst_pts, K, dist)
+    return False, None, None, None
 
 
 def estimate_vio_pts(src_pts, dst_pts, K, dist=None):
     E, mask = cv2.findEssentialMat(src_pts, dst_pts, K, dist, K, dist, threshold=.8)
-    return cv2.recoverPose(E, src_pts, dst_pts, K, mask=mask)
+    if E is None:
+        return False, None, None, None
+    if len(E) == 3:
+        return cv2.recoverPose(E, src_pts, dst_pts, K, mask=mask)
+    Es = [E[i * 3:(i + 1) * 3, :] for i in range(E.shape[0] // 3)]
+    bestE = None
+    min_mag = 1000
+    for E in Es:
+        _, R, t, _ = cv2.recoverPose(E, src_pts, dst_pts, K, mask=mask)
+        rvec = cv2.Rodrigues(R)[0]
+        if not np.any(np.abs(cv2.Rodrigues(R.T)[0] * RAD2DEG) > 25):
+            mag = np.linalg.norm(rvec)
+            if mag < min_mag:
+                bestE = E
+                min_mag = mag
+    if bestE is None:
+        return False, None, None, None
+    return cv2.recoverPose(bestE, src_pts, dst_pts, K, mask=mask)
 
 
 def bird_vio(prev_bird, curr_bird, K=None, dist=None, thresh=.8):
@@ -68,7 +87,7 @@ def bird_vio(prev_bird, curr_bird, K=None, dist=None, thresh=.8):
     ts = []
     for E in Es:
         ret, R, t, _ = cv2.recoverPose(E, prev_pts, curr_pts, K)
-        if not np.any(np.abs(cv2.Rodrigues(R.T)[0] * RAD2DEG) > 5):
+        if not np.any(np.abs(cv2.Rodrigues(R.T)[0] * RAD2DEG) > 20):
             Rs.append(R)
             ts.append(t)
     return len(Rs), Rs, ts
