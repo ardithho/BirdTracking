@@ -1,6 +1,9 @@
 import cv2
 import numpy as np
 
+from lightglue import LightGlue, SuperPoint, match_pair, viz2d
+from lightglue.utils import load_image, numpy_image_to_torch
+
 from utils.general import RAD2DEG
 from utils.structs import CLS_DICT
 
@@ -10,10 +13,10 @@ FLANN_INDEX_KDTREE = 1
 
 def extract_features(frame, mask=None, method='orb'):
     if method == 'orb':
-        detector = cv2.ORB_create()
+        extractor = cv2.ORB_create()
     else:
-        detector = cv2.SIFT_create(nfeatures=1000)
-    return detector.detectAndCompute(frame, mask)
+        extractor = cv2.SIFT_create(nfeatures=1000)
+    return extractor.detectAndCompute(frame, mask)
 
 
 def find_matches(prev_frame, curr_frame,
@@ -40,11 +43,21 @@ def find_matches(prev_frame, curr_frame,
 
 def find_matching_pts(prev_frame, curr_frame,
                       prev_mask=None, curr_mask=None, thresh=.8, method='orb'):
-    kp1, kp2, matches = find_matches(prev_frame, curr_frame,
-                                     prev_mask, curr_mask, thresh, method)
+    if method == 'lg':
+        extractor = SuperPoint(max_num_keypoints=2048).eval().cuda()  # load the extractor
+        matcher = LightGlue(features='superpoint').eval().cuda()  # load the matcher
+        feats0, feats1, matches01 = match_pair(
+            extractor, matcher,
+            numpy_image_to_torch(prev_frame[..., ::-1]).cuda(),
+            numpy_image_to_torch(curr_frame[..., ::-1]).cuda())
+        kpts0, kpts1, matches = feats0["keypoints"], feats1["keypoints"], matches01["matches"]
+        m_kpts0, m_kpts1 = kpts0[matches[..., 0]], kpts1[matches[..., 1]]
+        return m_kpts0.cpu().numpy(), m_kpts1.cpu().numpy()
 
-    src_pts = np.float32([kp1[m.queryIdx].pt for m in matches]).reshape(-1, 1, 2)
-    dst_pts = np.float32([kp2[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
+    kp0, kp1, matches = find_matches(prev_frame, curr_frame,
+                                     prev_mask, curr_mask, thresh, method)
+    src_pts = np.float32([kp0[m.queryIdx].pt for m in matches]).reshape(-1, 1, 2)
+    dst_pts = np.float32([kp1[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
     return src_pts, dst_pts
 
 
@@ -81,7 +94,7 @@ def estimate_vio(prev_frame, curr_frame,
 
 
 def estimate_vio_pts(src_pts, dst_pts, K, dist=None):
-    E, mask = cv2.findEssentialMat(src_pts, dst_pts, K, dist, K, dist, threshold=.8)
+    E, mask = cv2.findEssentialMat(src_pts, dst_pts, K, dist, K, dist, threshold=.5)
     if E is None:
         return False, None, None, None
     if len(E) == 3:
