@@ -12,27 +12,22 @@ from utils.sim import *
 from utils.odometry import estimate_vio, find_matches
 
 
-STRIDE = 1
+STRIDE = 30
 
-# tracker = Tracker('yolov8/weights/head.pt')
-# predictor_head = Predictor('yolov8/weights/head.pt')
+tracker = Tracker('yolov8/weights/head.pt')
+predictor_head = Predictor('yolov8/weights/head.pt')
 
-vid = 'data/blender/render.mp4'
+vid = 'data/vid/fps120/K203_K238_1_GH040045.mp4'
 
-cfg_path = 'data/blender/renders/cam.yaml'
-trans_path = 'data/blender/renders/transforms.txt'
+cfg_path = 'data/calibration/cam.yaml'
 
 h, w = (720, 1280)
-writer = cv2.VideoWriter('data/out/vio.mp4', cv2.VideoWriter_fourcc(*'MPEG'), 10, (w, int(h*1.5)))
+writer = cv2.VideoWriter('data/out/vio.mp4', cv2.VideoWriter_fourcc(*'MPEG'), 4, (w, int(h*1.5)))
 
 with open(cfg_path, 'r') as f:
     cfg = yaml.safe_load(f)
-    K = np.asarray(cfg['K']).reshape(3, 3)
-    dist = None
-
-with open(trans_path, 'r') as f:
-    lines = f.readlines()
-    transforms = [np.array(list(map(float, line.strip().split()[1:]))).reshape((4, 4)) for line in lines]
+    K = np.asarray(cfg['KR']).reshape(3, 3)
+    dist = np.asarray(cfg['distR'])
 
 cap = cv2.VideoCapture(vid)
 birds = Birds()
@@ -50,15 +45,15 @@ while cap.isOpened():
             break
     ret, frame = cap.retrieve()
     if ret:
-        # head = tracker.tracks(frame)[0].boxes.cpu().numpy()
-        # feat = detect_features(frame, head)
-        # birds.update([Bird(head, feat) for head, feat in zip(head, feat)], frame)
-        # bird = birds['m'] if birds['m'] is not None else birds['f']
-        # prev_bird = birds.caches['m'][-1] if birds.caches['m'][-1] is not None else birds.caches['f'][-1]
-        # if bird is not None and prev_frame is not None:
-        if prev_frame is not None:
-            # vio, _, R, t, _ = estimate_vio(prev_frame, frame, prev_bird.mask(prev_frame.shape[:2]), bird.mask(frame.shape[:2]), k)
-            vio, R, t, _ = estimate_vio(prev_frame, frame, K=K, thresh=.2)
+        head = tracker.tracks(frame)[0].boxes.cpu().numpy()
+        feat = detect_features(frame, head)
+        birds.update([Bird(head, feat) for head, feat in zip(head, feat)], frame)
+        bird = birds['m'] if birds['m'] is not None else birds['f']
+        prev_bird = birds.caches['m'][-1] if birds.caches['m'][-1] is not None else birds.caches['f'][-1]
+        if bird is not None and prev_frame is not None:
+            prev_mask = prev_bird.mask(prev_frame.shape[:2])
+            curr_mask = bird.mask(frame.shape[:2])
+            vio, R, t, _ = estimate_vio(prev_frame, frame, prev_mask, curr_mask, K, dist)
             if vio:
                 T[:3, :3] = R.T
                 # T[:3, 3] = -t.T
@@ -66,10 +61,9 @@ while cap.isOpened():
                 # error = np.linalg.norm(r)
                 # print(r, error)
                 print('vo:', *np.rint(cv2.Rodrigues(R.T)[0] * RAD2DEG))
-                print('gt:', *np.rint(cv2.Rodrigues(transforms[frame_no][:3, :3])[0] * RAD2DEG))
                 print('')
                 sim.update(T)
-            matches, kp1, kp2 = find_matches(prev_frame, frame, thresh=.2)
+            matches, kp1, kp2 = find_matches(prev_frame, frame, prev_mask, curr_mask)
             orb = cv2.drawMatches(prev_frame, kp1, frame, kp2, matches, None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
         # cv2.imshow('frame', cv2.resize(birds.plot(frame), None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC))
 
