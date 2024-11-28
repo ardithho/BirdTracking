@@ -5,19 +5,35 @@ from utils.general import RAD2DEG
 from utils.structs import CLS_DICT
 
 
-def extract_features(frame, mask=None):
-    orb = cv2.ORB_create()
-    return orb.detectAndCompute(frame, mask)
+FLANN_INDEX_KDTREE = 1
 
 
-def find_matches(prev_frame, curr_frame, prev_mask=None, curr_mask=None, thresh=0.8):
-    kp1, des1 = extract_features(prev_frame, prev_mask)
-    kp2, des2 = extract_features(curr_frame, curr_mask)
+def extract_features(frame, mask=None, method='orb'):
+    if method == 'orb':
+        detector = cv2.ORB_create()
+    else:
+        detector = cv2.SIFT_create()
+    return detector.detectAndCompute(frame, mask)
 
-    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-    matches = list(bf.match(des1, des2))
-    matches.sort(key=lambda x: x.distance)
-    filtered = matches[:int(len(matches) * thresh)]
+
+def find_matches(prev_frame, curr_frame, prev_mask=None, curr_mask=None, thresh=0.8, method='orb'):
+    kp1, des1 = extract_features(prev_frame, prev_mask, method)
+    kp2, des2 = extract_features(curr_frame, curr_mask, method)
+
+    if method == 'orb':
+        bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+        matches = list(bf.match(des1, des2))
+        matches.sort(key=lambda x: x.distance)
+        filtered = matches[:int(len(matches) * thresh)]
+    else:
+        index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
+        search_params = dict(checks=50)
+        flann = cv2.FlannBasedMatcher(index_params, search_params)
+        matches = flann.knnMatch(des1, des2, k=2)
+        filtered = []
+        for m, n in matches:
+            if m.distance < 0.7 * n.distance:
+                filtered.append(m)
     return filtered, kp1, kp2
 
 

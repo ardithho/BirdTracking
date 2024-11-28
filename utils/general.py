@@ -37,28 +37,28 @@ def kernel(length):
     return np.ones((length, length), np.uint8)
 
 
-def orbKP(img):
+def orbKP(img, mask=None):
     orb = cv2.ORB_create(nfeatures=50)
-    kp, des = orb.detectAndCompute(img, None)
+    kp, des = orb.detectAndCompute(img, mask)
     img = cv2.drawKeypoints(img, kp, None, color=(255, 255, 0), flags=0)
     return img
 
 
-def orbSingleKP(img):
+def orbSingleKP(img, mask=None):
     img_copy = img.copy()
     orb = cv2.ORB_create(nfeatures=10)
-    kp, des = orb.detectAndCompute(img, None)
+    kp, des = orb.detectAndCompute(img, mask)
     pt = significantKP(kp)
     cv2.circle(img_copy, pt, 4, (255, 255, 0), -1)
     return img_copy
 
 
-def orbKM(img):
+def orbKM(img, mask=None):
     colours = [(0, 0, 255), (0, 150, 255), (0, 255, 255), (0, 255, 150), (0, 255, 0), (150, 255, 0), (255, 255, 0),
                (255, 150, 0), (255, 0, 0), (255, 0, 150), (255, 0, 255), (150, 0, 255)]
     clrs = [colours[i] for i in range(len(colours)) if i % 2 == 0]
     orb = cv2.ORB_create(100)
-    kp, des = orb.detectAndCompute(img, None)
+    kp, des = orb.detectAndCompute(img, mask)
     km = KMeans(n_clusters=6)
     labels = km.fit_predict(des)
     for i in range(len(kp)):
@@ -66,26 +66,26 @@ def orbKM(img):
     return img
 
 
-def fastKP(img):  # corner detection
+def fastKP(img, mask=None):  # corner detection
     fast = cv2.FastFeatureDetector_create()
-    kp = fast.detect(img, None)
+    kp = fast.detect(img, mask)
     img = cv2.drawKeypoints(img, kp, None, color=(0, 255, 255))
     return img
 
 
-def siftKP(img):
+def siftKP(img, mask=None):
     sift = cv2.SIFT_create(nfeatures=1000)
-    kp = sift.detect(img, None)
+    kp = sift.detect(img, mask)
     img = cv2.drawKeypoints(img, kp, None, color=(255, 0, 0))
     return img
 
 
-def siftKM(img):
+def siftKM(img, mask=None):
     colours = [(0, 0, 255), (0, 150, 255), (0, 255, 255), (0, 255, 150), (0, 255, 0), (150, 255, 0), (255, 255, 0),
                (255, 150, 0), (255, 0, 0), (255, 0, 150), (255, 0, 255), (150, 0, 255)]
     clrs = [colours[i] for i in range(len(colours)) if i % 2 == 0]
     sift = cv2.SIFT_create(nfeatures=100)
-    kp, des = sift.detectAndCompute(img, None)
+    kp, des = sift.detectAndCompute(img, mask)
     km = KMeans(n_clusters=6)
     labels = km.fit_predict(des)
     for i in range(len(kp)):
