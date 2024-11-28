@@ -25,7 +25,7 @@ with open(trans_path, 'r') as f:
     transforms = [np.array(list(map(float, line.strip().split()[1:]))).reshape((4, 4)) for line in lines]
 
 
-index = 75
+index = 2
 im1 = cv2.imread(os.path.join(src_dir, f'{index:03}.png'))
 im2 = cv2.imread(os.path.join(src_dir, f'{index+1:03}.png'))
 
@@ -51,8 +51,8 @@ im2 = cv2.imread(os.path.join(src_dir, f'{index+1:03}.png'))
 extractor = SuperPoint(max_num_keypoints=2048).eval().cuda()  # load the extractor
 matcher = LightGlue(features='superpoint').eval().cuda()  # load the matcher
 
-image0 = numpy_image_to_torch(im1[..., ::-1]).cuda()
-image1 = numpy_image_to_torch(im2[..., ::-1]).cuda()
+image0 = numpy_image_to_torch(im1).cuda()
+image1 = numpy_image_to_torch(im2).cuda()
 
 feats0, feats1, matches01 = match_pair(extractor, matcher, image0, image1)
 kpts0, kpts1, matches = feats0["keypoints"], feats1["keypoints"], matches01["matches"]

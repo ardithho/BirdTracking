@@ -48,7 +48,8 @@ while cap.isOpened():
         if prev_frame is not None:
             vio, R, t, _ = estimate_vio(prev_frame, frame, K=K, method='lg')
             if vio:
-                T[:3, :3] = R.T
+                R_ = cv2.Rodrigues(cv2.Rodrigues(R.T)[0][[1, 0, 2]])[0]
+                T[:3, :3] = R_
                 # T[:3, 3] = -t.T
                 # r, _ = cv2.Rodrigues(R*transforms[frame_no][:3, :3])
                 # error = np.linalg.norm(r)

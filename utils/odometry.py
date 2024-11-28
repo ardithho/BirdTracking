@@ -48,8 +48,8 @@ def find_matching_pts(prev_frame, curr_frame,
         matcher = LightGlue(features='superpoint').eval().cuda()  # load the matcher
         feats0, feats1, matches01 = match_pair(
             extractor, matcher,
-            numpy_image_to_torch(prev_frame[..., ::-1]).cuda(),
-            numpy_image_to_torch(curr_frame[..., ::-1]).cuda())
+            numpy_image_to_torch(prev_frame).cuda(),
+            numpy_image_to_torch(curr_frame).cuda())
         kpts0, kpts1, matches = feats0["keypoints"], feats1["keypoints"], matches01["matches"]
         m_kpts0, m_kpts1 = kpts0[matches[..., 0]], kpts1[matches[..., 1]]
         return m_kpts0.cpu().numpy(), m_kpts1.cpu().numpy()
