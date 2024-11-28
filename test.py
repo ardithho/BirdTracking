@@ -37,7 +37,7 @@ while cap.isOpened():
             mask[y0:y1, x0:x1] = 1
             mask &= colour_mask(frame, 20)
             if prev_frame is not None:
-                matches, kp1, kp2 = find_matches(prev_frame, frame, prev_mask, mask)
+                kp1, kp2, matches = find_matches(prev_frame, frame, prev_mask, mask)
                 out = cv2.drawMatches(prev_frame, kp1, frame, kp2, matches, None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
                 cv2.imshow('matches', cv2.resize(out, None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC))
                 R, t = estimate_vio(prev_frame, frame, prev_mask, mask, k)[2:4]

@@ -12,7 +12,7 @@ def extract_features(frame, mask=None, method='orb'):
     if method == 'orb':
         detector = cv2.ORB_create()
     else:
-        detector = cv2.SIFT_create()
+        detector = cv2.SIFT_create(nfeatures=1000)
     return detector.detectAndCompute(frame, mask)
 
 
@@ -35,12 +35,12 @@ def find_matches(prev_frame, curr_frame,
         for m, n in matches:
             if m.distance < thresh * n.distance:
                 filtered.append(m)
-    return filtered, kp1, kp2
+    return kp1, kp2, filtered
 
 
 def find_matching_pts(prev_frame, curr_frame,
                       prev_mask=None, curr_mask=None, thresh=.8, method='orb'):
-    matches, kp1, kp2 = find_matches(prev_frame, curr_frame,
+    kp1, kp2, matches = find_matches(prev_frame, curr_frame,
                                      prev_mask, curr_mask, thresh, method)
 
     src_pts = np.float32([kp1[m.queryIdx].pt for m in matches]).reshape(-1, 1, 2)

@@ -53,7 +53,7 @@ while cap.isOpened():
         if bird is not None and prev_frame is not None:
             prev_mask = prev_bird.mask(prev_frame.shape[:2])
             curr_mask = bird.mask(frame.shape[:2])
-            vio, R, t, _ = estimate_vio(prev_frame, frame, prev_mask, curr_mask, K, dist)
+            vio, R, t, _ = estimate_vio(prev_frame, frame, prev_mask, curr_mask, K, dist, method='sift')
             if vio:
                 T[:3, :3] = R.T
                 # T[:3, 3] = -t.T
@@ -63,7 +63,7 @@ while cap.isOpened():
                 print('vo:', *np.rint(cv2.Rodrigues(R.T)[0] * RAD2DEG))
                 print('')
                 sim.update(T)
-            matches, kp1, kp2 = find_matches(prev_frame, frame, prev_mask, curr_mask)
+            kp1, kp2, matches = find_matches(prev_frame, frame, prev_mask, curr_mask, method='sift')
             orb = cv2.drawMatches(prev_frame, kp1, frame, kp2, matches, None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
         # cv2.imshow('frame', cv2.resize(birds.plot(frame), None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC))
 
