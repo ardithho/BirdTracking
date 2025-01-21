@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 
 from utils.sorter import sort_feat, to_dict, process_labels
@@ -122,7 +123,7 @@ class Birds:
             return birds
         return birds
 
-    def sort(self, birds, frame, thres=0.1):
+    def sort(self, birds, frame, thres=0.01):
         if len(birds) > 0:
             self.ids = {}
             if len(birds) == 2:
