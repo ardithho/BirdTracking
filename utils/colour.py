@@ -148,8 +148,8 @@ def bill_mask(im, kernel_size=5):
 def cheek_mask(im, kernel_size=5):
     hsv = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
     # orange cheeks
-    low = np.array([0, 140, 100])
-    high = np.array([40, 255, 255])
+    low = np.array([10, 140, 100])
+    high = np.array([20, 255, 255])
     mask = cv2.inRange(hsv, low, high)
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel(kernel_size))
 
