@@ -2,6 +2,11 @@ import yaml
 import cv2
 import numpy as np
 
+import sys
+from pathlib import Path
+ROOT = Path(__file__).parent.parent
+sys.path.append(str(ROOT))
+
 from yolov8.predict import Predictor, detect_features
 from yolov8.track import Tracker
 
@@ -14,22 +19,22 @@ from utils.odometry import estimate_vio, find_matches
 
 STRIDE = 30
 
-tracker = Tracker('yolov8/weights/head.pt')
-predictor_head = Predictor('yolov8/weights/head.pt')
+tracker = Tracker(ROOT / 'yolov8/weights/head.pt')
+predictor_head = Predictor(ROOT / 'yolov8/weights/head.pt')
 
-vid = 'data/vid/fps120/K203_K238_1_GH040045.mp4'
+vid_path = ROOT / 'data/vid/fps120/K203_K238_1_GH040045.mp4'
 
-cfg_path = 'data/calibration/cam.yaml'
+cfg_path = ROOT / 'data/calibration/cam.yaml'
 
 h, w = (720, 1280)
-writer = cv2.VideoWriter('data/out/vio.mp4', cv2.VideoWriter_fourcc(*'MPEG'), 4, (w, int(h*1.5)))
+writer = cv2.VideoWriter(str(ROOT / 'data/out/vio.mp4'), cv2.VideoWriter_fourcc(*'MPEG'), 4, (w, int(h * 1.5)))
 
 with open(cfg_path, 'r') as f:
     cfg = yaml.safe_load(f)
     K = np.asarray(cfg['KR']).reshape(3, 3)
     dist = np.asarray(cfg['distR'])
 
-cap = cv2.VideoCapture(vid)
+cap = cv2.VideoCapture(str(vid_path))
 birds = Birds()
 prev_frame = None
 frame_no = 0

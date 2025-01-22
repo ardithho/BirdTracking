@@ -3,6 +3,11 @@ import os
 import cv2
 import numpy as np
 
+import sys
+from pathlib import Path
+ROOT = Path(__file__).parent.parent
+sys.path.append(str(ROOT))
+
 from lightglue import LightGlue, SuperPoint, match_pair, viz2d
 from lightglue.utils import load_image, numpy_image_to_torch
 
@@ -10,7 +15,7 @@ from utils.general import RAD2DEG
 from utils.odometry import estimate_vio, estimate_vio_pts, find_matches
 
 
-src_dir = 'data/blender/renders'
+src_dir = ROOT / 'data/blender/renders'
 cfg_path = os.path.join(src_dir, 'cam.yaml')
 trans_path = os.path.join(src_dir, 'transforms.txt')
 

@@ -1,6 +1,10 @@
 import cv2
 import numpy as np
 
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
+
 from lightglue import LightGlue, SuperPoint, match_pair, viz2d
 from lightglue.utils import load_image, numpy_image_to_torch
 
@@ -115,6 +119,29 @@ def estimate_vio_pts(src_pts, dst_pts, K, dist=None):
     return cv2.recoverPose(bestE, src_pts, dst_pts, K, mask=mask)
 
 
+def optical_flow(prev_frame, curr_frame,
+                 prev_mask=None, curr_mask=None,
+                 K=None, dist=None, thresh=.8):
+    # params for ShiTomasi corner detection
+    feature_params = dict(maxCorners=100, qualityLevel=0.3,
+                          minDistance=7, blockSize=7)
+    # params for lucas kanade optical flow
+    lk_params = dict(winSize=(15, 15), maxLevel=2,
+                     criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
+    prev_grey = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
+    curr_grey = cv2.cvtColor(curr_frame, cv2.COLOR_BGR2GRAY)
+    p0 = cv2.goodFeaturesToTrack(prev_grey, mask=prev_mask, **feature_params)
+    p1, st, err = cv2.calcOpticalFlowPyrLK(prev_grey, curr_grey, p0, None, **lk_params)
+    # Select good points
+    p1 = p1[st == 1]
+    p0 = p0[st == 1]
+    src_pts = np.float32(p0).reshape(-1, 1, 2)
+    dst_pts = np.float32(p1).reshape(-1, 1, 2)
+    if len(src_pts) > 0:
+        return estimate_vio_pts(src_pts, dst_pts, K, dist)
+    return False, None, None, None
+
+
 def bird_vio(prev_bird, curr_bird, K=None, dist=None, thresh=.8):
     visible = [k for k in CLS_DICT.keys() if prev_bird.feats[k] is not None and curr_bird.feats[k] is not None]
     if len(visible) < 5:
@@ -155,4 +182,5 @@ if __name__ == '__main__':
                 print('Homography:', estimate_homography(prev, curr)[0])
                 print('Essential:', estimate_essential_mat(prev, curr)[0])
                 prev = curr
+                optical_flow(prev, curr)
     cap.release()

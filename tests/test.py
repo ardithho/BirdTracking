@@ -1,15 +1,21 @@
 import yaml
 import cv2
 import numpy as np
+
+import sys
+from pathlib import Path
+ROOT = Path(__file__).parent.parent
+sys.path.append(str(ROOT))
+
 from yolov8.predict import Predictor
 from utils.odometry import find_matches, estimate_vio
 from utils.sim import *
 from utils.colour import colour_mask
 
 
-model_head = Predictor('yolov8/weights/head.pt')
-vid_path = 'data/vid/fps120/K203_K238_1_GH040045.mp4'
-mtx_path = 'data/calibration/cam.yaml'
+model_head = Predictor(ROOT / 'yolov8/weights/head.pt')
+vid_path = ROOT / 'data/vid/fps120/K203_K238_1_GH040045.mp4'
+mtx_path = ROOT / 'data/calibration/cam.yaml'
 
 backgroundModel = np.zeros((1, 65), np.float64)
 foregroundModel = np.zeros((1, 65), np.float64)
@@ -21,7 +27,7 @@ with open(mtx_path, 'r') as f:
 print(k)
 print(dist)
 
-cap = cv2.VideoCapture(vid_path)
+cap = cv2.VideoCapture(str(vid_path))
 prev_frame = None
 prev_mask = None
 count = 1

@@ -4,12 +4,17 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
+import sys
+from pathlib import Path
+ROOT = Path(__file__).parent.parent
+sys.path.append(str(ROOT))
+
 from utils.odometry import estimate_vio_pts
 from utils.general import RAD2DEG, DEG2RAD
 
 
-save_dir = 'data/out/vio'
-cfg_path = 'data/blender/marked/cam.yaml'
+save_dir = ROOT / 'data/out/vio'
+cfg_path = ROOT / 'data/blender/marked/cam.yaml'
 with open(cfg_path, 'r') as f:
     cfg = yaml.safe_load(f)
     K = np.array(cfg['KF']).reshape(3, 3)
