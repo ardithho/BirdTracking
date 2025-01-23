@@ -48,7 +48,7 @@ def find_matches(prev_frame, curr_frame,
 def find_matching_pts(prev_frame, curr_frame,
                       prev_mask=None, curr_mask=None, thresh=.8, method='orb'):
     if method == 'lg':
-        extractor = SuperPoint(max_num_keypoints=256, detection_threshold=0.1).eval().cuda()  # load the extractor
+        extractor = SuperPoint(max_num_keypoints=256, detection_threshold=.1).eval().cuda()  # load the extractor
         matcher = LightGlue(features='superpoint').eval().cuda()  # load the matcher
         feats0, feats1, matches01 = match_pair(
             extractor, matcher,
