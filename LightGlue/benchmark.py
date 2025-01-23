@@ -201,7 +201,7 @@ if __name__ == "__main__":
                 results[pair_name][name].append(
                     1000 / runtime if args.measure == "throughput" else runtime
                 )
-            ax.plot(
+            ax.im_plot(
                 args.num_keypoints, results[pair_name][name], label=name, marker="o"
             )
         del matcher, feats0, feats1
@@ -240,7 +240,7 @@ if __name__ == "__main__":
                     results[pair_name][name].append(
                         1000 / runtime if args.measure == "throughput" else runtime
                     )
-                ax.plot(
+                ax.im_plot(
                     args.num_keypoints, results[pair_name][name], label=name, marker="o"
                 )
             del matcher, data, image0, image1, feats0, feats1

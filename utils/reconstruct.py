@@ -24,9 +24,16 @@ def solvePnP(bird, K, dist=None):
 def triangulate(birdL, birdR, stereo):
     visible = [k for k in CLS_DICT.keys() if birdL.feats[k] is not None and birdR.feats[k] is not None]
     if len(visible) == 0:
-        return 0, None, None
+        return [], []
     head_pts = np.array([HEAD_CFG[k] for k in visible])
     feat_ptsL = np.array([birdL.feats[k] for k in visible]).T
     feat_ptsR = np.array([birdR.feats[k] for k in visible]).T
     feat_pts = cv2.triangulatePoints(stereo.camL.P, stereo.camR.P, feat_ptsL, feat_ptsR)
+    return feat_pts, head_pts
+
+
+def triangulate_estimate(birdL, birdR, stereo):
+    feat_pts, head_pts = triangulate(birdL, birdR, stereo)
+    if len(feat_pts) == 0:
+        return 0, None, None
     return cv2.estimateAffine3D(head_pts, cv2.convertPointsFromHomogeneous(feat_pts.T))
