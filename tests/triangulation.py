@@ -11,6 +11,7 @@ from utils.camera import Stereo
 from utils.structs import Bird, Birds
 from utils.reconstruct import triangulate
 from utils.sim import *
+from utils.odometry import draw_matches
 
 
 STRIDE = 1
@@ -27,7 +28,7 @@ capL = cv2.VideoCapture(str(vidL))
 capR = cv2.VideoCapture(str(vidR))
 
 h, w = (720, 1280)
-writer = cv2.VideoWriter(str(ROOT / 'data/out/tri.mp4'), cv2.VideoWriter_fourcc(*'MPEG'), 10, (w, h * 2))
+writer = cv2.VideoWriter(str(ROOT / 'data/out/tri.mp4'), cv2.VideoWriter_fourcc(*'MPEG'), 10, (w, int(h * 1.5)))
 
 birdsL = Birds()
 birdsR = Birds()
@@ -53,15 +54,20 @@ while capL.isOpened() and capR.isOpened():
         birdL = birdsL['m'] if birdsL['m'] is not None else birdsL['f']
         birdsR.update([Bird(dummy_head, extract_features(frameR))], frameR)
         birdR = birdsR['m'] if birdsR['m'] is not None else birdsR['f']
-        T = triangulate(birdL, birdR, stereo)
-        sim.update(T)
-        out = cv2.vconcat([cv2.resize(cv2.hconcat([frameL, frameR]), (w, int(h / 2)), interpolation=cv2.INTER_CUBIC),
+        ret, T, _ = triangulate(birdL, birdR, stereo)
+        if ret:
+            sim.update(T)
+        matches = draw_matches(frameL, birdL, frameR, birdR)
+        out = cv2.vconcat([cv2.resize(matches, (w, int(h / 2)), interpolation=cv2.INTER_CUBIC),
                            cv2.resize(sim.screen, (w, h), interpolation=cv2.INTER_CUBIC)])
         cv2.imshow('out', out)
         writer.write(out)
 
-        if cv2.waitKey(1) == ord('q'):
+        key = cv2.waitKey(1)
+        if key == ord('q'):
             break
+        elif key == ord('s'):
+            cv2.waitKey(0)
     else:
         break
 
