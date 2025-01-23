@@ -48,7 +48,7 @@ def find_matches(prev_frame, curr_frame,
 def find_matching_pts(prev_frame, curr_frame,
                       prev_mask=None, curr_mask=None, thresh=.8, method='orb'):
     if method == 'lg':
-        extractor = SuperPoint(max_num_keypoints=2048).eval().cuda()  # load the extractor
+        extractor = SuperPoint(max_num_keypoints=2048, detection_threshold=0.1).eval().cuda()  # load the extractor
         matcher = LightGlue(features='superpoint').eval().cuda()  # load the matcher
         feats0, feats1, matches01 = match_pair(
             extractor, matcher,
@@ -169,6 +169,18 @@ def draw_matches(im1, bird1, im2, bird2):
         cv2.line(out, pt1, pt2, (0, 255, 0), 2)
         cv2.circle(out, pt1, 3, (0, 255, 255), -1)
         cv2.circle(out, pt2, 3, (0, 255, 255), -1)
+    return out
+
+
+def draw_lg_matches(im1, kp1, im2, kp2):
+    out = cv2.hconcat([im1, im2])
+    for p1, p2 in zip(kp1, kp2):
+        p2[0] += im1.shape[1]
+        p1 = np.rint(p1).astype(int)
+        p2 = np.rint(p2).astype(int)
+        cv2.line(out, p1, p2, (0, 255, 0), 2)
+        cv2.circle(out, p1, 3, (0, 255, 255), -1)
+        cv2.circle(out, p2, 3, (0, 255, 255), -1)
     return out
 
 

@@ -11,10 +11,10 @@ from utils.general import RAD2DEG
 from utils.camera import Stereo
 from utils.structs import Bird, Birds
 from utils.sim import *
-from utils.odometry import estimate_vio, find_matches
-
+from utils.odometry import estimate_vio, find_matches, find_matching_pts, draw_lg_matches
 
 STRIDE = 1
+METHOD = 'lg'
 
 vid_path = ROOT / 'data/blender/render.mp4'
 
@@ -22,7 +22,7 @@ cfg_path = ROOT / 'data/blender/renders/cam.yaml'
 trans_path = ROOT / 'data/blender/renders/transforms.txt'
 
 h, w = (720, 1280)
-writer = cv2.VideoWriter(str(ROOT / 'data/out/vio.mp4'), cv2.VideoWriter_fourcc(*'MPEG'), 10, (w, int(h * 1.5)))
+writer = cv2.VideoWriter(str(ROOT / f'data/out/vio_{METHOD}.mp4'), cv2.VideoWriter_fourcc(*'MPEG'), 10, (w, int(h * 1.5)))
 
 with open(cfg_path, 'r') as f:
     cfg = yaml.safe_load(f)
@@ -50,7 +50,7 @@ while cap.isOpened():
     ret, frame = cap.retrieve()
     if ret:
         if prev_frame is not None:
-            vio, R, t, _ = estimate_vio(prev_frame, frame, K=K, method='lg')
+            vio, R, t, _ = estimate_vio(prev_frame, frame, K=K, method=METHOD)
             if vio:
                 R_ = cv2.Rodrigues(cv2.Rodrigues(R.T)[0][[1, 0, 2]])[0]
                 T[:3, :3] = R_
@@ -62,10 +62,13 @@ while cap.isOpened():
                 print('gt:', *np.rint(cv2.Rodrigues(transforms[frame_no][:3, :3])[0] * RAD2DEG))
                 print('')
                 sim.update(T)
-            # matches, kp1, kp2 = find_matches(prev_frame, frame, thresh=.2)
-            # match = cv2.drawMatches(prev_frame, kp1, frame, kp2, matches, None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
-            match = cv2.hconcat([prev_frame, frame])
-        # cv2.imshow('frame', cv2.resize(birds.plot(frame), None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC))
+            if METHOD == 'lg':
+                kp1, kp2 = find_matching_pts(prev_frame, frame, method=METHOD)
+                match = draw_lg_matches(prev_frame, kp1, frame, kp2)
+            else:
+                matches, kp1, kp2 = find_matches(prev_frame, frame, thresh=.2, method=METHOD)
+                match = cv2.drawMatches(prev_frame, kp1, frame, kp2, matches, None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+            # cv2.imshow('frame', cv2.resize(birds.plot(frame), None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC))
 
         # out = cv2.vconcat([cv2.resize(birds.plot(frame), (w, h), interpolation=cv2.INTER_CUBIC),
         #                    cv2.resize(sim.screen, (w, h), interpolation=cv2.INTER_CUBIC)])
