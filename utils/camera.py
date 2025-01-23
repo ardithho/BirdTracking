@@ -94,8 +94,8 @@ class Stereo:
                 self.T = np.asarray(cfg['T']).reshape(3, 1) if 'T' in cfg.keys() else None
                 self.E = np.asarray(cfg['E']).reshape(3, 3) if 'E' in cfg.keys() else None
                 self.F = np.asarray(cfg['F']).reshape(3, 3) if 'F' in cfg.keys() else None
-                self.offsetL = cfg['offsetL'] if 'offsetL' in cfg.keys() else None
-                self.offsetR = cfg['offsetR'] if 'offsetR' in cfg.keys() else None
+                self.offsetL = cfg['offsetL'] if 'offsetL' in cfg.keys() else 0
+                self.offsetR = cfg['offsetR'] if 'offsetR' in cfg.keys() else 0
         else:
             self.camL = Camera(vidL, skip)
             self.camR = Camera(vidR, skip)
