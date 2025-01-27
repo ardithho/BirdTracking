@@ -12,9 +12,14 @@ with open(cfg_path, 'r') as f:
     HEAD_CFG = yaml.safe_load(f)
 
 
-def solvePnP(bird, K, dist=None):
+def get_head_feat_pts(bird):
     head_pts = np.array([HEAD_CFG[k] for k, v in bird.feats.items() if v is not None], dtype=np.float32)
     feat_pts = np.array([v for k, v in bird.feats.items() if v is not None], dtype=np.float32)
+    return head_pts, feat_pts
+
+
+def solvePnP(bird, K, dist=None):
+    head_pts, feat_pts = get_head_feat_pts(bird)
     if head_pts.shape[0] >= 4:
         return cv2.solvePnPRansac(head_pts, feat_pts, K, dist, reprojectionError=4.)
         # return True, cv2.solvePnPRefineLM(head_pts, feat_pts, K, dist, None, None), None
