@@ -16,6 +16,8 @@ from utils.odometry import draw_matches
 
 
 STRIDE = 1
+COLOURS = {'bill': 'r', 'left_eye': 'y', 'left_tear': 'g', 'right_eye': 'y', 'right_tear': 'g'}
+MARKERS = {'bill': '^', 'left_eye': 'o', 'left_tear': 'o', 'right_eye': 'o', 'right_tear': 'o'}
 
 vidL = ROOT / 'data/blender/marked_l.mp4'
 vidR = ROOT / 'data/blender/marked_r.mp4'
@@ -45,7 +47,7 @@ ax.set_zlim(-3, 3)
 ax.set_xlabel("X")
 ax.set_ylabel("Y")
 ax.set_zlabel("Z")
-scatter_plot = None
+scatter_plots = [None, None, None, None, None]
 
 cam_w, cam_h = capL.get(cv2.CAP_PROP_FRAME_WIDTH), capL.get(cv2.CAP_PROP_FRAME_HEIGHT)
 dummy_head = Box(0, conf=[1.],
@@ -70,15 +72,17 @@ while capL.isOpened() and capR.isOpened():
         matches = draw_matches(frameL, birdL, frameR, birdR)
 
         feat_pts, head_pts = triangulate(birdL, birdR, stereo)
+        visible = [k for k in CLS_DICT.keys() if birdL.feats[k] is not None and birdR.feats[k] is not None]
         if len(feat_pts) > 0:
             pts = np.squeeze(cv2.convertPointsFromHomogeneous(feat_pts.T), axis=1)
-            if scatter_plot is not None:
-                scatter_plot.remove()
-            scatter_plot = ax.scatter(pts[:, 0], pts[:, 1], pts[:, 2], c='blue', marker='o')
+            for i, ft, pt in zip(range(len(visible)), visible, pts):
+                scatter_plots[i] = ax.scatter(*pt, c=COLOURS[ft], marker=MARKERS[ft])
             fig.canvas.draw()
             im_plot = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
             im_plot = im_plot.reshape(fig.canvas.get_width_height()[::-1] + (3,))
             plt.close(fig)
+            for i in range(len(pts)):
+                scatter_plots[i].remove()
 
         out = cv2.vconcat([cv2.resize(matches, (w, int(h / 2)), interpolation=cv2.INTER_CUBIC),
                            cv2.resize(im_plot, (w, h), interpolation=cv2.INTER_CUBIC)])
