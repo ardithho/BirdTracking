@@ -3,7 +3,7 @@ import numpy as np
 import cv2
 from pathlib import Path
 
-from utils.general import cnt_centroid
+from utils.general import cnt_centroid, DEG2RAD
 from .sorter import process_labels
 from .colour import bgr_mask
 from .structs import CLS_DICT
@@ -29,7 +29,7 @@ class Sim:
         self.vis.update_renderer()
 
     def flip(self):
-        rad = 180 * np.pi / 180
+        rad = 180 * DEG2RAD
         self.T[0, 0] = np.cos(rad)
         self.T[0, 2] = np.sin(rad)
         self.T[2, 0] = -np.sin(rad)
