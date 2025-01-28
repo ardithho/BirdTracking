@@ -31,6 +31,8 @@ with open(cfg_path, 'r') as f:
     cfg = yaml.safe_load(f)
     K = np.array(cfg['KF']).reshape(3, 3)
     ext = np.array(cfg['extF']).reshape(3, 4)
+print(cv2.Rodrigues(ext[:3, :3])[0]*RAD2DEG)
+print(ext[:3, 3])
 
 with open(trans_path, 'r') as f:
     lines = f.readlines()
@@ -84,17 +86,17 @@ while cap.isOpened():
             rig = pnp['cam_from_world']  # Rigid3d
             R = rig.rotation.matrix()
             r = cv2.Rodrigues(R)[0]
-        #     r -= cv2.Rodrigues(ext[:3, :3])[0]
-        #     # r = r[[0, 2, 1]]
-        #     R, _ = cv2.Rodrigues(r)
-        #     # R = R.T
+            r = r[[1, 2, 0]]
+            R, _ = cv2.Rodrigues(r)
+            R = R @ ext[:3, :3].T
+            R = R.T
             T[:3, :3] = R @ prev_T[:3, :3].T
-            print('es:', *np.rint(cv2.Rodrigues(T[:3, :3])[0]*RAD2DEG))
-            print('gt:', *np.rint(cv2.Rodrigues(transforms[frame_no][:3, :3])[0]*RAD2DEG))
-
-            print('esT:', *np.rint(r*RAD2DEG))
-            print('gtT:', *np.rint(cv2.Rodrigues(gt[:3, :3])[0]*RAD2DEG))
-            print('')
+            # print('es:', *np.rint(cv2.Rodrigues(T[:3, :3])[0]*RAD2DEG))
+            # print('gt:', *np.rint(cv2.Rodrigues(transforms[frame_no][:3, :3])[0]*RAD2DEG))
+            #
+            # print('esT:', *np.rint(r*RAD2DEG))
+            # print('gtT:', *np.rint(cv2.Rodrigues(gt[:3, :3])[0]*RAD2DEG))
+            # print('')
             prev_T[:3, :3] = R
             sim.update(T)
 
