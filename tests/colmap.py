@@ -1,3 +1,4 @@
+import yaml
 import cv2
 import os
 import pycolmap
@@ -26,6 +27,10 @@ h, w = (720, 1280)
 writer = cv2.VideoWriter(str(ROOT / 'data/out/colmap.mp4'), cv2.VideoWriter_fourcc(*'MPEG'), 10, (w, int(h * 2)))
 
 stereo = Stereo(path=cfg_path)
+with open(cfg_path, 'r') as f:
+    cfg = yaml.safe_load(f)
+    K = np.array(cfg['KF']).reshape(3, 3)
+    ext = np.array(cfg['extF']).reshape(3, 4)
 
 with open(trans_path, 'r') as f:
     lines = f.readlines()
@@ -44,8 +49,8 @@ cam = pycolmap.Camera(
     model='SIMPLE_PINHOLE',
     width=stereo.camL.w,
     height=stereo.camL.h,
-    params=(stereo.camL.K[0, 0],  # focal length
-            stereo.camL.K[0, 2], stereo.camL.K[1, 2]),  # cx, cy
+    params=(K[0, 0],  # focal length
+            K[0, 2], K[1, 2]),  # cx, cy
 )
 
 cap = cv2.VideoCapture(str(vid_path))
