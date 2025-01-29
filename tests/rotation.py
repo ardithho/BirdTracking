@@ -20,15 +20,13 @@ with open(cfg_path, 'r') as f:
     R = ext[:3, :3]
     t = ext[:3, 3]
 
-cam_rot = ext[:3, :3]
-cam_rot = cv2.Rodrigues(np.array([-90, 180, 0], dtype=np.float32)*DEG2RAD)[0]
 T = np.eye(4)
-r = np.array([90, 0, 0], dtype=np.float64)
+r = np.array([0, 0, 0], dtype=np.float64)
 T[:3, :3] = cv2.Rodrigues(r * DEG2RAD)[0]
 sim.update(T)
 o3d.visualization.draw_geometries([sim.mesh],
-                                  front=-R.T@t,
+                                  front=R.T@t[[0, 2, 1]],
                                   lookat=[0, 0, 0],
-                                  up=[0, -1, 0],
+                                  up=[0, 1, 0],
                                   zoom=1.
                                   )
