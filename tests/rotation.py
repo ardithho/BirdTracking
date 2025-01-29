@@ -17,6 +17,8 @@ with open(cfg_path, 'r') as f:
     cfg = yaml.safe_load(f)
     K = np.array(cfg['KF']).reshape(3, 3)
     ext = np.array(cfg['extF']).reshape(3, 4)
+    R = ext[:3, :3]
+    t = ext[:3, 3]
 
 cam_rot = ext[:3, :3]
 cam_rot = cv2.Rodrigues(np.array([-90, 180, 0], dtype=np.float32)*DEG2RAD)[0]
@@ -25,8 +27,8 @@ r = np.array([90, 0, 0], dtype=np.float64)
 T[:3, :3] = cv2.Rodrigues(r * DEG2RAD)[0]
 sim.update(T)
 o3d.visualization.draw_geometries([sim.mesh],
-                                  front=cam_rot[:, 0],
-                                  lookat=cam_rot[:, 1],
-                                  up=cam_rot[:, 2],
+                                  front=-R.T@t,
+                                  lookat=[0, 0, 0],
+                                  up=[0, -1, 0],
                                   zoom=1.
                                   )
