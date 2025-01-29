@@ -24,9 +24,10 @@ T = np.eye(4)
 r = np.array([0, 0, 0], dtype=np.float64)
 T[:3, :3] = cv2.Rodrigues(r * DEG2RAD)[0]
 sim.update(T)
-o3d.visualization.draw_geometries([sim.mesh],
-                                  front=R.T@t[[0, 2, 1]],
-                                  lookat=[0, 0, 0],
-                                  up=[0, 1, 0],
-                                  zoom=1.
-                                  )
+# o3d.visualization.draw_geometries([sim.mesh],
+#                                   front=R.T@t[[0, 2, 1]],
+#                                   lookat=[0, 0, 0],
+#                                   up=[0, 1, 0],
+#                                   zoom=1.
+#                                   )
+sim.run()

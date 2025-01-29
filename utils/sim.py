@@ -1,6 +1,7 @@
 import open3d as o3d
 import numpy as np
 import cv2
+import yaml
 from pathlib import Path
 
 from utils.general import cnt_centroid, DEG2RAD
@@ -14,13 +15,25 @@ ROOT = Path(__file__).parent.parent
 
 
 class Sim:
-    def __init__(self, path=ROOT / 'data/blender/full_model.obj'):
+    def __init__(self, path=ROOT / 'data/blender/full_model.obj', cfg=ROOT / 'data/blender/cam.yaml'):
         self.mesh = o3d.io.read_triangle_mesh(str(path), enable_post_processing=True)
         self.mesh.compute_vertex_normals()
         self.vis = o3d.visualization.Visualizer()
         self.vis.create_window()
         self.vis.add_geometry(self.mesh)
+        with open(cfg, 'r') as f:
+            cfg = yaml.safe_load(f)
+            ext = np.array(cfg['ext']).reshape(3, 4)
+            R = ext[:3, :3]
+            t = ext[:3, 3]
+        self.vis.get_view_control().set_front(R.T@t[[0, 2, 1]])
+        self.vis.get_view_control().set_lookat([0, 0, 0])
+        self.vis.get_view_control().set_up([0, 1, 0])
+        self.vis.update_renderer()
         self.T = np.eye(4)
+
+    def run(self):
+        self.vis.run()
 
     def update(self, T):
         self.mesh.transform(T)
