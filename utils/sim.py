@@ -5,10 +5,10 @@ import yaml
 from pathlib import Path
 
 from utils.general import cnt_centroid, DEG2RAD
-from .sorter import process_labels
-from .colour import bgr_mask
-from .structs import CLS_DICT
-from .box import Box
+from utils.sorter import process_labels
+from utils.colour import bgr_mask
+from utils.structs import CLS_DICT
+from utils.box import Box
 
 
 ROOT = Path(__file__).parent.parent
