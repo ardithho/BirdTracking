@@ -65,8 +65,9 @@ while cap.isOpened():
         if pnp:
             r -= cv2.Rodrigues(ext[:3, :3])[0]
             # r = r[[0, 2, 1]]
+            r[2] = -r[2]
             R, _ = cv2.Rodrigues(r)
-            # R = R.T
+            R = R.T
             T[:3, :3] = R @ prev_T[:3, :3].T
             # T[:3, 3] = t.T - prev_T[:3, 3]
             # r, _ = cv2.Rodrigues(R*transforms[frame_no][:3, :3])
