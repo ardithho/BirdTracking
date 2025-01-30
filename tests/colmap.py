@@ -16,12 +16,14 @@ from utils.reconstruct import get_head_feat_pts
 
 
 STRIDE = 1
+BLENDER_ROOT = ROOT / 'data/blender'
+NAME = 'marked'
 
-vid_path = ROOT / 'data/blender/marked_f.mp4'
-
-renders_dir = ROOT / 'data/blender/marked'
-cfg_path = os.path.join(renders_dir, 'cam.yaml')
-trans_path = os.path.join(renders_dir, 'transforms.txt')
+vid_path = BLENDER_ROOT / f'vid/{NAME}_f.mp4'
+renders_dir = BLENDER_ROOT / 'renders'
+input_dir = renders_dir / NAME
+cfg_path = input_dir / 'cam.yaml'
+trans_path = input_dir / 'transforms.txt'
 
 h, w = (720, 1280)
 writer = cv2.VideoWriter(str(ROOT / 'data/out/colmap.mp4'), cv2.VideoWriter_fourcc(*'MPEG'), 10, (w, int(h * 2)))

@@ -15,9 +15,14 @@ from utils.general import RAD2DEG
 from utils.odometry import estimate_vio, estimate_vio_pts, find_matches
 
 
-src_dir = ROOT / 'data/blender/renders'
-cfg_path = os.path.join(src_dir, 'cam.yaml')
-trans_path = os.path.join(src_dir, 'transforms.txt')
+BLENDER_ROOT = ROOT / 'data/blender'
+NAME = 'vanilla'
+
+vid_path = BLENDER_ROOT / f'vid/{NAME}_f.mp4'
+renders_dir = BLENDER_ROOT / 'renders'
+input_dir = renders_dir / NAME
+cfg_path = input_dir / 'cam.yaml'
+trans_path = input_dir / 'transforms.txt'
 
 
 with open(cfg_path, 'r') as f:
@@ -31,8 +36,8 @@ with open(trans_path, 'r') as f:
 
 
 index = 2
-im1 = cv2.imread(os.path.join(src_dir, f'{index:03}.png'))
-im2 = cv2.imread(os.path.join(src_dir, f'{index+1:03}.png'))
+im1 = cv2.imread(os.path.join(input_dir, f'{index:03}.png'))
+im2 = cv2.imread(os.path.join(input_dir, f'{index+1:03}.png'))
 
 # thresh = .5
 # method = 'orb'

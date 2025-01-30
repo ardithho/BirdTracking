@@ -15,11 +15,14 @@ from utils.odometry import estimate_vio, find_matches, find_matching_pts, draw_l
 
 STRIDE = 1
 METHOD = 'lg'
+BLENDER_ROOT = ROOT / 'data/blender'
+NAME = 'vanilla'
 
-vid_path = ROOT / 'data/blender/render.mp4'
-
-cfg_path = ROOT / 'data/blender/renders/cam.yaml'
-trans_path = ROOT / 'data/blender/renders/transforms.txt'
+vid_path = BLENDER_ROOT / f'vid/{NAME}.mp4'
+renders_dir = BLENDER_ROOT / 'renders'
+input_dir = renders_dir / NAME
+cfg_path = input_dir / 'cam.yaml'
+trans_path = input_dir / 'transforms.txt'
 
 h, w = (720, 1280)
 writer = cv2.VideoWriter(str(ROOT / f'data/out/vio_{METHOD}.mp4'), cv2.VideoWriter_fourcc(*'MPEG'), 10, (w, int(h * 1.5)))
