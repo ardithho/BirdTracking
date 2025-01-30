@@ -5,6 +5,11 @@ from matplotlib.colors import hsv_to_rgb
 from collections import Counter
 from sklearn.cluster import KMeans
 
+import sys
+from pathlib import Path
+ROOT = Path(__file__).parent.parent
+sys.path.append(str(ROOT))
+
 from utils.general import kernel
 
 

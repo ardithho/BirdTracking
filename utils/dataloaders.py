@@ -1,6 +1,12 @@
 import os
 import cv2
 import time
+
+import sys
+from pathlib import Path
+ROOT = Path(__file__).parent.parent
+sys.path.append(str(ROOT))
+
 from utils.general import euc_dist
 
 
@@ -227,7 +233,6 @@ def get_frame_no(filename):
 
 
 if __name__ == '__main__':
-    ROOT = os.path.dirname(os.getcwd())
     det_dir = os.path.join(ROOT, 'runs/detect/exp7/labels')
     vid_path = os.path.join(ROOT, 'vid/fps120/K203_K238_1_GH020045_cut.mp4')
     detections = DetectionsDataloader(det_dir, resize=0.3)

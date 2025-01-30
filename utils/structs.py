@@ -1,6 +1,11 @@
 import cv2
 import numpy as np
 
+import sys
+from pathlib import Path
+ROOT = Path(__file__).parent.parent
+sys.path.append(str(ROOT))
+
 from utils.sorter import sort_feat, to_dict, process_labels
 from utils.plot import plot_box, plot_feat
 from utils.colour import cheek_mask, mask_ratio

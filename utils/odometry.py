@@ -3,7 +3,8 @@ import numpy as np
 
 import sys
 from pathlib import Path
-sys.path.append(str(Path(__file__).parent.parent))
+ROOT = Path(__file__).parent.parent
+sys.path.append(str(ROOT))
 
 from lightglue import LightGlue, SuperPoint, match_pair, viz2d
 from lightglue.utils import load_image, numpy_image_to_torch
@@ -185,7 +186,7 @@ def draw_lg_matches(im1, kp1, im2, kp2):
 
 
 if __name__ == '__main__':
-    cap = cv2.VideoCapture('../data/vid/fps120/K203_K238/GOPRO2/GH010039.MP4')
+    cap = cv2.VideoCapture(str(ROOT / '/data/vid/fps120/K203_K238/GOPRO2/GH010039.MP4'))
     if cap.isOpened():
         prev = cap.read()[1]
         while cap.isOpened():

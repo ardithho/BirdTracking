@@ -1,6 +1,12 @@
 import yaml
 import cv2
 import numpy as np
+
+import sys
+from pathlib import Path
+ROOT = Path(__file__).parent.parent
+sys.path.append(str(ROOT))
+
 from utils.general import kernel
 from utils.calibrate import find_corners, get_mask, remap, obj_pts
 
@@ -197,7 +203,6 @@ if __name__ == '__main__':
     import yaml
     from pathlib import Path
 
-    ROOT = Path(__file__).parent.parent
     STRIDE = 30
     vidL = str(ROOT / 'data/vid/fps120/K203_K238/GOPRO2/GH010039.MP4')
     vidR = str(ROOT / 'data/vid/fps120/K203_K238/GOPRO1/GH010045.MP4')

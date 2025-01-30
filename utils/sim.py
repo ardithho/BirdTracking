@@ -2,16 +2,17 @@ import open3d as o3d
 import numpy as np
 import cv2
 import yaml
+
+import sys
 from pathlib import Path
+ROOT = Path(__file__).parent.parent
+sys.path.append(str(ROOT))
 
 from utils.general import cnt_centroid, DEG2RAD
 from utils.sorter import process_labels
 from utils.colour import bgr_mask
 from utils.structs import CLS_DICT
 from utils.box import Box
-
-
-ROOT = Path(__file__).parent.parent
 
 
 class Sim:
