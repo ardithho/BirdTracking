@@ -79,30 +79,31 @@ while cap.isOpened():
         birds.update([Bird(dummy_head, extract_features(frame))], frame)
         bird = birds['m'] if birds['m'] is not None else birds['f']
         head_pts, feat_pts = get_head_feat_pts(bird)
-        pnp = pycolmap.estimate_and_refine_absolute_pose(feat_pts, head_pts, cam)
-        gt = transforms[frame_no] @ gt
-        gtt = cv2.Rodrigues(gt[:3, :3])[0][[2, 1, 0]]
-        gtt[2] = -gtt[2]
-        if pnp is not None:
-            rig = pnp['cam_from_world']  # Rigid3d
-            R = rig.rotation.matrix()
-            R = R @ ext[:3, :3].T  # undo camera extrinsic rotation
-            r = cv2.Rodrigues(R)[0]
-            # blender to o3d notation
-            # r = r[[0, 2, 1]]
-            r[2] = -r[2]
-            R, _ = cv2.Rodrigues(r)
-            R = R.T
-            T[:3, :3] = R @ prev_T[:3, :3].T
-            print('es:', *np.rint(cv2.Rodrigues(T[:3, :3])[0]*RAD2DEG))
-            print('gt:', *np.rint(cv2.Rodrigues(transforms[frame_no][:3, :3])[0]*RAD2DEG))
+        if head_pts.shape[0] > 0:
+            pnp = pycolmap.estimate_and_refine_absolute_pose(feat_pts, head_pts, cam)
+            gt = transforms[frame_no] @ gt
+            gtt = cv2.Rodrigues(gt[:3, :3])[0][[2, 1, 0]]
+            gtt[2] = -gtt[2]
+            if pnp is not None:
+                rig = pnp['cam_from_world']  # Rigid3d
+                R = rig.rotation.matrix()
+                R = R @ ext[:3, :3].T  # undo camera extrinsic rotation
+                r = cv2.Rodrigues(R)[0]
+                # blender to o3d notation
+                # r = r[[0, 2, 1]]
+                r[2] = -r[2]
+                R, _ = cv2.Rodrigues(r)
+                R = R.T
+                T[:3, :3] = R @ prev_T[:3, :3].T
+                print('es:', *np.rint(cv2.Rodrigues(T[:3, :3])[0]*RAD2DEG))
+                print('gt:', *np.rint(cv2.Rodrigues(transforms[frame_no][:3, :3])[0]*RAD2DEG))
 
-            print('esT:', *np.rint(cv2.Rodrigues(R)[0]*RAD2DEG))
-            # print('gtT:', *np.rint(cv2.Rodrigues(gt[:3, :3])[0]*RAD2DEG))
-            print('gtT:', *np.rint(gtt*RAD2DEG))
-            print('')
-            prev_T[:3, :3] = R
-            sim.update(T)
+                print('esT:', *np.rint(cv2.Rodrigues(R)[0]*RAD2DEG))
+                # print('gtT:', *np.rint(cv2.Rodrigues(gt[:3, :3])[0]*RAD2DEG))
+                print('gtT:', *np.rint(gtt*RAD2DEG))
+                print('')
+                prev_T[:3, :3] = R
+                sim.update(T)
 
         cv2.imshow('frame', cv2.resize(birds.plot(frame), None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC))
         out = cv2.vconcat([cv2.resize(birds.plot(frame), (w, h), interpolation=cv2.INTER_CUBIC),
