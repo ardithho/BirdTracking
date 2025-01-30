@@ -21,7 +21,7 @@ if SAVE:
     h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     fps = cap.get(cv2.CAP_PROP_FPS)
-    writer = cv2.VideoWriter('data/out/landmarks.mp4', cv2.VideoWriter_fourcc(*'MPEG'), fps//STRIDE, (w, h))
+    writer = cv2.VideoWriter('data/out/landmarks.mp4', cv2.VideoWriter_fourcc(*'mp4v'), fps//STRIDE, (w, h))
 
 birds = Birds()
 while cap.isOpened():

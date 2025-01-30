@@ -27,7 +27,7 @@ vid_path = ROOT / 'data/vid/fps120/K203_K238_1_GH040045.mp4'
 cfg_path = ROOT / 'data/calibration/cam.yaml'
 
 h, w = (720, 1280)
-writer = cv2.VideoWriter(str(ROOT / 'data/out/vio.mp4'), cv2.VideoWriter_fourcc(*'MPEG'), 4, (w, int(h * 1.5)))
+writer = cv2.VideoWriter(str(ROOT / 'data/out/vio.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 4, (w, int(h * 1.5)))
 
 with open(cfg_path, 'r') as f:
     cfg = yaml.safe_load(f)

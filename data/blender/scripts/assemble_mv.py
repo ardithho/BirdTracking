@@ -19,10 +19,10 @@ r_out_path = os.path.join(output_dir, f'{NAME}_r.mp4')
 f_out_path = os.path.join(output_dir, f'{NAME}_f.mp4')
 
 w, h = (1920, 1080)
-writer = cv2.VideoWriter(out_path, cv2.VideoWriter_fourcc(*'MPEG'), 10, (w*2, h))
-writer_l = cv2.VideoWriter(l_out_path, cv2.VideoWriter_fourcc(*'MPEG'), 10, (w, h))
-writer_r = cv2.VideoWriter(r_out_path, cv2.VideoWriter_fourcc(*'MPEG'), 10, (w, h))
-writer_f = cv2.VideoWriter(f_out_path, cv2.VideoWriter_fourcc(*'MPEG'), 10, (w, h))
+writer = cv2.VideoWriter(out_path, cv2.VideoWriter_fourcc(*'mp4v'), 10, (w*2, h))
+writer_l = cv2.VideoWriter(l_out_path, cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, h))
+writer_r = cv2.VideoWriter(r_out_path, cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, h))
+writer_f = cv2.VideoWriter(f_out_path, cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, h))
 
 l_renders = [x for x in os.listdir(l_dir) if x.endswith('.png') or x.endswith('.jpg')]
 l_renders.sort()

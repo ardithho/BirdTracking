@@ -27,7 +27,7 @@ vidR = ROOT / 'data/vid/fps120/K203_K238/GOPRO1/GH010045.MP4'
 cfg_path = ROOT / 'data/calibration/cam.yaml'
 
 h, w = (720, 1280)
-writer = cv2.VideoWriter(str(ROOT / 'data/out/pnp.mp4'), cv2.VideoWriter_fourcc(*'MPEG'), 10, (w, h * 2))
+writer = cv2.VideoWriter(str(ROOT / 'data/out/pnp.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, h * 2))
 
 
 with open(cfg_path, 'r') as f:

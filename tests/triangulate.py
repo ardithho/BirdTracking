@@ -34,7 +34,7 @@ capL = cv2.VideoCapture(str(vidL))
 capR = cv2.VideoCapture(str(vidR))
 
 h, w = (720, 1280)
-writer = cv2.VideoWriter(str(ROOT / 'data/out/tri_plot.mp4'), cv2.VideoWriter_fourcc(*'MPEG'), 10, (w, int(h * 1.5)))
+writer = cv2.VideoWriter(str(ROOT / 'data/out/tri_plot.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, int(h * 1.5)))
 
 birdsL = Birds()
 birdsR = Birds()
