@@ -8,7 +8,7 @@ from mathutils import Matrix
 from scipy.spatial.transform import Rotation as R
 
 
-AXIS = 'x'
+AXIS = 'z'
 axis_dict = {'x': 0, 'y': 1, 'z': 2}
 BLENDER_ROOT = Path(__file__).parent.parent
 renders_dir = BLENDER_ROOT / 'renders'

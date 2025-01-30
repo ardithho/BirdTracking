@@ -17,7 +17,8 @@ from utils.reconstruct import get_head_feat_pts
 
 STRIDE = 1
 BLENDER_ROOT = ROOT / 'data/blender'
-NAME = 'marked_x'
+EXTENSION = ''
+NAME = f'marked{EXTENSION}'
 
 renders_dir = BLENDER_ROOT / 'renders'
 vid_path = renders_dir / f'vid/{NAME}_f.mp4'
@@ -26,7 +27,7 @@ cfg_path = input_dir / 'cam.yaml'
 trans_path = input_dir / 'transforms.txt'
 
 h, w = (720, 1280)
-writer = cv2.VideoWriter(str(ROOT / 'data/out/colmap.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, int(h * 2)))
+writer = cv2.VideoWriter(str(ROOT / f'data/out/colmap{EXTENSION}.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, int(h * 2)))
 
 stereo = Stereo(path=cfg_path)
 with open(cfg_path, 'r') as f:
@@ -82,25 +83,24 @@ while cap.isOpened():
         if head_pts.shape[0] > 0:
             pnp = pycolmap.estimate_and_refine_absolute_pose(feat_pts, head_pts, cam)
             gt = transforms[frame_no] @ gt
-            gtt = cv2.Rodrigues(gt[:3, :3])[0][[2, 1, 0]]
-            gtt[2] = -gtt[2]
             if pnp is not None:
                 rig = pnp['cam_from_world']  # Rigid3d
                 R = rig.rotation.matrix()
                 R = R @ ext[:3, :3].T  # undo camera extrinsic rotation
                 r = cv2.Rodrigues(R)[0]
-                # blender to o3d notation
-                # r = r[[0, 2, 1]]
+                # cv2 to o3d notation
                 r[2] = -r[2]
                 R, _ = cv2.Rodrigues(r)
                 R = R.T
                 T[:3, :3] = R @ prev_T[:3, :3].T
                 print('es:', *np.rint(cv2.Rodrigues(T[:3, :3])[0]*RAD2DEG))
-                print('gt:', *np.rint(cv2.Rodrigues(transforms[frame_no][:3, :3])[0]*RAD2DEG))
+                print('gt:', *np.rint(
+                    cv2.Rodrigues(transforms[frame_no][:3, :3])[0][[0, 2, 1]]*np.array([1., 1., -1.]).reshape((-1, 1))*RAD2DEG))
 
                 print('esT:', *np.rint(cv2.Rodrigues(R)[0]*RAD2DEG))
-                # print('gtT:', *np.rint(cv2.Rodrigues(gt[:3, :3])[0]*RAD2DEG))
-                print('gtT:', *np.rint(gtt*RAD2DEG))
+                print('gtT:', *np.rint(
+                    cv2.Rodrigues(gt[:3, :3])[0][[0, 2, 1]]*np.array([1., 1., -1.]).reshape((-1, 1))*RAD2DEG))
+
                 print('')
                 prev_T[:3, :3] = R
                 sim.update(T)
