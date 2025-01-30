@@ -1,0 +1,22 @@
+# Origin set at bill tip, measured in mm
+# (x, y, z)
+bill:
+  - 0.0
+  - 0.0
+  - 0.0
+left_eye:
+  - 9.2951
+  - 14.5035
+  - 12.1133
+left_tear:
+  - 12.692
+  - 20.3469
+  - 4.5218
+right_eye:
+  - -9.2951
+  - 14.5035
+  - 12.1133
+right_tear:
+  - -12.692
+  - 20.3469
+  - 4.5218

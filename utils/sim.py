@@ -16,7 +16,7 @@ from utils.box import Box
 
 
 class Sim:
-    def __init__(self, path=ROOT / 'data/blender/full_model.obj', cfg=ROOT / 'data/blender/cam.yaml'):
+    def __init__(self, path=ROOT / 'data/blender/full_model.obj', cfg=ROOT / 'data/blender/configs/cam.yaml'):
         self.mesh = o3d.io.read_triangle_mesh(str(path), enable_post_processing=True)
         self.mesh.compute_vertex_normals()
         self.vis = o3d.visualization.Visualizer()
