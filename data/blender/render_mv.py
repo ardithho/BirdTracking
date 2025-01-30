@@ -10,7 +10,8 @@ from scipy.spatial.transform import Rotation as R
 
 
 parent_dir = Path(__file__).parent.parent
-output_dir = os.path.join(parent_dir, 'renders')
+renders_dir = parent_dir / "renders"
+output_dir = os.path.join(renders_dir, 'vanilla')
 os.makedirs(output_dir, exist_ok=True)
 
 cam_name = 'cam_f'

@@ -11,7 +11,8 @@ from scipy.spatial.transform import Rotation as R
 AXIS = 'x'
 axis_dict = {'x': 0, 'y': 1, 'z': 2}
 parent_dir = Path(__file__).parent.parent
-output_dir = os.path.join(parent_dir, f'marked_{AXIS}')
+renders_dir = parent_dir / 'renders'
+output_dir = os.path.join(renders_dir, f'marked_{AXIS}')
 l_dir = os.path.join(output_dir, 'l')
 r_dir = os.path.join(output_dir, 'r')
 f_dir = os.path.join(output_dir, 'f')

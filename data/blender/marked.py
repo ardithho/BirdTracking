@@ -9,7 +9,8 @@ from scipy.spatial.transform import Rotation as R
 
 
 parent_dir = Path(__file__).parent.parent
-output_dir = os.path.join(parent_dir, 'marked')
+renders_dir = parent_dir / 'renders'
+output_dir = os.path.join(renders_dir, 'marked')
 l_dir = os.path.join(output_dir, 'l')
 r_dir = os.path.join(output_dir, 'r')
 f_dir = os.path.join(output_dir, 'f')
@@ -45,8 +46,8 @@ def extrinsic_mat(cam):
 
     # Build the coordinate transform matrix from world to computer vision camera
     # NOTE: Use * instead of @ here for older versions of Blender
-    R_world2cv = R_bcam2cv@R_world2bcam
-    T_world2cv = R_bcam2cv@T_world2bcam
+    R_world2cv = R_bcam2cv @ R_world2bcam
+    T_world2cv = R_bcam2cv @ T_world2bcam
 
     # put into 3x4 matrix
     RT = np.array([[*R_world2cv[0][:], T_world2cv[0]],
