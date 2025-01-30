@@ -1,4 +1,4 @@
-# Origin set at bill tip, measured in mm
+# Origin set at centre of head, measured in mm
 # (x, y, z)
 bill:
   - 0.0
