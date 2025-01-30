@@ -11,8 +11,8 @@ from utils.sim import *
 from utils.general import DEG2RAD
 
 
-renders_dir = ROOT / 'data/blender/marked'
-cfg_path = os.path.join(renders_dir, 'cam.yaml')
+input_dir = ROOT / 'data/blender/renders/marked'
+cfg_path = os.path.join(input_dir, 'cam.yaml')
 with open(cfg_path, 'r') as f:
     cfg = yaml.safe_load(f)
     K = np.array(cfg['KF']).reshape(3, 3)

@@ -19,8 +19,8 @@ STRIDE = 1
 BLENDER_ROOT = ROOT / 'data/blender'
 NAME = 'marked'
 
-vid_path = BLENDER_ROOT / f'vid/{NAME}_f.mp4'
 renders_dir = BLENDER_ROOT / 'renders'
+vid_path = renders_dir / f'vid/{NAME}_f.mp4'
 input_dir = renders_dir / NAME
 cfg_path = input_dir / 'cam.yaml'
 trans_path = input_dir / 'transforms.txt'

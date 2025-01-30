@@ -18,12 +18,12 @@ STRIDE = 1
 BLENDER_ROOT = ROOT / 'data/blender'
 NAME = 'marked'
 
-vidL = BLENDER_ROOT / f'vid/{NAME}_l.mp4'
-vidR = BLENDER_ROOT / f'vid/{NAME}_r.mp4'
 renders_dir = BLENDER_ROOT / 'renders'
-input_dir = renders_dir / NAME
-cfg_path = input_dir / 'cam.yaml'
-trans_path = input_dir / 'transforms.txt'
+vidL = renders_dir / f'vid/{NAME}_l.mp4'
+vidR = renders_dir / f'vid/{NAME}_r.mp4'
+input_dir = renders_dir / 'renders'
+cfg_path = os.path.join(input_dir, 'cam.yaml')
+trans_path = os.path.join(input_dir, 'transforms.txt')
 
 stereo = Stereo(path=cfg_path)
 capL = cv2.VideoCapture(str(vidL))

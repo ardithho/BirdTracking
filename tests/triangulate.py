@@ -5,6 +5,7 @@ import os
 
 import sys
 from pathlib import Path
+
 ROOT = Path(__file__).parent.parent
 sys.path.append(str(ROOT))
 
@@ -18,13 +19,15 @@ from utils.odometry import draw_matches
 STRIDE = 1
 COLOURS = {'bill': 'r', 'left_eye': 'y', 'left_tear': 'g', 'right_eye': 'y', 'right_tear': 'g'}
 MARKERS = {'bill': '^', 'left_eye': 'o', 'left_tear': 'o', 'right_eye': 'o', 'right_tear': 'o'}
+BLENDER_ROOT = ROOT / 'blender'
+NAME = 'marked'
 
-vidL = ROOT / 'data/blender/marked_l.mp4'
-vidR = ROOT / 'data/blender/marked_r.mp4'
-
-renders_dir = ROOT / 'data/blender/marked'
-cfg_path = os.path.join(renders_dir, 'cam.yaml')
-trans_path = os.path.join(renders_dir, 'transforms.txt')
+renders_dir = BLENDER_ROOT / 'renders'
+vidL = renders_dir / f'vid/{NAME}_l.mp4'
+vidR = renders_dir / f'vid/{NAME}_r.mp4'
+input_dir = renders_dir / 'renders'
+cfg_path = os.path.join(input_dir, 'cam.yaml')
+trans_path = os.path.join(input_dir, 'transforms.txt')
 
 stereo = Stereo(path=cfg_path)
 capL = cv2.VideoCapture(str(vidL))
