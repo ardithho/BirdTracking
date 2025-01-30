@@ -10,7 +10,7 @@ from scipy.spatial.transform import Rotation as R
 
 AXIS = 'z'
 axis_dict = {'x': 0, 'y': 1, 'z': 2}
-BLENDER_ROOT = Path(__file__).parent.parent
+BLENDER_ROOT = Path(__file__).parent.parent.parent
 renders_dir = BLENDER_ROOT / 'renders'
 output_dir = os.path.join(renders_dir, f'marked_{AXIS}')
 l_dir = os.path.join(output_dir, 'l')

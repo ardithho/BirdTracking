@@ -8,7 +8,7 @@ from mathutils import Matrix
 from scipy.spatial.transform import Rotation as R
 
 
-BLENDER_ROOT = Path(__file__).parent.parent
+BLENDER_ROOT = Path(__file__).parent.parent.parent
 renders_dir = BLENDER_ROOT / 'renders'
 output_dir = os.path.join(renders_dir, 'marked')
 l_dir = os.path.join(output_dir, 'l')
