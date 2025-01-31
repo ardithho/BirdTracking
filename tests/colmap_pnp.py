@@ -1,3 +1,4 @@
+import pycolmap
 import yaml
 import cv2
 import numpy as np
@@ -12,8 +13,9 @@ from yolov8.track import Tracker
 
 from utils.camera import Stereo
 from utils.structs import Bird, Birds
-from utils.reconstruct import solvePnP
+from utils.reconstruct import solvePnP, get_head_feat_pts
 from utils.sim import *
+from utils.general import RAD2DEG
 
 
 STRIDE = 4
@@ -25,14 +27,28 @@ vidL = ROOT / 'data/vid/fps120/K203_K238/GOPRO2/GH010039.MP4'
 vidR = ROOT / 'data/vid/fps120/K203_K238/GOPRO1/GH010045.MP4'
 
 cfg_path = ROOT / 'data/calibration/cam.yaml'
+blender_cfg = ROOT / 'data/blender/configs/cam.yaml'
 
 h, w = (720, 1280)
 writer = cv2.VideoWriter(str(ROOT / 'data/out/pnp.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, h * 2))
 
+stereo = Stereo(path=cfg_path)
 with open(cfg_path, 'r') as f:
     cfg = yaml.safe_load(f)
     K = np.asarray(cfg['KR']).reshape(3, 3)
     dist = np.asarray(cfg['distR'])
+
+with open(blender_cfg, 'r') as f:
+    cfg = yaml.safe_load(f)
+    ext = np.array(cfg['ext']).reshape(3, 4)
+
+cam = pycolmap.Camera(
+    model='SIMPLE_PINHOLE',
+    width=stereo.camR.w,
+    height=stereo.camR.h,
+    params=(K[0, 0],  # focal length
+            K[0, 2], K[1, 2]),  # cx, cy
+    )
 
 cap = cv2.VideoCapture(str(ROOT / 'data/vid/fps120/K203_K238_1_GH040045.mp4'))
 birds = Birds()
@@ -53,14 +69,24 @@ while cap.isOpened():
         birds.update([Bird(head, feat) for head, feat in zip(head, feat)], frame)
         bird = birds['m'] if birds['m'] is not None else birds['f']
         if bird is not None:
-            pnp, r, t, _ = solvePnP(bird, K, dist)
-            if pnp:
-                R, _ = cv2.Rodrigues(r)
-                T[:3, :3] = prev_T[:3, :3].T @ R
-                # T[:3, 3] = t.T - prev_T[:3, 3]
-                prev_T[:3, :3] = R
-                # prev_T[:3, 3] = t.T
-                sim.update(T)
+            head_pts, feat_pts = get_head_feat_pts(bird)
+            if head_pts.shape[0] > 0:
+                pnp = pycolmap.estimate_and_refine_absolute_pose(feat_pts, head_pts, cam)
+                if pnp is not None:
+                    rig = pnp['cam_from_world']  # Rigid3d
+                    R = rig.rotation.matrix()
+                    R = R @ ext[:3, :3].T  # undo camera extrinsic rotation
+                    r = cv2.Rodrigues(R)[0]
+                    # cv2 to o3d notation
+                    r[2] = -r[2]
+                    R, _ = cv2.Rodrigues(r)
+                    R = R.T
+                    T[:3, :3] = R @ prev_T[:3, :3].T
+                    print('es:', *np.rint(cv2.Rodrigues(T[:3, :3])[0] * RAD2DEG))
+                    print('esT:', *np.rint(cv2.Rodrigues(R)[0] * RAD2DEG))
+                    print('')
+                    prev_T[:3, :3] = R
+                    sim.update(T)
         cv2.imshow('frame', cv2.resize(birds.plot(frame), None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC))
 
         out = cv2.vconcat([cv2.resize(birds.plot(frame), (w, h), interpolation=cv2.INTER_CUBIC),
