@@ -13,7 +13,7 @@ from yolov8.track import Tracker
 
 from utils.camera import Stereo
 from utils.structs import Bird, Birds
-from utils.reconstruct import solvePnP, get_head_feat_pts
+from utils.reconstruct import get_head_feat_pts
 from utils.sim import *
 from utils.general import RAD2DEG
 
@@ -71,16 +71,17 @@ while cap.isOpened():
         bird = birds['m'] if birds['m'] is not None else birds['f']
         if bird is not None:
             head_pts, feat_pts = get_head_feat_pts(bird)
+            print([k for k in CLS_DICT.keys() if bird.feats[k] is not None])
             if head_pts.shape[0] > 0:
                 pnp = pycolmap.estimate_and_refine_absolute_pose(feat_pts, head_pts, cam)
                 if pnp is not None:
                     rig = pnp['cam_from_world']  # Rigid3d
                     R = rig.rotation.matrix()
-                    # R = R @ ext[:3, :3].T  # undo camera extrinsic rotation
+                    R = R @ ext[:3, :3].T  # undo camera extrinsic rotation
                     r = cv2.Rodrigues(R)[0]
                     # cv2 to o3d notation
-                    r[2] = -r[2]
-                    r[1] = -r[1]
+                    # r[2] = -r[2]
+                    # r[1] = -r[1]
                     R, _ = cv2.Rodrigues(r)
                     R = R.T
                     T[:3, :3] = R @ prev_T[:3, :3].T
