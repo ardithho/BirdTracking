@@ -43,11 +43,12 @@ with open(blender_cfg, 'r') as f:
     ext = np.array(cfg['ext']).reshape(3, 4)
 
 cam = pycolmap.Camera(
-    model='SIMPLE_PINHOLE',
+    model='OPENCV',
     width=stereo.camR.w,
     height=stereo.camR.h,
-    params=(K[0, 0],  # focal length
-            K[0, 2], K[1, 2]),  # cx, cy
+    params=(K[0, 0], K[1, 1],  # fx, fy
+            K[0, 2], K[1, 2],  # cx, cy
+            *dist[:4]),  # dist: k1, k2, p1, p2
     )
 
 cap = cv2.VideoCapture(str(ROOT / 'data/vid/fps120/K203_K238_1_GH040045.mp4'))
@@ -75,10 +76,11 @@ while cap.isOpened():
                 if pnp is not None:
                     rig = pnp['cam_from_world']  # Rigid3d
                     R = rig.rotation.matrix()
-                    R = R @ ext[:3, :3].T  # undo camera extrinsic rotation
+                    # R = R @ ext[:3, :3].T  # undo camera extrinsic rotation
                     r = cv2.Rodrigues(R)[0]
                     # cv2 to o3d notation
                     r[2] = -r[2]
+                    r[1] = -r[1]
                     R, _ = cv2.Rodrigues(r)
                     R = R.T
                     T[:3, :3] = R @ prev_T[:3, :3].T
