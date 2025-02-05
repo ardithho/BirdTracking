@@ -53,7 +53,6 @@ cam = pycolmap.Camera(
 
 cap = cv2.VideoCapture(str(ROOT / 'data/vid/fps120/K203_K238_1_GH040045.mp4'))
 birds = Birds()
-sim.flip()
 T = np.eye(4)
 prev_T = np.eye(4)
 sim.update(T)
@@ -71,7 +70,6 @@ while cap.isOpened():
         bird = birds['m'] if birds['m'] is not None else birds['f']
         if bird is not None:
             head_pts, feat_pts = get_head_feat_pts(bird)
-            print([k for k in CLS_DICT.keys() if bird.feats[k] is not None])
             if head_pts.shape[0] > 0:
                 # head_pts[:, 1:] = head_pts[:, 2:0:-1]
                 pnp = pycolmap.estimate_and_refine_absolute_pose(feat_pts, head_pts, cam)
@@ -80,21 +78,24 @@ while cap.isOpened():
                     R = rig.rotation.matrix()
                     R = R @ ext[:3, :3].T  # undo camera extrinsic rotation
                     r = cv2.Rodrigues(R)[0]
-                    # cv2 to o3d notation
+                    # colmap to o3d notation
                     r[0] = -r[0]
                     R, _ = cv2.Rodrigues(r)
                     R = R.T
                     T[:3, :3] = R @ prev_T[:3, :3].T
-                    print('es:', *np.rint(cv2.Rodrigues(T[:3, :3])[0] * RAD2DEG))
-                    print('esT:', *np.rint(cv2.Rodrigues(R)[0] * RAD2DEG))
-                    print('')
+                    if head_pts.shape[0] >= 4:
+                        print('es:', *np.rint(cv2.Rodrigues(T[:3, :3])[0] * RAD2DEG))
+                        print('esT:', *np.rint(cv2.Rodrigues(R)[0] * RAD2DEG))
+                        print('')
                     prev_T[:3, :3] = R
                     sim.update(T)
         cv2.imshow('frame', cv2.resize(birds.plot(frame), None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC))
 
         out = cv2.vconcat([cv2.resize(birds.plot(frame), (w, h), interpolation=cv2.INTER_CUBIC),
                            cv2.resize(sim.screen, (w, h), interpolation=cv2.INTER_CUBIC)])
-        cv2.imshow('out', out)
+        cv2.imshow('out', cv2.resize(out, None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC))
+        if bird is not None and head_pts.shape[0] >= 4:
+            cv2.waitKey(0)
         writer.write(out)
 
         if cv2.waitKey(1) == ord('q'):

@@ -17,7 +17,7 @@ from utils.reconstruct import get_head_feat_pts
 
 STRIDE = 1
 BLENDER_ROOT = ROOT / 'data/blender'
-EXTENSION = '_x'
+EXTENSION = ''
 NAME = f'marked{EXTENSION}'
 
 renders_dir = BLENDER_ROOT / 'renders'
@@ -80,7 +80,7 @@ while cap.isOpened():
                 R = rig.rotation.matrix()
                 R = R @ ext[:3, :3].T  # undo camera extrinsic rotation
                 r = cv2.Rodrigues(R)[0]
-                # cv2 to o3d notation
+                # colmap to o3d notation
                 r[0] = -r[0]
                 R, _ = cv2.Rodrigues(r)
                 R = R.T

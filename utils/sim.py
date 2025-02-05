@@ -87,10 +87,10 @@ def extract_features(im, colour_bill=(255, 0, 0), colour_eye=(255, 255, 0), colo
 if __name__ == '__main__':
     import numpy as np
     T = np.eye(4)
-    rad = 160 * np.pi / 180
-    T[0, 0] = np.cos(rad)
-    T[0, 2] = np.sin(rad)
-    T[2, 0] = -np.sin(rad)
-    T[2, 2] = np.cos(rad)
+    # rad = 0 * np.pi / 180
+    # T[0, 0] = np.cos(rad)
+    # T[0, 2] = np.sin(rad)
+    # T[2, 0] = -np.sin(rad)
+    # T[2, 2] = np.cos(rad)
     sim.update(T)
     o3d.visualization.draw_geometries([o3d.geometry.TriangleMesh.create_coordinate_frame(), sim.mesh])
