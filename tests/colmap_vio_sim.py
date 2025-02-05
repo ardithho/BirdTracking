@@ -10,7 +10,6 @@ sys.path.append(str(ROOT))
 
 from utils.general import RAD2DEG
 from utils.camera import Stereo
-from utils.structs import Bird, Birds
 from utils.sim import *
 from utils.odometry import find_matches, find_matching_pts, draw_lg_matches
 
@@ -18,7 +17,7 @@ from utils.odometry import find_matches, find_matching_pts, draw_lg_matches
 STRIDE = 1
 METHOD = 'orb'
 BLENDER_ROOT = ROOT / 'data/blender'
-NAME = f'vanilla'
+NAME = 'vanilla'
 
 renders_dir = BLENDER_ROOT / 'renders'
 vid_path = renders_dir / f'vid/{NAME}.mp4'
@@ -40,6 +39,7 @@ with open(trans_path, 'r') as f:
     transforms = [np.array(list(map(float, line.strip().split()[1:]))).reshape((4, 4)) for line in lines]
 
 cam = pycolmap.Camera(
+    camera_id=0,
     model='SIMPLE_PINHOLE',
     width=int(K[0, 2]*2),
     height=int(K[1, 2]*2),
@@ -48,7 +48,6 @@ cam = pycolmap.Camera(
 )
 
 cap = cv2.VideoCapture(str(vid_path))
-birds = Birds()
 frame_no = 0
 T = np.eye(4)
 abs_T = T.copy()
@@ -66,10 +65,12 @@ while cap.isOpened():
         gt = transforms[frame_no] @ gt
         if prev_frame is not None:
             pts1, pts2 = find_matching_pts(prev_frame, frame, method=METHOD)
+            matches = np.asarray(list(zip(list(range(len(pts1))), list(range(len(pts2))))))
             vio = pycolmap.estimate_two_view_geometry(cam,
                                                       pts1.reshape(-1, 2).astype(np.float64),
                                                       cam,
-                                                      pts2.reshape(-1, 2).astype(np.float64))
+                                                      pts2.reshape(-1, 2).astype(np.float64),
+                                                      matches)
             if vio is not None:
                 rig = vio.cam2_from_cam1  # Rigid3d
                 R = rig.rotation.matrix()
