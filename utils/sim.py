@@ -27,6 +27,7 @@ class Sim:
             ext = np.array(cfg['ext']).reshape(3, 4)
             R = ext[:3, :3]
             t = ext[:3, 3]
+        print((R.T@t)[[0, 2, 1]])
         self.vis.get_view_control().set_front((R.T@t)[[0, 2, 1]])
         self.vis.get_view_control().set_lookat([0, 0, 0])
         self.vis.get_view_control().set_up([0, 1, 0])
