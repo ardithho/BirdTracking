@@ -22,6 +22,7 @@ class Sim:
         self.vis = o3d.visualization.Visualizer()
         self.vis.create_window()
         self.vis.add_geometry(self.mesh)
+        self.vis.add_geometry(o3d.geometry.TriangleMesh.create_coordinate_frame())
         with open(cfg, 'r') as f:
             cfg = yaml.safe_load(f)
             ext = np.array(cfg['ext']).reshape(3, 4)
@@ -30,6 +31,7 @@ class Sim:
         self.vis.get_view_control().set_front(R.T@t[[0, 2, 1]])
         self.vis.get_view_control().set_lookat([0, 0, 0])
         self.vis.get_view_control().set_up([0, 1, 0])
+        # self.vis.get_render_option().show_coordinate_frame = True
         self.vis.update_renderer()
         self.T = np.eye(4)
 
@@ -93,5 +95,5 @@ if __name__ == '__main__':
     T[2, 0] = -np.sin(rad)
     T[2, 2] = np.cos(rad)
     sim.update(T)
+    o3d.visualization.Visualizer().add_geometry(o3d.geometry.TriangleMesh.create_coordinate_frame())
     o3d.visualization.draw_geometries([sim.mesh])
-
