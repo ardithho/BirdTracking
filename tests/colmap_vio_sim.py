@@ -16,11 +16,12 @@ from utils.odometry import find_matches, find_matching_pts, draw_lg_matches
 
 
 STRIDE = 1
+METHOD = 'orb'
 BLENDER_ROOT = ROOT / 'data/blender'
 NAME = f'vanilla'
 
 renders_dir = BLENDER_ROOT / 'renders'
-vid_path = renders_dir / f'vid/{NAME}_f.mp4'
+vid_path = renders_dir / f'vid/{NAME}.mp4'
 input_dir = renders_dir / NAME
 cfg_path = input_dir / 'cam.yaml'
 trans_path = input_dir / 'transforms.txt'
@@ -28,6 +29,7 @@ trans_path = input_dir / 'transforms.txt'
 h, w = (720, 1280)
 writer = cv2.VideoWriter(str(ROOT / f'data/out/colmap_vio.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, int(h * 2)))
 
+stereo = Stereo(path=cfg_path)
 with open(cfg_path, 'r') as f:
     cfg = yaml.safe_load(f)
     K = np.array(cfg['KF']).reshape(3, 3)
@@ -39,8 +41,8 @@ with open(trans_path, 'r') as f:
 
 cam = pycolmap.Camera(
     model='SIMPLE_PINHOLE',
-    width=stereo.camL.w,
-    height=stereo.camL.h,
+    width=int(K[0, 2]*2),
+    height=int(K[1, 2]*2),
     params=(K[0, 0],  # focal length
             K[0, 2], K[1, 2]),  # cx, cy
 )
@@ -63,8 +65,11 @@ while cap.isOpened():
     if ret:
         gt = transforms[frame_no] @ gt
         if prev_frame is not None:
-            pts1, pts2 = find_matching_pts(prev_frame, frame)
-            vio = pycolmap.estimate_two_view_geometry(cam, pts1, cam, pts2)
+            pts1, pts2 = find_matching_pts(prev_frame, frame, method=METHOD)
+            vio = pycolmap.estimate_two_view_geometry(cam,
+                                                      pts1.reshape(-1, 2).astype(np.float64),
+                                                      cam,
+                                                      pts2.reshape(-1, 2).astype(np.float64))
             if vio is not None:
                 rig = vio.cam2_from_cam1  # Rigid3d
                 R = rig.rotation.matrix()
@@ -86,11 +91,18 @@ while cap.isOpened():
 
                 print('')
                 sim.update(T)
+            if METHOD == 'lg':
+                kp1, kp2 = find_matching_pts(prev_frame, frame, method=METHOD)
+                match = draw_lg_matches(prev_frame, kp1, frame, kp2)
+            else:
+                kp1, kp2, matches = find_matches(prev_frame, frame, thresh=.2, method=METHOD)
+                match = cv2.drawMatches(prev_frame, kp1, frame, kp2, matches, None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
 
-        cv2.imshow('frame', cv2.resize(birds.plot(frame), None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC))
-        out = cv2.vconcat([cv2.resize(birds.plot(frame), (w, h), interpolation=cv2.INTER_CUBIC),
+            out = cv2.vconcat([cv2.resize(match, (w, int(h / 2)), interpolation=cv2.INTER_CUBIC),
                            cv2.resize(sim.screen, (w, h), interpolation=cv2.INTER_CUBIC)])
-
+        else:
+            out = cv2.vconcat([cv2.resize(cv2.hconcat([frame, frame]), (w, int(h / 2)), interpolation=cv2.INTER_CUBIC),
+                           cv2.resize(sim.screen, (w, h), interpolation=cv2.INTER_CUBIC)])
         cv2.imshow('out', cv2.resize(out, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC))
         writer.write(out)
 
