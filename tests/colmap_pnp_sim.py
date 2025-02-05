@@ -39,15 +39,6 @@ with open(trans_path, 'r') as f:
     lines = f.readlines()
     transforms = [np.array(list(map(float, line.strip().split()[1:]))).reshape((4, 4)) for line in lines]
 
-# camL = pycolmap.Camera(
-#     model='OPENCV',
-#     width=stereo.camL.w,
-#     height=stereo.camL.h,
-#     params=(stereo.camL.K[0, 0], stereo.camL.K[1, 1],  # fx, fy
-#             stereo.camL.K[0, 2], stereo.camL.K[1, 2],  # cx, cy
-#             *stereo.camL.dist[:4]),  # dist: k1, k2, p1, p2
-# )
-
 cam = pycolmap.Camera(
     model='SIMPLE_PINHOLE',
     width=stereo.camL.w,
@@ -89,17 +80,17 @@ while cap.isOpened():
                 R = R @ ext[:3, :3].T  # undo camera extrinsic rotation
                 r = cv2.Rodrigues(R)[0]
                 # cv2 to o3d notation
-                r[2] = -r[2]
+                r[0] = -r[0]
                 R, _ = cv2.Rodrigues(r)
                 R = R.T
                 T[:3, :3] = R @ prev_T[:3, :3].T
                 print('es:', *np.rint(cv2.Rodrigues(T[:3, :3])[0]*RAD2DEG))
                 print('gt:', *np.rint(
-                    cv2.Rodrigues(transforms[frame_no][:3, :3])[0][[0, 2, 1]]*np.array([1., 1., -1.]).reshape((-1, 1))*RAD2DEG))
+                    cv2.Rodrigues(transforms[frame_no][:3, :3])[0][[0, 2, 1]]*np.array([-1., 1., 1.]).reshape((-1, 1))*RAD2DEG))
 
                 print('esT:', *np.rint(cv2.Rodrigues(R)[0]*RAD2DEG))
                 print('gtT:', *np.rint(
-                    cv2.Rodrigues(gt[:3, :3])[0][[0, 2, 1]]*np.array([1., 1., -1.]).reshape((-1, 1))*RAD2DEG))
+                    cv2.Rodrigues(gt[:3, :3])[0][[0, 2, 1]]*np.array([-1., 1., 1.]).reshape((-1, 1))*RAD2DEG))
 
                 print('')
                 prev_T[:3, :3] = R
