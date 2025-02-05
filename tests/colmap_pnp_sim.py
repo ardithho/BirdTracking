@@ -72,7 +72,6 @@ while cap.isOpened():
         bird = birds['m'] if birds['m'] is not None else birds['f']
         head_pts, feat_pts = get_head_feat_pts(bird)
         if head_pts.shape[0] > 0:
-            # head_pts[:, 1:] = head_pts[:, 2:0:-1]
             pnp = pycolmap.estimate_and_refine_absolute_pose(feat_pts, head_pts, cam)
             gt = transforms[frame_no] @ gt
             if pnp is not None:
