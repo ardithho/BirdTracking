@@ -16,13 +16,12 @@ from utils.box import Box
 
 
 class Sim:
-    def __init__(self, path=ROOT / 'data/blender/full_model_marked.obj', cfg=ROOT / 'data/blender/configs/cam.yaml'):
+    def __init__(self, path=ROOT / 'data/blender/full_model.obj', cfg=ROOT / 'data/blender/configs/cam.yaml'):
         self.mesh = o3d.io.read_triangle_mesh(str(path), enable_post_processing=True)
         self.mesh.compute_vertex_normals()
         self.vis = o3d.visualization.Visualizer()
         self.vis.create_window()
         self.vis.add_geometry(self.mesh)
-        # self.vis.add_geometry(o3d.geometry.TriangleMesh.create_coordinate_frame())
         with open(cfg, 'r') as f:
             cfg = yaml.safe_load(f)
             ext = np.array(cfg['ext']).reshape(3, 4)
@@ -31,7 +30,6 @@ class Sim:
         self.vis.get_view_control().set_front(R.T@t[[0, 2, 1]])
         self.vis.get_view_control().set_lookat([0, 0, 0])
         self.vis.get_view_control().set_up([0, 1, 0])
-        # self.vis.get_render_option().show_coordinate_frame = True
         self.vis.update_renderer()
         self.T = np.eye(4)
 
