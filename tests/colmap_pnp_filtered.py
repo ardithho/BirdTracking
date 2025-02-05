@@ -2,6 +2,7 @@ import pycolmap
 import yaml
 import cv2
 import numpy as np
+import os
 
 import sys
 from pathlib import Path
@@ -25,6 +26,8 @@ predictor_head = Predictor(ROOT / 'yolov8/weights/head.pt')
 
 vidL = ROOT / 'data/vid/fps120/K203_K238/GOPRO2/GH010039.MP4'
 vidR = ROOT / 'data/vid/fps120/K203_K238/GOPRO1/GH010045.MP4'
+out_dir = ROOT / 'data/out/pnp'
+os.makedirs(out_dir, exist_ok=True)
 
 cfg_path = ROOT / 'data/calibration/cam.yaml'
 blender_cfg = ROOT / 'data/blender/configs/cam.yaml'
@@ -56,6 +59,7 @@ birds = Birds()
 T = np.eye(4)
 prev_T = np.eye(4)
 sim.update(T)
+frame_no = 1
 while cap.isOpened():
     for i in range(STRIDE):
         if cap.isOpened():
@@ -91,11 +95,14 @@ while cap.isOpened():
 
         out = cv2.vconcat([cv2.resize(birds.plot(frame), (w, h), interpolation=cv2.INTER_CUBIC),
                            cv2.resize(sim.screen, (w, h), interpolation=cv2.INTER_CUBIC)])
-        cv2.imshow('out', cv2.resize(out, None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC))
+        cv2.imshow('out', cv2.resize(out, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC))
         writer.write(out)
+        if bird is not None and head_pts.shape[0] >= 4:
+            cv2.imwrite(os.path.join(out_dir, f'filtered_{frame_no}.jpg'), out)
 
         if cv2.waitKey(1) == ord('q'):
             break
+        frame_no += 1
     else:
         break
 

@@ -92,7 +92,7 @@ while cap.isOpened():
 
         out = cv2.vconcat([cv2.resize(birds.plot(frame), (w, h), interpolation=cv2.INTER_CUBIC),
                            cv2.resize(sim.screen, (w, h), interpolation=cv2.INTER_CUBIC)])
-        cv2.imshow('out', cv2.resize(out, None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC))
+        cv2.imshow('out', cv2.resize(out, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC))
         if bird is not None and head_pts.shape[0] >= 4:
             cv2.waitKey(0)
         writer.write(out)

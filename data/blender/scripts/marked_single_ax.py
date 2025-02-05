@@ -5,7 +5,6 @@ import yaml
 import numpy as np
 from pathlib import Path
 from mathutils import Matrix
-from scipy.spatial.transform import Rotation as R
 
 
 AXIS = 'y'
@@ -131,8 +130,6 @@ for i in range(100):
     scene.render.filepath = os.path.join(f_dir, '%03d.jpg' % (i+1))
     bpy.ops.render.render(write_still=True, use_viewport=True)
 
-    # T[:3, 3] = np.random.rand(3) * 0.005
-    # T[:3, :3] = R.from_euler('zyx', np.random.randint(0, 5, 3), degrees=True).as_matrix()
     rvec[axis_dict[AXIS]] = np.random.randint(0, 5)
     T[:3, :3] = cv2.Rodrigues(rvec*np.pi/180)[0]
 
