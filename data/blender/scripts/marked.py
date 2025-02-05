@@ -24,9 +24,9 @@ scene = bpy.context.scene
 def extrinsic_mat(cam):
     # bcam stands for blender camera
     R_bcam2cv = Matrix(
-        ((1, 0,  0),
-         (0, -1, 0),
-         (0, 0, -1)))
+        ((1, 0, 0),
+         (0, 1, 0),
+         (0, 0, 1)))
 
     # Transpose since the rotation is object rotation,
     # and we want coordinate rotation

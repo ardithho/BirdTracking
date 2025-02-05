@@ -73,7 +73,7 @@ while cap.isOpened():
             head_pts, feat_pts = get_head_feat_pts(bird)
             print([k for k in CLS_DICT.keys() if bird.feats[k] is not None])
             if head_pts.shape[0] > 0:
-                head_pts[:, 1:] = head_pts[:, 2:0:-1]
+                # head_pts[:, 1:] = head_pts[:, 2:0:-1]
                 pnp = pycolmap.estimate_and_refine_absolute_pose(feat_pts, head_pts, cam)
                 if pnp is not None:
                     rig = pnp['cam_from_world']  # Rigid3d

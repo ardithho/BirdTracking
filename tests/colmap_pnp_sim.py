@@ -17,7 +17,7 @@ from utils.reconstruct import get_head_feat_pts
 
 STRIDE = 1
 BLENDER_ROOT = ROOT / 'data/blender'
-EXTENSION = ''
+EXTENSION = '_x'
 NAME = f'marked{EXTENSION}'
 
 renders_dir = BLENDER_ROOT / 'renders'
@@ -87,11 +87,11 @@ while cap.isOpened():
                 T[:3, :3] = R @ prev_T[:3, :3].T
                 print('es:', *np.rint(cv2.Rodrigues(T[:3, :3])[0]*RAD2DEG))
                 print('gt:', *np.rint(
-                    cv2.Rodrigues(transforms[frame_no][:3, :3])[0][[0, 2, 1]]*np.array([-1., 1., 1.]).reshape((-1, 1))*RAD2DEG))
+                    cv2.Rodrigues(transforms[frame_no][:3, :3])[0][[0, 1, 2]]*np.array([-1., 1., 1.]).reshape((-1, 1))*RAD2DEG))
 
                 print('esT:', *np.rint(cv2.Rodrigues(R)[0]*RAD2DEG))
                 print('gtT:', *np.rint(
-                    cv2.Rodrigues(gt[:3, :3])[0][[0, 2, 1]]*np.array([-1., 1., 1.]).reshape((-1, 1))*RAD2DEG))
+                    cv2.Rodrigues(gt[:3, :3])[0][[0, 1, 2]]*np.array([-1., 1., 1.]).reshape((-1, 1))*RAD2DEG))
 
                 print('')
                 prev_T[:3, :3] = R
