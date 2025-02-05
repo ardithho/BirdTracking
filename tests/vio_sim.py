@@ -40,10 +40,8 @@ cap = cv2.VideoCapture(str(vid_path))
 birds = Birds()
 prev_frame = None
 frame_no = 0
-sim.flip()
 T = np.eye(4)
 sim.update(T)
-print(sim.screen.shape)
 while cap.isOpened():
     for i in range(STRIDE):
         if cap.isOpened():
