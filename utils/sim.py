@@ -16,13 +16,13 @@ from utils.box import Box
 
 
 class Sim:
-    def __init__(self, path=ROOT / 'data/blender/full_model.obj', cfg=ROOT / 'data/blender/configs/cam.yaml'):
+    def __init__(self, path=ROOT / 'data/blender/full_model_marked.obj', cfg=ROOT / 'data/blender/configs/cam.yaml'):
         self.mesh = o3d.io.read_triangle_mesh(str(path), enable_post_processing=True)
         self.mesh.compute_vertex_normals()
         self.vis = o3d.visualization.Visualizer()
         self.vis.create_window()
         self.vis.add_geometry(self.mesh)
-        self.vis.add_geometry(o3d.geometry.TriangleMesh.create_coordinate_frame())
+        # self.vis.add_geometry(o3d.geometry.TriangleMesh.create_coordinate_frame())
         with open(cfg, 'r') as f:
             cfg = yaml.safe_load(f)
             ext = np.array(cfg['ext']).reshape(3, 4)
@@ -95,5 +95,4 @@ if __name__ == '__main__':
     T[2, 0] = -np.sin(rad)
     T[2, 2] = np.cos(rad)
     sim.update(T)
-    o3d.visualization.Visualizer().add_geometry(o3d.geometry.TriangleMesh.create_coordinate_frame())
-    o3d.visualization.draw_geometries([sim.mesh])
+    o3d.visualization.draw_geometries([o3d.geometry.TriangleMesh.create_coordinate_frame(), sim.mesh])
