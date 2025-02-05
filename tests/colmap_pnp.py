@@ -80,8 +80,7 @@ while cap.isOpened():
                     R = R @ ext[:3, :3].T  # undo camera extrinsic rotation
                     r = cv2.Rodrigues(R)[0]
                     # cv2 to o3d notation
-                    r[2] = -r[2]
-                    r[1] = -r[1]
+                    r[0] = -r[0]
                     R, _ = cv2.Rodrigues(r)
                     R = R.T
                     T[:3, :3] = R @ prev_T[:3, :3].T
