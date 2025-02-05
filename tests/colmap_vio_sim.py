@@ -14,6 +14,7 @@ from utils.sim import *
 from utils.odometry import find_matches, find_matching_pts, draw_lg_matches
 
 
+RESIZE = 1.
 STRIDE = 1
 METHOD = 'orb'
 BLENDER_ROOT = ROOT / 'data/blender'
@@ -26,7 +27,7 @@ cfg_path = input_dir / 'cam.yaml'
 trans_path = input_dir / 'transforms.txt'
 
 h, w = (720, 1280)
-writer = cv2.VideoWriter(str(ROOT / f'data/out/colmap_vio.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, int(h * 2)))
+writer = cv2.VideoWriter(str(ROOT / f'data/out/colmap_vio.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, int(h * 1.5)))
 
 stereo = Stereo(path=cfg_path)
 with open(cfg_path, 'r') as f:
@@ -66,7 +67,7 @@ while cap.isOpened():
         if prev_frame is not None:
             pts1, pts2 = find_matching_pts(prev_frame, frame, method=METHOD)
             matches = np.asarray(list(zip(list(range(len(pts1))), list(range(len(pts2))))))
-            vio = pycolmap.estimate_two_view_geometry(cam,
+            vio = pycolmap.estimate_calibrated_two_view_geometry(cam,
                                                       pts1.reshape(-1, 2).astype(np.float64),
                                                       cam,
                                                       pts2.reshape(-1, 2).astype(np.float64),
@@ -104,7 +105,7 @@ while cap.isOpened():
         else:
             out = cv2.vconcat([cv2.resize(cv2.hconcat([frame, frame]), (w, int(h / 2)), interpolation=cv2.INTER_CUBIC),
                            cv2.resize(sim.screen, (w, h), interpolation=cv2.INTER_CUBIC)])
-        cv2.imshow('out', cv2.resize(out, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC))
+        cv2.imshow('out', cv2.resize(out, None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
         writer.write(out)
 
         frame_no += 1
