@@ -16,7 +16,7 @@ from utils.odometry import find_matches, find_matching_pts, draw_lg_matches
 
 RESIZE = 1.
 STRIDE = 1
-METHOD = 'orb'
+METHOD = 'lg'
 BLENDER_ROOT = ROOT / 'data/blender'
 NAME = 'vanilla'
 
@@ -27,7 +27,7 @@ cfg_path = input_dir / 'cam.yaml'
 trans_path = input_dir / 'transforms.txt'
 
 h, w = (720, 1280)
-writer = cv2.VideoWriter(str(ROOT / f'data/out/colmap_vio.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, int(h * 1.5)))
+writer = cv2.VideoWriter(str(ROOT / f'data/out/colmap_vio_sim_{METHOD}.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, int(h * 1.5)))
 
 stereo = Stereo(path=cfg_path)
 with open(cfg_path, 'r') as f:
@@ -47,6 +47,7 @@ cam = pycolmap.Camera(
     params=(K[0, 0],  # focal length
             K[0, 2], K[1, 2]),  # cx, cy
 )
+options = pycolmap.TwoViewGeometryOptions(compute_relative_pose=True)
 
 cap = cv2.VideoCapture(str(vid_path))
 frame_no = 0
@@ -67,11 +68,12 @@ while cap.isOpened():
         if prev_frame is not None:
             pts1, pts2 = find_matching_pts(prev_frame, frame, method=METHOD)
             matches = np.asarray(list(zip(list(range(len(pts1))), list(range(len(pts2))))))
-            vio = pycolmap.estimate_calibrated_two_view_geometry(cam,
-                                                      pts1.reshape(-1, 2).astype(np.float64),
-                                                      cam,
-                                                      pts2.reshape(-1, 2).astype(np.float64),
-                                                      matches)
+            vio = pycolmap.estimate_calibrated_two_view_geometry(camera1=cam,
+                                                                 points1=pts1.reshape(-1, 2),
+                                                                 camera2=cam,
+                                                                 points2=pts2.reshape(-1, 2),
+                                                                 matches=matches,
+                                                                 options=options)
             if vio is not None:
                 rig = vio.cam2_from_cam1  # Rigid3d
                 R = rig.rotation.matrix()
@@ -85,11 +87,11 @@ while cap.isOpened():
                 abs_T = T @ abs_T
                 print('es:', *np.rint(cv2.Rodrigues(T[:3, :3])[0]*RAD2DEG))
                 print('gt:', *np.rint(
-                    cv2.Rodrigues(transforms[frame_no][:3, :3])[0][[0, 1, 2]]*np.array([-1., 1., 1.]).reshape((-1, 1))*RAD2DEG))
+                    cv2.Rodrigues(transforms[frame_no][:3, :3])[0]*np.array([-1., 1., 1.]).reshape((-1, 1))*RAD2DEG))
 
                 print('esT:', *np.rint(cv2.Rodrigues(abs_T[:3, :3])[0]*RAD2DEG))
                 print('gtT:', *np.rint(
-                    cv2.Rodrigues(gt[:3, :3])[0][[0, 1, 2]]*np.array([-1., 1., 1.]).reshape((-1, 1))*RAD2DEG))
+                    cv2.Rodrigues(gt[:3, :3])[0]*np.array([-1., 1., 1.]).reshape((-1, 1))*RAD2DEG))
 
                 print('')
                 sim.update(T)
