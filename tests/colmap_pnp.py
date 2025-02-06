@@ -12,10 +12,10 @@ from yolov8.predict import Predictor, detect_features
 from yolov8.track import Tracker
 
 from utils.camera import Stereo
-from utils.structs import Bird, Birds
+from utils.general import RAD2DEG
 from utils.reconstruct import get_head_feat_pts
 from utils.sim import *
-from utils.general import RAD2DEG
+from utils.structs import Bird, Birds
 
 
 STRIDE = 4
@@ -23,8 +23,7 @@ STRIDE = 4
 tracker = Tracker(ROOT / 'yolov8/weights/head.pt')
 predictor_head = Predictor(ROOT / 'yolov8/weights/head.pt')
 
-vidL = ROOT / 'data/vid/fps120/K203_K238/GOPRO2/GH010039.MP4'
-vidR = ROOT / 'data/vid/fps120/K203_K238/GOPRO1/GH010045.MP4'
+vid_path = ROOT / 'data/vid/fps120/K203_K238/GOPRO1/GH010045.MP4'
 
 cfg_path = ROOT / 'data/calibration/cam.yaml'
 blender_cfg = ROOT / 'data/blender/configs/cam.yaml'
@@ -51,7 +50,7 @@ cam = pycolmap.Camera(
             *dist[:4]),  # dist: k1, k2, p1, p2
     )
 
-cap = cv2.VideoCapture(str(ROOT / 'data/vid/fps120/K203_K238_1_GH040045.mp4'))
+cap = cv2.VideoCapture(str(vid_path))
 birds = Birds()
 T = np.eye(4)
 prev_T = np.eye(4)

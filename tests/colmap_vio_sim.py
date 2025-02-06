@@ -8,10 +8,10 @@ from pathlib import Path
 ROOT = Path(__file__).parent.parent
 sys.path.append(str(ROOT))
 
-from utils.general import RAD2DEG
 from utils.camera import Stereo
-from utils.sim import *
+from utils.general import RAD2DEG
 from utils.odometry import find_matches, find_matching_pts, draw_kp_matches
+from utils.sim import *
 
 
 RESIZE = 1.
@@ -46,7 +46,7 @@ cam = pycolmap.Camera(
     height=int(K[1, 2]*2),
     params=(K[0, 0],  # focal length
             K[0, 2], K[1, 2]),  # cx, cy
-)
+    )
 options = pycolmap.TwoViewGeometryOptions(compute_relative_pose=True)
 
 cap = cv2.VideoCapture(str(vid_path))
@@ -121,4 +121,3 @@ cap.release()
 writer.release()
 cv2.destroyAllWindows()
 sim.close()
-

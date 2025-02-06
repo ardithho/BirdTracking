@@ -13,10 +13,10 @@ from yolov8.predict import Predictor, detect_features
 from yolov8.track import Tracker
 
 from utils.camera import Stereo
-from utils.structs import Bird, Birds
+from utils.general import RAD2DEG
 from utils.reconstruct import get_head_feat_pts
 from utils.sim import *
-from utils.general import RAD2DEG
+from utils.structs import Bird, Birds
 
 
 STRIDE = 4

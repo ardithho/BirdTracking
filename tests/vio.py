@@ -11,10 +11,9 @@ from yolov8.predict import Predictor, detect_features
 from yolov8.track import Tracker
 
 from utils.general import RAD2DEG
-from utils.camera import Stereo
-from utils.structs import Bird, Birds
-from utils.sim import *
 from utils.odometry import estimate_vio, find_matches
+from utils.sim import *
+from utils.structs import Bird, Birds
 
 
 STRIDE = 30
