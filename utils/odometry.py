@@ -51,6 +51,8 @@ def find_matching_pts(prev_frame, curr_frame,
     if method == 'lg':
         extractor = SuperPoint(max_num_keypoints=256, detection_threshold=.1).eval().cuda()  # load the extractor
         matcher = LightGlue(features='superpoint').eval().cuda()  # load the matcher
+        prev_frame = cv2.bitwise_and(prev_frame, prev_frame, mask=prev_mask)
+        curr_frame = cv2.bitwise_and(curr_frame, curr_frame, mask=curr_mask)
         feats0, feats1, matches01 = match_pair(
             extractor, matcher,
             numpy_image_to_torch(prev_frame).cuda(),
