@@ -64,8 +64,8 @@ while capL.isOpened() and capR.isOpened():
                 prev_T[:3, :3] = R
                 # prev_T[:3, 3] = t.T
                 sim.update(T)
-        display = cv2.hconcat([cv2.resize(birdsL.plot(frameL), None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC),
-                               cv2.resize(birdsR.plot(frameR), None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC)])
+        display = cv2.hconcat([cv2.resize(birdsL.plot(), None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC),
+                               cv2.resize(birdsR.plot(), None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC)])
         cv2.imshow('display', display)
         key = cv2.waitKey(1)
         if key == ord('q'):

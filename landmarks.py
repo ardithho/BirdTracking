@@ -33,7 +33,7 @@ while cap.isOpened():
         feat = detect_features(frame, head)
         birds.update([Bird(head, feat) for head, feat in zip(head, feat)], frame)
 
-        display = birds.plot(frame)
+        display = birds.plot()
         cv2.imshow('display', display)
         if SAVE: writer.write(display)
         key = cv2.waitKey(1)

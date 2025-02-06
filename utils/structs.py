@@ -155,7 +155,8 @@ class Birds:
                     self.ids[birds[0].id+1] = 'm'
                     self.ids[birds[0].id] = 'f'
 
-    def plot(self, frame):
+    def plot(self):
+        frame = self.frames[-1]
         if self['m'] is not None:
             frame = plot_box(frame, self['m'].xyxy, (255, 0, 0))
             frame = plot_feat(frame, self['m'].feats['bill'],

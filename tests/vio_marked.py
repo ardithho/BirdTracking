@@ -76,9 +76,9 @@ while cap.isOpened():
                 print('')
                 sim.update(T)
             matches = draw_bird_matches(prev_frame, prev_bird, frame, bird)
-        # cv2.imshow('frame', cv2.resize(birds.plot(frame), None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC))
+        # cv2.imshow('frame', cv2.resize(birds.plot(), None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC))
 
-        # out = cv2.vconcat([cv2.resize(birds.plot(frame), (w, h), interpolation=cv2.INTER_CUBIC),
+        # out = cv2.vconcat([cv2.resize(birds.plot(), (w, h), interpolation=cv2.INTER_CUBIC),
         #                    cv2.resize(sim.screen, (w, h), interpolation=cv2.INTER_CUBIC)])
             out = cv2.vconcat([cv2.resize(matches, (w, int(h/2)), interpolation=cv2.INTER_CUBIC),
                                cv2.resize(sim.screen, (w, h), interpolation=cv2.INTER_CUBIC)])
