@@ -103,10 +103,10 @@ while cap.isOpened():
                 match = cv2.drawMatches(prev_frame, kp1, frame, kp2, matches, None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
 
             out = cv2.vconcat([cv2.resize(match, (w, int(h / 2)), interpolation=cv2.INTER_CUBIC),
-                           cv2.resize(sim.screen, (w, h), interpolation=cv2.INTER_CUBIC)])
+                               cv2.resize(sim.screen, (w, h), interpolation=cv2.INTER_CUBIC)])
         else:
             out = cv2.vconcat([cv2.resize(cv2.hconcat([frame, frame]), (w, int(h / 2)), interpolation=cv2.INTER_CUBIC),
-                           cv2.resize(sim.screen, (w, h), interpolation=cv2.INTER_CUBIC)])
+                               cv2.resize(sim.screen, (w, h), interpolation=cv2.INTER_CUBIC)])
         cv2.imshow('out', cv2.resize(out, None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
         writer.write(out)
 
