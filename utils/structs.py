@@ -5,10 +5,10 @@ from pathlib import Path
 ROOT = Path(__file__).parent.parent
 sys.path.append(str(ROOT))
 
-from utils.sorter import sort_feat, to_dict, process_labels
-from utils.plot import plot_box, plot_feat
-from utils.colour import cheek_mask, mask_ratio
 from utils.box import iou
+from utils.colour import cheek_mask, head_mask, mask_ratio
+from utils.plot import plot_box, plot_feat
+from utils.sorter import sort_feat, to_dict, process_labels
 
 
 CLS_DICT = {'bill': 0,
@@ -65,10 +65,12 @@ class Bird:
         tear_marks = process_labels([feat.xy for feat in self.featsUnsorted if feat.cls in FEAT_DICT['tear_marks']], 2)
         return to_dict(*sort_feat(bill, eyes, tear_marks))
 
-    def mask(self, im_shape):
+    def mask(self, im):
+        im_shape = im.shape[:2]
         mask = np.zeros(im_shape, dtype=np.uint8)
         x1, y1, x2, y2 = np.rint(self.xyxyn.reshape((2, 2)) * im_shape[::-1]).astype(np.uint32).flatten()
         mask[y1:y2, x1:x2] = 255
+        mask &= head_mask(im)
         return mask
 
 
@@ -76,6 +78,7 @@ class Birds:
     def __init__(self, tracked=False, iou=0.7):
         self.current = {}
         self.caches = {'m': Cache(), 'f': Cache()}
+        self.frames = Cache()
         self.ids = None
         self.tracked = tracked
         self.iou = iou
@@ -95,6 +98,7 @@ class Birds:
             for sex in unseen:
                 self.current[sex] = None
                 self.caches[sex].update(None)
+        self.frames.update(frame)
 
     def track(self, birds):
         if self.ids is None:

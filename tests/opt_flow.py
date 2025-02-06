@@ -55,8 +55,8 @@ while cap.isOpened():
         bird = birds['m'] if birds['m'] is not None else birds['f']
         prev_bird = birds.caches['m'][-1] if birds.caches['m'][-1] is not None else birds.caches['f'][-1]
         if bird is not None and prev_frame is not None:
-            prev_mask = prev_bird.mask(prev_frame.shape[:2])
-            curr_mask = bird.mask(frame.shape[:2])
+            prev_mask = prev_bird.mask(prev_frame)
+            curr_mask = bird.mask(frame)
             vio, R, t, _ = optical_flow(prev_frame, frame, prev_mask, curr_mask, K, dist)
             if vio:
                 T[:3, :3] = R.T

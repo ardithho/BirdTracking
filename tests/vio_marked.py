@@ -62,7 +62,7 @@ while cap.isOpened():
         bird = birds['m'] if birds['m'] is not None else birds['f']
         if prev_frame is not None:
             prev_bird = birds.caches['m'][-2] if birds.caches['m'][-2] is not None else birds.caches['f'][-2]
-            # vio, _, R, t, _ = estimate_vio(prev_frame, frame, prev_bird.mask(prev_frame.shape[:2]), bird.mask(frame.shape[:2]), k)
+            # vio, _, R, t, _ = estimate_vio(prev_frame, frame, prev_bird.mask(prev_frame), bird.mask(frame), k)
             vio, Rs, ts = bird_vio(prev_bird, bird, K=K)
             if vio:
                 T[:3, :3] = Rs[0].T

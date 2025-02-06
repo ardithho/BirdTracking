@@ -90,7 +90,7 @@ def mask_ratio(mask):
     return np.count_nonzero(mask) / (mask.shape[0] * mask.shape[1])
 
 
-def colour_mask(im, kernel_size=5):
+def head_mask(im, kernel_size=5):
     hsv = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
     # orange cheeks (+feet
     lowo = np.array([0, 140, 80])
@@ -111,7 +111,6 @@ def colour_mask(im, kernel_size=5):
     # mask = maskr
     mask = masko | maskr | maskb | maskg
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel(kernel_size))
-    # mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel(5))
     return mask
 
 

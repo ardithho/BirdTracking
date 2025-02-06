@@ -10,7 +10,7 @@ sys.path.append(str(ROOT))
 from yolov8.predict import Predictor
 from utils.odometry import find_matches, estimate_vio
 from utils.sim import *
-from utils.colour import colour_mask
+from utils.colour import head_mask
 
 
 model_head = Predictor(ROOT / 'yolov8/weights/head.pt')
@@ -41,7 +41,7 @@ while cap.isOpened():
             x0, y0, x1, y1 = list(map(int, list(boxes.xyxy[0].cpu().numpy())))
             mask = np.zeros(frame.shape[:2], np.uint8)
             mask[y0:y1, x0:x1] = 1
-            mask &= colour_mask(frame, 20)
+            mask &= head_mask(frame, 20)
             if prev_frame is not None:
                 kp1, kp2, matches = find_matches(prev_frame, frame, prev_mask, mask)
                 out = cv2.drawMatches(prev_frame, kp1, frame, kp2, matches, None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)

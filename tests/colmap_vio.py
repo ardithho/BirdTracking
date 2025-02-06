@@ -76,8 +76,8 @@ while cap.isOpened():
         bird = birds['m'] if birds['m'] is not None else birds['f']
         prev_bird = birds.caches['m'][-1] if birds.caches['m'][-1] is not None else birds.caches['f'][-1]
         if bird is not None and prev_frame is not None:
-            prev_mask = prev_bird.mask(prev_frame.shape[:2])
-            curr_mask = bird.mask(frame.shape[:2])
+            prev_mask = prev_bird.mask(prev_frame)
+            curr_mask = bird.mask(frame)
             pts1, pts2 = find_matching_pts(prev_frame, frame, prev_mask, curr_mask, method=METHOD)
             matches = np.asarray(list(zip(list(range(len(pts1))), list(range(len(pts2))))))
             vio = pycolmap.estimate_calibrated_two_view_geometry(camera1=cam,
