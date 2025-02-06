@@ -11,12 +11,12 @@ sys.path.append(str(ROOT))
 from utils.general import RAD2DEG
 from utils.camera import Stereo
 from utils.sim import *
-from utils.odometry import find_matches, find_matching_pts, draw_lg_matches
+from utils.odometry import find_matches, find_matching_pts, draw_kp_matches
 
 
 RESIZE = 1.
 STRIDE = 1
-METHOD = 'lg'
+METHOD = 'of'
 BLENDER_ROOT = ROOT / 'data/blender'
 NAME = 'vanilla'
 
@@ -95,9 +95,9 @@ while cap.isOpened():
 
                 print('')
                 sim.update(T)
-            if METHOD == 'lg':
+            if METHOD == 'lg' or METHOD == 'of':
                 kp1, kp2 = find_matching_pts(prev_frame, frame, method=METHOD)
-                match = draw_lg_matches(prev_frame, kp1, frame, kp2)
+                match = draw_kp_matches(prev_frame, kp1, frame, kp2)
             else:
                 kp1, kp2, matches = find_matches(prev_frame, frame, thresh=.2, method=METHOD)
                 match = cv2.drawMatches(prev_frame, kp1, frame, kp2, matches, None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)

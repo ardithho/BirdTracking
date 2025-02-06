@@ -11,7 +11,7 @@ from utils.camera import Stereo
 from utils.structs import Bird, Birds
 from utils.reconstruct import triangulate_estimate
 from utils.sim import *
-from utils.odometry import draw_matches
+from utils.odometry import draw_bird_matches
 
 
 STRIDE = 1
@@ -59,7 +59,7 @@ while capL.isOpened() and capR.isOpened():
         ret, T, _ = triangulate_estimate(birdL, birdR, stereo)
         if ret:
             sim.update(T)
-        matches = draw_matches(frameL, birdL, frameR, birdR)
+        matches = draw_bird_matches(frameL, birdL, frameR, birdR)
         out = cv2.vconcat([cv2.resize(matches, (w, int(h / 2)), interpolation=cv2.INTER_CUBIC),
                            cv2.resize(sim.screen, (w, h), interpolation=cv2.INTER_CUBIC)])
         cv2.imshow('out', out)

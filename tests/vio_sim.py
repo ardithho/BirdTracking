@@ -11,7 +11,7 @@ from utils.general import RAD2DEG
 from utils.camera import Stereo
 from utils.structs import Bird, Birds
 from utils.sim import *
-from utils.odometry import estimate_vio, find_matches, find_matching_pts, draw_lg_matches
+from utils.odometry import estimate_vio, find_matches, find_matching_pts, draw_kp_matches
 
 STRIDE = 1
 METHOD = 'lg'
@@ -65,7 +65,7 @@ while cap.isOpened():
                 sim.update(T)
             if METHOD == 'lg':
                 kp1, kp2 = find_matching_pts(prev_frame, frame, method=METHOD)
-                match = draw_lg_matches(prev_frame, kp1, frame, kp2)
+                match = draw_kp_matches(prev_frame, kp1, frame, kp2)
             else:
                 kp1, kp2, matches = find_matches(prev_frame, frame, thresh=.2, method=METHOD)
                 match = cv2.drawMatches(prev_frame, kp1, frame, kp2, matches, None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)

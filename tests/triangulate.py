@@ -13,7 +13,7 @@ from utils.camera import Stereo
 from utils.structs import Bird, Birds
 from utils.reconstruct import triangulate
 from utils.sim import *
-from utils.odometry import draw_matches
+from utils.odometry import draw_bird_matches
 
 
 STRIDE = 1
@@ -72,7 +72,7 @@ while capL.isOpened() and capR.isOpened():
         birdsR.update([Bird(dummy_head, extract_features(frameR))], frameR)
         birdR = birdsR['m'] if birdsR['m'] is not None else birdsR['f']
 
-        matches = draw_matches(frameL, birdL, frameR, birdR)
+        matches = draw_bird_matches(frameL, birdL, frameR, birdR)
 
         feat_pts, head_pts = triangulate(birdL, birdR, stereo)
         visible = [k for k in CLS_DICT.keys() if birdL.feats[k] is not None and birdR.feats[k] is not None]

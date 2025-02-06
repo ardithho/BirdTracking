@@ -58,6 +58,23 @@ def find_matching_pts(prev_frame, curr_frame,
         kpts0, kpts1, matches = feats0["keypoints"], feats1["keypoints"], matches01["matches"]
         m_kpts0, m_kpts1 = kpts0[matches[..., 0]], kpts1[matches[..., 1]]
         return m_kpts0.cpu().numpy(), m_kpts1.cpu().numpy()
+    elif method == 'of':
+        # params for ShiTomasi corner detection
+        feature_params = dict(maxCorners=100, qualityLevel=0.3,
+                              minDistance=7, blockSize=7)
+        # params for lucas kanade optical flow
+        lk_params = dict(winSize=(15, 15), maxLevel=2,
+                         criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
+        prev_grey = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
+        curr_grey = cv2.cvtColor(curr_frame, cv2.COLOR_BGR2GRAY)
+        p0 = cv2.goodFeaturesToTrack(prev_grey, mask=prev_mask, **feature_params)
+        p1, st, err = cv2.calcOpticalFlowPyrLK(prev_grey, curr_grey, p0, None, **lk_params)
+        # Select good points
+        p1 = p1[st == 1]
+        p0 = p0[st == 1]
+        src_pts = np.float32(p0).reshape(-1, 1, 2)
+        dst_pts = np.float32(p1).reshape(-1, 1, 2)
+        return src_pts, dst_pts
 
     kp0, kp1, matches = find_matches(prev_frame, curr_frame,
                                      prev_mask, curr_mask, thresh, method)
@@ -123,21 +140,7 @@ def estimate_vio_pts(src_pts, dst_pts, K, dist=None):
 def optical_flow(prev_frame, curr_frame,
                  prev_mask=None, curr_mask=None,
                  K=None, dist=None, thresh=.8):
-    # params for ShiTomasi corner detection
-    feature_params = dict(maxCorners=100, qualityLevel=0.3,
-                          minDistance=7, blockSize=7)
-    # params for lucas kanade optical flow
-    lk_params = dict(winSize=(15, 15), maxLevel=2,
-                     criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
-    prev_grey = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
-    curr_grey = cv2.cvtColor(curr_frame, cv2.COLOR_BGR2GRAY)
-    p0 = cv2.goodFeaturesToTrack(prev_grey, mask=prev_mask, **feature_params)
-    p1, st, err = cv2.calcOpticalFlowPyrLK(prev_grey, curr_grey, p0, None, **lk_params)
-    # Select good points
-    p1 = p1[st == 1]
-    p0 = p0[st == 1]
-    src_pts = np.float32(p0).reshape(-1, 1, 2)
-    dst_pts = np.float32(p1).reshape(-1, 1, 2)
+    src_pts, dst_pts = find_matching_pts(prev_frame, curr_frame, prev_mask, curr_mask, thresh, method='of')
     if len(src_pts) > 0:
         return estimate_vio_pts(src_pts, dst_pts, K, dist)
     return False, None, None, None
@@ -161,7 +164,7 @@ def bird_vio(prev_bird, curr_bird, K=None, dist=None, thresh=.8):
     return len(Rs), Rs, ts
 
 
-def draw_matches(im1, bird1, im2, bird2):
+def draw_bird_matches(im1, bird1, im2, bird2):
     out = cv2.hconcat([im1, im2])
     visible = [k for k in CLS_DICT.keys() if bird1.feats[k] is not None and bird2.feats[k] is not None]
     for k in visible:
@@ -173,7 +176,9 @@ def draw_matches(im1, bird1, im2, bird2):
     return out
 
 
-def draw_lg_matches(im1, kp1, im2, kp2):
+def draw_kp_matches(im1, kp1, im2, kp2):
+    kp1 = kp1.reshape(-1, 2)
+    kp2 = kp2.reshape(-1, 2)
     out = cv2.hconcat([im1, im2])
     for p1, p2 in zip(kp1, kp2):
         p2[0] += im1.shape[1]

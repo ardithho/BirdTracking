@@ -14,8 +14,7 @@ from utils.general import RAD2DEG
 from utils.camera import Stereo
 from utils.structs import Bird, Birds
 from utils.sim import *
-from utils.odometry import optical_flow, find_matches
-
+from utils.odometry import optical_flow, find_matches, find_matching_pts, draw_kp_matches
 
 STRIDE = 4
 
@@ -68,13 +67,9 @@ while cap.isOpened():
                 print('vo:', *np.rint(cv2.Rodrigues(R.T)[0] * RAD2DEG))
                 print('')
                 sim.update(T)
-            kp1, kp2, matches = find_matches(prev_frame, frame, prev_mask, curr_mask, method='sift')
-            orb = cv2.drawMatches(prev_frame, kp1, frame, kp2, matches, None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
-        # cv2.imshow('frame', cv2.resize(birds.plot(frame), None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC))
-
-        # out = cv2.vconcat([cv2.resize(birds.plot(frame), (w, h), interpolation=cv2.INTER_CUBIC),
-        #                    cv2.resize(sim.screen, (w, h), interpolation=cv2.INTER_CUBIC)])
-            out = cv2.vconcat([cv2.resize(orb, (w, int(h/2)), interpolation=cv2.INTER_CUBIC),
+            kp1, kp2 = find_matching_pts(prev_frame, frame, prev_mask, curr_mask, method='of')
+            of = draw_kp_matches(prev_frame, kp1, frame, kp2)
+            out = cv2.vconcat([cv2.resize(of, (w, int(h / 2)), interpolation=cv2.INTER_CUBIC),
                                cv2.resize(sim.screen, (w, h), interpolation=cv2.INTER_CUBIC)])
         else:
             out = cv2.vconcat([cv2.resize(cv2.hconcat([frame, frame]), (w, int(h / 2)), interpolation=cv2.INTER_CUBIC),

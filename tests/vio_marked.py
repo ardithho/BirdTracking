@@ -12,7 +12,7 @@ from utils.general import RAD2DEG
 from utils.camera import Stereo
 from utils.structs import Bird, Birds
 from utils.sim import *
-from utils.odometry import bird_vio, draw_matches
+from utils.odometry import bird_vio, draw_bird_matches
 
 
 STRIDE = 1
@@ -75,7 +75,7 @@ while cap.isOpened():
                 print('gt:', *np.rint(cv2.Rodrigues(transforms[frame_no][:3, :3])[0]*RAD2DEG))
                 print('')
                 sim.update(T)
-            matches = draw_matches(prev_frame, prev_bird, frame, bird)
+            matches = draw_bird_matches(prev_frame, prev_bird, frame, bird)
         # cv2.imshow('frame', cv2.resize(birds.plot(frame), None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC))
 
         # out = cv2.vconcat([cv2.resize(birds.plot(frame), (w, h), interpolation=cv2.INTER_CUBIC),
