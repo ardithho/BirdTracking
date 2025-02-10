@@ -20,6 +20,9 @@ class Camera:
         self.h = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.w = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.flash = flash
+        self.K = K
+        self.dist = dist
+        self.ext = np.concatenate([np.eye(3), np.zeros((3, 1))], axis=1) if ext is None else ext
         if K is None:
             self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.skip)
             self.first_flash()
@@ -27,9 +30,9 @@ class Camera:
             self.imgpts = []
             self.mpts = []
             self.mpts_ = []
-        self.K = K
-        self.dist = dist
-        self.ext = np.concatenate([np.eye(3), np.zeros((3, 1))], axis=1) if ext is None else ext
+            self.colmap = None
+        else:
+            self.setup_colmap()
         if P is None and self.K is not None:
             self.P = self.K @ self.ext
         else:
@@ -58,6 +61,16 @@ class Camera:
                 print('not ret')
                 self.cap.release()
                 break
+
+    def setup_colmap(self):
+        self.colmap = pycolmap.Camera(
+            modle='OPENCV',
+            width=self.w,
+            heigh=self.h,
+            params=(self.K[0, 0], self.K[1, 1],  # fx, fy
+                    self.K[0, 2], self.K[1, 2],  # cx, cy
+                    *self.dist[:4]),  # dist: k1, k2, p1, p2
+        )
 
     def add_chessboard_pts(self, corners, size):
         if corners is not None and size is not None:
@@ -174,8 +187,10 @@ class Stereo:
             (self.camL.w, self.camL.h),
             self.R, self.T, self.E, self.F)
         self.camL.P = self.camL.K @ self.camL.ext
+        self.camL.setup_colmap()
         self.camR.ext = np.concatenate([self.R, self.T], axis=1)
         self.camR.P = self.camR.K @ self.camR.ext
+        self.camR.setup_colmap()
 
     def save(self, path):
         with open(path, 'w') as f:

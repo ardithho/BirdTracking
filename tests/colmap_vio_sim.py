@@ -40,7 +40,6 @@ with open(trans_path, 'r') as f:
     transforms = [np.array(list(map(float, line.strip().split()[1:]))).reshape((4, 4)) for line in lines]
 
 cam = pycolmap.Camera(
-    camera_id=0,
     model='SIMPLE_PINHOLE',
     width=int(K[0, 2]*2),
     height=int(K[1, 2]*2),
