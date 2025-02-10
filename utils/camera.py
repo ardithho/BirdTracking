@@ -1,6 +1,7 @@
 import yaml
 import cv2
 import numpy as np
+import pycolmap
 
 import sys
 from pathlib import Path
