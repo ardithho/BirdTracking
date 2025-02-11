@@ -64,9 +64,9 @@ class Camera:
 
     def setup_colmap(self):
         self.colmap = pycolmap.Camera(
-            modle='OPENCV',
+            model='OPENCV',
             width=self.w,
-            heigh=self.h,
+            height=self.h,
             params=(self.K[0, 0], self.K[1, 1],  # fx, fy
                     self.K[0, 2], self.K[1, 2],  # cx, cy
                     *self.dist[:4]),  # dist: k1, k2, p1, p2
