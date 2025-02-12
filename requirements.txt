@@ -7,7 +7,7 @@ matplotlib>=3.2.2
 numpy>=1.18.5
 opencv-python>=4.1.1
 Pillow>=7.1.2
-psutil~=5.9.1
+psutil~=6.1.1
 PyYAML>=5.3.1
 requests>=2.23.0
 scipy>=1.4.1
@@ -18,7 +18,7 @@ tqdm>=4.64.0
 ipython>=8.4.0
 scikit-learn>=1.1.1
 scikit-image>=0.19.3
-ultralytics~=8.2.32
+ultralytics~=8.3.70
 # protobuf<=3.20.1  # https://github.com/ultralytics/yolov5/issues/8012
 
 # Logging ---------------------------------------------------------------------
@@ -52,6 +52,7 @@ setuptools>=65.5.1 # Snyk vulnerability fix
 # pycocotools>=2.0.6  # COCO mAP
 # roboflow
 
-open3d~=0.17.0
+open3d>=0.19.0
 flask~=3.0.0
-roboflow~=0.2.5
+pycolmap>=3.11.1
+pykalman>=0.10.1
