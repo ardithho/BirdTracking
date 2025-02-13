@@ -114,9 +114,9 @@ def head_mask(im, kernel_size=5):
     return mask
 
 
-def bgr_mask(im, colour):
+def bgr_mask(im, colour, s=200, v=100):
     hue = bgr2hsv(colour)[0]
-    return hue_mask(im, hue//2, s=100, v=50)
+    return hue_mask(im, hue//2, s=s, v=v)
 
 
 def hue_mask(im, hue, s=200, v=200, kernel_size=5):

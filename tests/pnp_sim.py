@@ -67,7 +67,7 @@ while cap.isOpened():
         if pnp:
             r -= cv2.Rodrigues(ext[:3, :3])[0]
             # r = r[[0, 2, 1]]
-            r[2] = -r[2]
+            r[2] *= -1
             R, _ = cv2.Rodrigues(r)
             R = R.T
             T[:3, :3] = R @ prev_T[:3, :3].T

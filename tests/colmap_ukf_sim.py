@@ -84,7 +84,7 @@ while cap.isOpened():
                 R = rig.rotation.matrix()
                 R = R @ ext[:3, :3].T  # undo camera extrinsic rotation
                 r = cv2.Rodrigues(R)[0]
-                print(*r)
+                print(*r*RAD2DEG)
                 obs = np.array([*Rotation.from_euler('xyz', -r.flatten()).as_quat(), *-rig.translation])
                 state_mean, state_cov = ukf.filter_update(
                     filtered_state_mean=state_mean,
@@ -94,17 +94,23 @@ while cap.isOpened():
                 )
                 # colmap to o3d notation
                 r = Rotation.from_quat(state_mean[:4]).as_rotvec()
-                r[0] = -r[0]
+                r[0] *= -1
                 R, _ = cv2.Rodrigues(r)
                 # R = R.T
                 T[:3, :3] = R @ prev_T[:3, :3].T
                 print('es:', *np.rint(cv2.Rodrigues(T[:3, :3])[0]*RAD2DEG))
                 print('gt:', *np.rint(
-                    cv2.Rodrigues(transforms[frame_no][:3, :3])[0][[0, 1, 2]]*np.array([-1., 1., 1.]).reshape((-1, 1))*RAD2DEG))
+                    cv2.Rodrigues(transforms[frame_no][:3, :3])[0]*np.array([-1., 1., 1.]).reshape((-1, 1))*RAD2DEG))
 
                 print('esT:', *np.rint(cv2.Rodrigues(R)[0]*RAD2DEG))
                 print('gtT:', *np.rint(
-                    cv2.Rodrigues(gt[:3, :3])[0][[0, 1, 2]]*np.array([-1., 1., 1.]).reshape((-1, 1))*RAD2DEG))
+                    cv2.Rodrigues(gt[:3, :3])[0]*np.array([-1., 1., 1.]).reshape((-1, 1))*RAD2DEG))
+
+                print('esq:', np.round(Rotation.from_matrix(R).as_quat(), 2))
+                print('gtq:', np.round(
+                    Rotation.from_rotvec(
+                        (cv2.Rodrigues(gt[:3, :3])[0]*np.array([-1., 1., 1.]).reshape((-1, 1))).flatten()).as_quat(),
+                    2))
 
                 print('')
                 prev_T[:3, :3] = R

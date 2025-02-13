@@ -6,7 +6,7 @@ STATE_DIMS = 14
 OBS_DIMS = 7
 
 OBS_COV_LOW = np.eye(OBS_DIMS) * 0.01
-OBS_COV_HIGH = np.eye(OBS_DIMS) * 0.05
+OBS_COV_HIGH = np.eye(OBS_DIMS) * 1.0
 
 
 def transition_function(state, noise):
@@ -33,7 +33,7 @@ def observation_function(state, noise):
 initial_state = np.array([1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0])  # Identity quaternion & zero translation
 initial_covariance = np.eye(STATE_DIMS) * 1.0  # Small initial uncertainty
 
-transition_covariance = np.eye(STATE_DIMS) * 0.01  # Process noise
+transition_covariance = np.eye(STATE_DIMS) * 5.0  # Process noise
 observation_covariance = OBS_COV_HIGH  # Measurement noise (quaternion & translation only)
 
 
