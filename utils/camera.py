@@ -63,14 +63,23 @@ class Camera:
                 break
 
     def setup_colmap(self):
-        self.colmap = pycolmap.Camera(
-            model='OPENCV',
-            width=self.w,
-            height=self.h,
-            params=(self.K[0, 0], self.K[1, 1],  # fx, fy
-                    self.K[0, 2], self.K[1, 2],  # cx, cy
-                    *self.dist[:4]),  # dist: k1, k2, p1, p2
-        )
+        if self.dist is not None:
+            self.colmap = pycolmap.Camera(
+                model='OPENCV',
+                width=self.w,
+                height=self.h,
+                params=(self.K[0, 0], self.K[1, 1],  # fx, fy
+                        self.K[0, 2], self.K[1, 2],  # cx, cy
+                        *self.dist[:4]),  # dist: k1, k2, p1, p2
+            )
+        else:
+            self.colmap = pycolmap.Camera(
+                model='SIMPLE_PINHOLE',
+                width=self.w,
+                height=self.h,
+                params=(self.K[0, 0],  # focal length
+                        self.K[0, 2], self.K[1, 2]),  # cx, cy
+)
 
     def add_chessboard_pts(self, corners, size):
         if corners is not None and size is not None:
