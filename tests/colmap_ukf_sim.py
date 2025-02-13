@@ -17,6 +17,7 @@ from utils.sim import *
 from utils.reconstruct import get_head_feat_pts
 
 
+RESIZE = .5
 STRIDE = 1
 BLENDER_ROOT = ROOT / 'data/blender'
 EXTENSION = ''
@@ -107,11 +108,11 @@ while cap.isOpened():
                 prev_T[:3, :3] = R
                 sim.update(T)
 
-        cv2.imshow('frame', cv2.resize(birds.plot(), None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC))
+        cv2.imshow('frame', cv2.resize(birds.plot(), None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
         out = cv2.vconcat([cv2.resize(birds.plot(), (w, h), interpolation=cv2.INTER_CUBIC),
                            cv2.resize(sim.screen, (w, h), interpolation=cv2.INTER_CUBIC)])
 
-        cv2.imshow('out', out)
+        cv2.imshow('out', cv2.resize(out, None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
         writer.write(out)
 
         frame_no += 1
