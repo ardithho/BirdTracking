@@ -5,6 +5,9 @@ from pykalman import UnscentedKalmanFilter
 STATE_DIMS = 14
 OBS_DIMS = 7
 
+OBS_COV_LOW = np.eye(OBS_DIMS) * 0.01
+OBS_COV_HIGH = np.eye(OBS_DIMS) * 0.05
+
 
 def transition_function(state, noise):
     # state: [qw, qx, qy, qz,
@@ -31,7 +34,7 @@ initial_state = np.array([1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0])  # Identity
 initial_covariance = np.eye(STATE_DIMS) * 1.0  # Small initial uncertainty
 
 transition_covariance = np.eye(STATE_DIMS) * 0.01  # Process noise
-observation_covariance = np.eye(OBS_DIMS) * 0.05  # Measurement noise (quaternion & translation only)
+observation_covariance = OBS_COV_HIGH  # Measurement noise (quaternion & translation only)
 
 
 ukf = UnscentedKalmanFilter(

@@ -11,7 +11,7 @@ sys.path.append(str(ROOT))
 
 from utils.general import RAD2DEG
 from utils.camera import Stereo
-from utils.filter import ukf
+from utils.filter import ukf, OBS_COV_HIGH, OBS_COV_LOW
 from utils.structs import Bird, Birds
 from utils.sim import *
 from utils.reconstruct import get_head_feat_pts
@@ -57,6 +57,8 @@ T = np.eye(4)
 prev_T = T.copy()
 sim.update(T)
 gt = np.eye(4)
+state_mean = ukf.initial_state_mean
+state_cov = ukf.initial_state_covariance
 cam_w, cam_h = cap.get(cv2.CAP_PROP_FRAME_WIDTH), cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 dummy_head = Box(0, conf=[1.],
                  xywh=np.array([[cam_w/2, cam_h/2, cam_w, cam_h]]),
@@ -82,16 +84,16 @@ while cap.isOpened():
                 R = rig.rotation.matrix()
                 R = R @ ext[:3, :3].T  # undo camera extrinsic rotation
                 r = cv2.Rodrigues(R)[0]
+                print(*r)
                 obs = np.array([*Rotation.from_euler('xyz', -r.flatten()).as_quat(), *-rig.translation])
-                mean, cov = ukf.filter_update(
-                    filtered_state_mean=ukf.initial_state_mean,
-                    filtered_state_covariance=ukf.initial_state_covariance,
-                    observation=np.array(obs)
+                state_mean, state_cov = ukf.filter_update(
+                    filtered_state_mean=state_mean,
+                    filtered_state_covariance=state_cov,
+                    observation=np.array(obs),
+                    observation_covariance=OBS_COV_HIGH if head_pts.shape[0] < 4 else OBS_COV_LOW
                 )
-                ukf.initial_state_mean = mean
-                ukf.initial_state_covariance = cov
                 # colmap to o3d notation
-                r = Rotation.from_quat(mean[:4]).as_rotvec()
+                r = Rotation.from_quat(state_mean[:4]).as_rotvec()
                 r[0] = -r[0]
                 R, _ = cv2.Rodrigues(r)
                 # R = R.T
