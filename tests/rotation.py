@@ -1,6 +1,7 @@
 import cv2
 import yaml
 import os
+from scipy.spatial.transform import Rotation
 
 import sys
 from pathlib import Path
@@ -21,13 +22,13 @@ with open(cfg_path, 'r') as f:
     t = ext[:3, 3]
 
 T = np.eye(4)
-r = np.array([0, 0, 0], dtype=np.float64)
-T[:3, :3] = cv2.Rodrigues(r * DEG2RAD)[0]
+q = np.array([0, 0, 0, 1])
+# r = np.array([0, 0, 0], dtype=np.float64)
+# T[:3, :3] = cv2.Rodrigues(r * DEG2RAD)[0]
+T[:3, :3] = Rotation.from_quat(-q).as_matrix()
+r_1 = np.array([0, 0, 0], dtype=np.float64)
+r_2 = np.array([0, 0, 180], dtype=np.float64)
+print(Rotation.from_euler('xyz', r_1, degrees=True).as_quat())
+print(Rotation.from_euler('xyz', r_2, degrees=True).as_quat())
 sim.update(T)
-# o3d.visualization.draw_geometries([sim.mesh],
-#                                   front=R.T@t[[0, 2, 1]],
-#                                   lookat=[0, 0, 0],
-#                                   up=[0, 1, 0],
-#                                   zoom=1.
-#                                   )
 sim.run()
