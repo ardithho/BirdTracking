@@ -301,3 +301,10 @@ def cosine(pivot, p1, p2):
     v1 = p1 - pivot
     v2 = p2 - pivot
     return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
+
+
+def slerp(q1, q2, t):
+    omega = np.arccos(np.dot(q1, q2) / (np.linalg.norm(q1) * np.linalg.norm(q2)))
+    if omega != 0:
+        return (q2*np.sin(t*omega) + q1*np.sin((1-t)*omega)) / np.sin(omega)
+    return q1
