@@ -9,7 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).parent.parent
 sys.path.append(str(ROOT))
 
-from utils.general import RAD2DEG
+from utils.general import RAD2DEG, slerp
 from utils.camera import Stereo
 from utils.structs import Bird, Birds
 from utils.sim import *
@@ -81,15 +81,18 @@ while cap.isOpened():
                 r[0] *= -1
                 q = Rotation.from_euler('xyz', -r.flatten()).as_quat()
                 if ptr is not None and frame_no > ptr + 1:
-                    key_qs = [qs[ptr], q]
-                    key_times = [ptr, frame_no]
-                    mid_time = (frame_no + ptr) / 2
-                    slerp = Slerp(key_times, Rotation.from_quat(key_qs))
-                    mid_q = -slerp(mid_time).as_quat()
-                    slerp = Slerp([ptr, mid_time, frame_no], Rotation.from_quat([qs[ptr], mid_q, q]))
-                    interp_qs = slerp(list(range(ptr+1, frame_no))).as_quat()
-                    for i, interp_q in zip(range(ptr+1, frame_no), interp_qs):
-                        qs[i] = interp_q
+                    # key_qs = [qs[ptr], q]
+                    # key_times = [ptr, frame_no]
+                    # mid_time = (frame_no + ptr) / 2
+                    # slerp = Slerp(key_times, Rotation.from_quat(key_qs))
+                    # mid_q = -slerp(mid_time).as_quat()
+                    # slerp = Slerp([ptr, mid_time, frame_no], Rotation.from_quat([qs[ptr], mid_q, q]))
+                    # interp_qs = slerp(list(range(ptr+1, frame_no))).as_quat()
+                    # for i, interp_q in zip(range(ptr+1, frame_no), interp_qs):
+                    #     qs[i] = interp_q
+                    q_ = qs[ptr]
+                    for i in range(ptr+1, frame_no):
+                        qs[i] = slerp(q_, q, i/(frame_no-ptr))
                 else:
                     qs.append(q)
                 ptr = frame_no
