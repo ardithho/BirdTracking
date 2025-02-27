@@ -9,13 +9,14 @@ from pathlib import Path
 ROOT = Path(__file__).parent.parent
 sys.path.append(str(ROOT))
 
-from utils.general import RAD2DEG, cosine, slerp
 from utils.camera import Stereo
-from utils.structs import Bird, Birds
-from utils.sim import *
+from utils.general import RAD2DEG, cosine, slerp
 from utils.reconstruct import get_head_feat_pts
+from utils.sim import *
+from utils.structs import Bird, Birds
 
 
+RESIZE = .5
 STRIDE = 1
 BLENDER_ROOT = ROOT / 'data/blender'
 EXTENSION = ''
@@ -46,7 +47,7 @@ cam = pycolmap.Camera(
     height=stereo.camL.h,
     params=(K[0, 0],  # focal length
             K[0, 2], K[1, 2]),  # cx, cy
-)
+    )
 
 cap = cv2.VideoCapture(str(vid_path))
 birds = Birds()
@@ -92,7 +93,7 @@ while cap.isOpened():
                     #     qs[i] = interp_q
                     q_ = qs[ptr].copy()
                     steps = frame_no - ptr
-                    if ptr >= 1:
+                    if ptr >= 1 and qs[ptr-1] is not None:
                         if cosine(qs[ptr-1], slerp(-q_, q, 1/steps)) < cosine(qs[ptr-1], slerp(q_, q, 1/steps)):
                             q_ *= -1
                     for i in range(ptr+1, frame_no):
@@ -121,8 +122,11 @@ while cap.isOpened() and frame_no < len(qs):
     ret, frame = cap.retrieve()
     if ret:
         q = qs[frame_no]
-        R = Rotation.from_quat(q).as_matrix()
-        T[:3, :3] = R @ prev_T[:3, :3].T
+        if q is not None:
+            R = Rotation.from_quat(q).as_matrix()
+            T[:3, :3] = R @ prev_T[:3, :3].T
+            prev_T[:3, :3] = R
+            sim.update(T)
         print('es:', *np.rint(cv2.Rodrigues(T[:3, :3])[0]*RAD2DEG))
         print('gt:', *np.rint(
             cv2.Rodrigues(transforms[frame_no][:3, :3])[0][[0, 1, 2]]*np.array([-1., 1., 1.]).reshape((-1, 1))*RAD2DEG))
@@ -132,13 +136,11 @@ while cap.isOpened() and frame_no < len(qs):
             cv2.Rodrigues(gt[:3, :3])[0][[0, 1, 2]]*np.array([-1., 1., 1.]).reshape((-1, 1))*RAD2DEG))
 
         print('')
-        prev_T[:3, :3] = R
-        sim.update(T)
 
         out = cv2.vconcat([cv2.resize(frame, (w, h), interpolation=cv2.INTER_CUBIC),
                            cv2.resize(sim.screen, (w, h), interpolation=cv2.INTER_CUBIC)])
 
-        cv2.imshow('out', out)
+        cv2.imshow('out', cv2.resize(out, None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
         writer.write(out)
 
         frame_no += 1

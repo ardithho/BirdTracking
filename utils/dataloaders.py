@@ -126,7 +126,7 @@ class DetectionsDataloader:
         for headNo in range(2):
             for frameNo in range(self.firstHead, self.noOfFrames):
                 skip = self.pairFrameSkips[frameNo][headNo]
-                if self.offset >= skip > 0:
+                if 0 < skip <= self.offset:
                     curr = self.detections[frameNo][headNo]
                     startNo = frameNo - skip - 1
                     start = self.detections[startNo][headNo]

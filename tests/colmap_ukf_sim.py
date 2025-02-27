@@ -9,12 +9,12 @@ from pathlib import Path
 ROOT = Path(__file__).parent.parent
 sys.path.append(str(ROOT))
 
-from utils.general import RAD2DEG
 from utils.camera import Stereo
+from utils.general import RAD2DEG
 from utils.filter import ukf, OBS_COV_HIGH, OBS_COV_LOW
-from utils.structs import Bird, Birds
-from utils.sim import *
 from utils.reconstruct import get_head_feat_pts
+from utils.sim import *
+from utils.structs import Bird, Birds
 
 
 RESIZE = .5

@@ -18,12 +18,13 @@ from utils.sim import *
 from utils.structs import Bird, Birds
 
 
+RESIZE = .5
 STRIDE = 4
 
 tracker = Tracker(ROOT / 'yolov8/weights/head.pt')
 predictor_head = Predictor(ROOT / 'yolov8/weights/head.pt')
 
-vid_path = ROOT / 'data/vid/fps120/K203_K238/GOPRO1/GH010045.MP4'
+vid_path = ROOT / 'data/vid/fps120/K203_K238_1_GH040045.mp4'
 
 cfg_path = ROOT / 'data/calibration/cam.yaml'
 blender_cfg = ROOT / 'data/blender/configs/cam.yaml'
@@ -87,13 +88,13 @@ while cap.isOpened():
                         print('')
                     prev_T[:3, :3] = R
                     sim.update(T)
-        cv2.imshow('frame', cv2.resize(birds.plot(), None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC))
+        cv2.imshow('frame', cv2.resize(birds.plot(), None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
 
         out = cv2.vconcat([cv2.resize(birds.plot(), (w, h), interpolation=cv2.INTER_CUBIC),
                            cv2.resize(sim.screen, (w, h), interpolation=cv2.INTER_CUBIC)])
-        cv2.imshow('out', cv2.resize(out, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC))
-        if bird is not None and head_pts.shape[0] >= 4:
-            cv2.waitKey(0)
+        cv2.imshow('out', cv2.resize(out, None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
+        # if bird is not None and head_pts.shape[0] >= 4:
+        #     cv2.waitKey(0)
         writer.write(out)
 
         if cv2.waitKey(1) == ord('q'):
