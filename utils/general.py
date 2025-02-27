@@ -297,10 +297,13 @@ def angle(pivot, point):
 
 
 # cosine similarity
-def cosine(v1, v2, pivot=None):
+def cosine(p1, p2, pivot=None):
     if pivot is not None:
-        v1 -= pivot
-        v2 -= pivot
+        v1 = p1 - pivot
+        v2 = p2 - pivot
+    else:
+        v1 = p1
+        v2 = p2
     return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
 
 

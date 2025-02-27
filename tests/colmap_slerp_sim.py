@@ -9,7 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).parent.parent
 sys.path.append(str(ROOT))
 
-from utils.general import RAD2DEG, slerp
+from utils.general import RAD2DEG, cosine, slerp
 from utils.camera import Stereo
 from utils.structs import Bird, Birds
 from utils.sim import *
@@ -90,9 +90,13 @@ while cap.isOpened():
                     # interp_qs = slerp(list(range(ptr+1, frame_no))).as_quat()
                     # for i, interp_q in zip(range(ptr+1, frame_no), interp_qs):
                     #     qs[i] = interp_q
-                    q_ = qs[ptr]
+                    q_ = qs[ptr].copy()
+                    steps = frame_no - ptr
+                    if ptr >= 1:
+                        if cosine(qs[ptr-1], slerp(-q_, q, 1/steps)) < cosine(qs[ptr-1], slerp(q_, q, 1/steps)):
+                            q_ *= -1
                     for i in range(ptr+1, frame_no):
-                        qs[i] = slerp(q_, -q, (i-ptr)/(frame_no-ptr))
+                        qs[i] = slerp(q_, q, (i-ptr)/steps)
                 else:
                     qs.append(q)
                 ptr = frame_no
