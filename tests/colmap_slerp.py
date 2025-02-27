@@ -20,7 +20,7 @@ from utils.structs import Bird, Birds
 
 
 RESIZE = .5
-STRIDE = 4
+STRIDE = 1
 OFFSET = 10
 
 tracker = Tracker(ROOT / 'yolov8/weights/head.pt')
