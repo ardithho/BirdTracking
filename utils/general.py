@@ -297,14 +297,15 @@ def angle(pivot, point):
 
 
 # cosine similarity
-def cosine(pivot, p1, p2):
-    v1 = p1 - pivot
-    v2 = p2 - pivot
+def cosine(v1, v2, pivot=None):
+    if pivot is not None:
+        v1 -= pivot
+        v2 -= pivot
     return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
 
 
 def slerp(q0, q1, t):
-    omega = np.arccos(np.dot(q0, q1) / (np.linalg.norm(q0) * np.linalg.norm(q1)))
+    omega = np.arccos(cosine(q0, q1))
     if omega != 0:
         return (q1*np.sin(t*omega) + q0*np.sin((1-t)*omega)) / np.sin(omega)
     return q0

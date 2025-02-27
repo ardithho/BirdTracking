@@ -118,7 +118,7 @@ def sort_feat(bill, eyes, tear_marks):
             tear_marks.append(None)
     elif len(eyes) > len(tear_marks):
         if bill is not None:
-            if cosine(bill, eyes[0], tear_marks[0]) >= cosine(bill, eyes[1], tear_marks[0]):
+            if cosine(eyes[0], tear_marks[0], bill) >= cosine(eyes[1], tear_marks[0], bill):
                 if sort_lr(bill, eyes[0], tear_marks[0]) == 'left':
                     tear_marks.append(None)
                 else:
@@ -145,7 +145,7 @@ def sort_feat(bill, eyes, tear_marks):
                     tear_marks.insert(0, None)
     elif len(eyes) < len(tear_marks):
         if bill is not None:
-            if cosine(bill, eyes[0], tear_marks[0]) >= cosine(bill, eyes[0], tear_marks[1]):
+            if cosine(eyes[0], tear_marks[0], bill) >= cosine(eyes[0], tear_marks[1], bill):
                 if sort_lr(bill, eyes[0], tear_marks[0]) == 'left':
                     eyes.append(None)
                 else:
