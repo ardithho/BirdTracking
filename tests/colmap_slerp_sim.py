@@ -92,7 +92,7 @@ while cap.isOpened():
                     #     qs[i] = interp_q
                     q_ = qs[ptr]
                     for i in range(ptr+1, frame_no):
-                        qs[i] = slerp(q_, q, i/(frame_no-ptr))
+                        qs[i] = slerp(q_, -q, (i-ptr)/(frame_no-ptr))
                 else:
                     qs.append(q)
                 ptr = frame_no
