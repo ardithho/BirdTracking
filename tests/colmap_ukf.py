@@ -22,17 +22,18 @@ from utils.structs import Bird, Birds
 
 RESIZE = .5
 STRIDE = 1
+FPS = 120
 
 tracker = Tracker(ROOT / 'yolov8/weights/head.pt')
 predictor_head = Predictor(ROOT / 'yolov8/weights/head.pt')
 
-vid_path = ROOT / 'data/vid/fps120/K203_K238_1_GH040045.mp4'
+vid_path = ROOT / 'data/vid/fps120/K203_K238_1_GH010045.mp4'
 
 cfg_path = ROOT / 'data/calibration/cam.yaml'
 blender_cfg = ROOT / 'data/blender/configs/cam.yaml'
 
 h, w = (720, 1280)
-writer = cv2.VideoWriter(str(ROOT / 'data/out/colmap_ukf.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, h * 2))
+writer = cv2.VideoWriter(str(ROOT / 'data/out/colmap_ukf.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), FPS//STRIDE, (w, h * 2))
 
 stereo = Stereo(path=cfg_path)
 with open(cfg_path, 'r') as f:
@@ -68,6 +69,7 @@ while cap.isOpened():
             break
     ret, frame = cap.retrieve()
     if ret:
+        frame = cv2.rotate(frame, cv2.ROTATE_180)
         head = tracker.tracks(frame)[0].boxes.cpu().numpy()
         feat = detect_features(frame, head)
         birds.update([Bird(head, feat) for head, feat in zip(head, feat)], frame)

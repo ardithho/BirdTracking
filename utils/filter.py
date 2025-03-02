@@ -6,7 +6,7 @@ STATE_DIMS = 14
 OBS_DIMS = 7
 
 OBS_COV_LOW = np.eye(OBS_DIMS) * 0.01
-OBS_COV_HIGH = np.eye(OBS_DIMS) * 1.0
+OBS_COV_HIGH = np.eye(OBS_DIMS) * 0.5
 
 
 def transition_function(state, noise):
