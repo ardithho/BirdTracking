@@ -89,7 +89,7 @@ while cap.isOpened():
                 state_mean, state_cov = ukf.filter_update(
                     filtered_state_mean=state_mean,
                     filtered_state_covariance=state_cov,
-                    observation=np.array(obs),
+                    observation=obs,
                     observation_covariance=OBS_COV_HIGH if head_pts.shape[0] < 4 else OBS_COV_LOW
                 )
                 # colmap to o3d notation
