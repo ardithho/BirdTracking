@@ -87,8 +87,7 @@ class Birds:
         birds = birds[:2]
         if not self.tracked:
             birds = self.track(birds)
-        if self.ids is None:
-            self.sort(birds, frame)
+        self.sort(birds, frame)
         unseen = ['m', 'f']
         for bird in birds:
             self.current[self.ids[bird.id]] = bird

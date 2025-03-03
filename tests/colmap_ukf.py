@@ -69,7 +69,6 @@ while cap.isOpened():
             break
     ret, frame = cap.retrieve()
     if ret:
-        frame = cv2.rotate(frame, cv2.ROTATE_180)
         head = tracker.tracks(frame)[0].boxes.cpu().numpy()
         feat = detect_features(frame, head)
         birds.update([Bird(head, feat) for head, feat in zip(head, feat)], frame)
