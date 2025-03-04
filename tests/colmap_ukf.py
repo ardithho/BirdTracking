@@ -27,7 +27,7 @@ FPS = 120
 tracker = Tracker(ROOT / 'yolov8/weights/head.pt')
 predictor_head = Predictor(ROOT / 'yolov8/weights/head.pt')
 
-vid_path = ROOT / 'data/vid/fps120/K203_K238_1_GH010045.mp4'
+vid_path = ROOT / 'data/vid/fps120/GH140045_solo.mp4'
 
 cfg_path = ROOT / 'data/calibration/cam.yaml'
 blender_cfg = ROOT / 'data/blender/configs/cam.yaml'
