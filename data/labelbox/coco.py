@@ -97,7 +97,9 @@ def coco_bbox_converter(data_row_id, annotation, category_id): # was data_row_id
         An annotation dictionary in the COCO format
     """
     coco_annotation = {
+        "id": annotation['feature_id'],
         "image_id": data_row_id,
+        "category_id": category_id,
         "bbox": [
             int(annotation['bounding_box']['top']),
             int(annotation['bounding_box']['left']),
@@ -106,8 +108,7 @@ def coco_bbox_converter(data_row_id, annotation, category_id): # was data_row_id
         ],
         "area": int(annotation['bounding_box']['height'] * annotation['bounding_box']['width']),
         "segmentation": [],
-        "category_id": category_id,
-        "id": annotation['feature_id']
+        "iscrowd": 0
     }
     return coco_annotation
 
