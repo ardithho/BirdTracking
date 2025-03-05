@@ -1,0 +1,14 @@
+cls:
+  bill: 0
+  left_eye: 1,
+  left_tear: 2
+  right_eye: 4,
+  right_tear: 5
+feat:
+  bill: 0
+  eyes:
+    - 1
+    - 4
+  tear_marks:
+    - 2
+    - 5
