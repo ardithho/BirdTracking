@@ -380,32 +380,32 @@ def coco_converter(project, project_id):
                 keypoints.append(str("line_")+str(i+1))
                 skeleton.append([str(i), str(i+1)])
             categories.append({
-                "supercategory": ontology_index[featureSchemaId]['name'],
-                "id": str(ontology_index[featureSchemaId]["encoded_value"]),
+                "id": int(ontology_index[featureSchemaId]["encoded_value"]),
                 "name": ontology_index[featureSchemaId]['name'],
+                "supercategory": ontology_index[featureSchemaId]['name'],
                 "keypoints": keypoints,
                 "skeleton": skeleton,
             })
         elif ontology_index[featureSchemaId]["type"] == "point":
             categories.append({
-                "supercategory": ontology_index[featureSchemaId]['name'],
-                "id": str(ontology_index[featureSchemaId]["encoded_value"]),
+                "id": int(ontology_index[featureSchemaId]["encoded_value"]),
                 "name": ontology_index[featureSchemaId]['name'],
+                "supercategory": ontology_index[featureSchemaId]['name'],
                 "keypoints": ['point'],
                 "skeleton": ["0", "0"],
             })
         elif ontology_index[featureSchemaId]['kind'] == 'tool':
             categories.append({
-                "supercategory": ontology_index[featureSchemaId]['name'],
-                "id": str(ontology_index[featureSchemaId]["encoded_value"]),
-                "name": ontology_index[featureSchemaId]['name']
+                "id": int(ontology_index[featureSchemaId]["encoded_value"]),
+                "name": ontology_index[featureSchemaId]['name'],
+                "supercategory": 'none'
             })
         elif len(ontology_index[featureSchemaId]['parent_featureSchemaIds']) == 2:
             supercategory = ontology_index[ontology_index[featureSchemaId]['parent_featureSchemaIds'][0]]['name']
             categories.append({
-                "supercategory": supercategory,
-                "id": str(ontology_index[featureSchemaId]["encoded_value"]),
-                "name": ontology_index[featureSchemaId]['name']
+                "id": int(ontology_index[featureSchemaId]["encoded_value"]),
+                "name": ontology_index[featureSchemaId]['name'],
+                "supercategory": supercategory
             })
     print(f'\nOntology Conversion Complete')
 
