@@ -9,8 +9,8 @@ sys.path.append(str(ROOT))
 from lightglue import LightGlue, SuperPoint, match_pair, viz2d
 from lightglue.utils import load_image, numpy_image_to_torch
 
+from utils.configs import CLS_DICT
 from utils.general import RAD2DEG
-from utils.structs import CLS_DICT
 
 
 FLANN_INDEX_KDTREE = 1

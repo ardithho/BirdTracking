@@ -6,8 +6,8 @@ from pathlib import Path
 ROOT = Path(__file__).parent.parent
 sys.path.append(str(ROOT))
 
-from utils.general import euc_dist, angle, cosine, cnt_centroid
 from utils.colour import bill_mask
+from utils.general import euc_dist, angle, cosine, cnt_centroid
 
 
 # filter eyes and tear marks that is within a distance to the bill tip

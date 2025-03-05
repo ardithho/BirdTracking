@@ -7,19 +7,9 @@ sys.path.append(str(ROOT))
 
 from utils.box import iou
 from utils.colour import cheek_mask, head_mask, mask_ratio
+from utils.configs import FEAT_DICT
 from utils.plot import plot_box, plot_feat
 from utils.sorter import sort_feat, to_dict, process_labels
-
-
-CLS_DICT = {'bill': 0,
-            'left_eye': 1,
-            'left_tear': 2,
-            'right_eye': 4,
-            'right_tear': 5}
-
-FEAT_DICT = {'bill': CLS_DICT['bill'],
-             'eyes': [CLS_DICT['left_eye'], CLS_DICT['right_eye']],
-             'tear_marks': [CLS_DICT['left_tear'], CLS_DICT['right_tear']]}
 
 
 class Feature:

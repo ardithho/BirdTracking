@@ -8,11 +8,11 @@ from pathlib import Path
 ROOT = Path(__file__).parent.parent
 sys.path.append(str(ROOT))
 
+from utils.box import Box
+from utils.colour import bgr_mask
+from utils.configs import CLS_DICT
 from utils.general import cnt_centroid, DEG2RAD
 from utils.sorter import process_labels
-from utils.colour import bgr_mask
-from utils.structs import CLS_DICT
-from utils.box import Box
 
 
 class Sim:

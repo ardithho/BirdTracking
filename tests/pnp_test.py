@@ -8,9 +8,10 @@ ROOT = Path(__file__).parent.parent
 sys.path.append(str(ROOT))
 
 from utils.box import Box
+from utils.configs import HEAD_CFG
 from utils.structs import Bird, Birds
 from utils.sim import extract_features
-from utils.reconstruct import solvePnP, HEAD_CFG
+from utils.reconstruct import solvePnP
 from utils.general import RAD2DEG
 
 

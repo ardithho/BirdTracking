@@ -16,7 +16,7 @@ class Predictor:
         return self.model.predict(source, save=save, verbose=verbose, iou=iou, **kwargs)
 
 
-feat_model = Predictor(ROOT / 'weights/feat.pt')
+feat_model = Predictor(ROOT / 'weights/liner.pt')
 def detect_features(img, boxes):
     feats = []
     for xyxy in boxes.xyxy:
