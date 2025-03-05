@@ -1,14 +1,19 @@
 cls:
   bill: 0
-  left_eye: 1,
-  left_tear: 2
-  right_eye: 4,
-  right_tear: 5
+  left_liner: 1
+  left_eye: 2
+  left_tear: 3
+  right_liner: 5
+  right_eye: 6
+  right_tear: 7
 feat:
   bill: 0
   eyes:
-    - 1
-    - 4
-  tear_marks:
     - 2
+    - 6
+  tear_marks:
+    - 3
+    - 7
+  bill_liners:
+    - 1
     - 5
