@@ -236,7 +236,7 @@ def filter_feat(im, det):
     return sort_feat(*bound_feat(im, bill, bill_conf, eyes, tear_marks))
 
 
-def to_txt(im, bill, eyes, tear_marks, start=(0, 0)):
+def to_txt(im, bill, eyes, tear_marks, bill_liners=None, start=(0, 0)):
     shape = im.shape[:2]
     if bill is not None:
         bill = [(start[i] + bill[i])/shape[1-i] for i in range(2)]
@@ -245,12 +245,20 @@ def to_txt(im, bill, eyes, tear_marks, start=(0, 0)):
             eyes[i] = [(start[j]+eyes[i][j])/shape[1-j] for j in range(2)]
         if tear_marks[i]:
             tear_marks[i] = [(start[j]+tear_marks[i][j])/shape[1-j] for j in range(2)]
-    return bill, eyes, tear_marks
+        if bill_liners is not None and bill_liners[i]:
+            bill_liners[i] = [(start[j]+bill_liners[i][j])/shape[1-j] for j in range(2)]
+    if bill_liners is None:
+        return bill, eyes, tear_marks
+    return bill, eyes, tear_marks, bill_liners
+    
 
-
-def to_dict(bill, eyes, tear_marks):
-    return {'bill': bill,
+def to_dict(bill, eyes, tear_marks, bill_liners=None):
+    dict = {'bill': bill,
             'left_eye': eyes[0],
-            'left_tear': tear_marks[0],
             'right_eye': eyes[1],
+            'left_tear': tear_marks[0],
             'right_tear': tear_marks[1]}
+    if bill_liners is not None:
+        dict['left_liner'] = bill_liners[0]
+        dict['right_liner'] = bill_liners[1]
+    return dict
