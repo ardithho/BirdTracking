@@ -65,9 +65,9 @@ def bound_feat(im, bill, bill_conf, eyes, tear_marks):
 
 
 # determine left right of a pair of features
-def sort_lr(pivot, eye, tear_mark):
-    eye_angle = angle(pivot, eye)
-    tear_angle = angle(pivot, tear_mark)
+def sort_lr(pivot, top, bot):
+    eye_angle = angle(pivot, top)
+    tear_angle = angle(pivot, bot)
     if (eye_angle-tear_angle) % (2*math.pi) < math.pi:
         return 'left'
     return 'right'
@@ -312,7 +312,7 @@ def sort_feat(bill, eyes, tear_marks, bill_liners=None):
                     tear_marks.append(None)
                 else:
                     tear_marks.insert(0, None)
-    elif encoding == [2, 2, 0]:
+    elif encoding == [2, 2, 0] or encoding == [2, 2, 1]:
         if all([euc_dist(eyes[0], tear_marks[i]) < euc_dist(eyes[1], tear_marks[i]) for i in range(2)]):
             if euc_dist(eyes[1], tear_marks[0]) < euc_dist(eyes[1], tear_marks[1]):
                 tear_marks = tear_marks[::-1]
@@ -326,7 +326,13 @@ def sort_feat(bill, eyes, tear_marks, bill_liners=None):
         if sort_lr(pivotL, eyes[0], tear_marks[0]) == 'right' and sort_lr(pivotR, eyes[1], tear_marks[1]) == 'left':
             eyes = eyes[::-1]
             tear_marks = tear_marks[::-1]
-    elif encoding == [2, 0, 2]:
+        if encoding[2] == 1:
+            if (euc_dist(bill_liners[0], eyes[1]) + euc_dist(bill_liners[0], tear_marks[1]) <
+                    euc_dist(bill_liners[0], eyes[0]) + euc_dist(bill_liners[0], tear_marks[0])):
+                bill_liners.insert(0, None)
+            else:
+                bill_liners.append(None)
+    elif encoding == [2, 0, 2] or encoding == [2, 1, 2]:
         if all([euc_dist(eyes[0], bill_liners[i]) < euc_dist(eyes[1], bill_liners[i]) for i in range(2)]):
             if euc_dist(eyes[1], bill_liners[0]) < euc_dist(eyes[1], bill_liners[1]):
                 bill_liners = bill_liners[::-1]
@@ -340,7 +346,13 @@ def sort_feat(bill, eyes, tear_marks, bill_liners=None):
         if sort_lr(pivotL, eyes[0], bill_liners[0]) == 'right' and sort_lr(pivotR, eyes[1], bill_liners[1]) == 'left':
             eyes = eyes[::-1]
             bill_liners = bill_liners[::-1]
-    elif encoding == [0, 2, 2]:
+        if encoding[1] == 1:
+            if (euc_dist(tear_marks[0], eyes[1]) + euc_dist(tear_marks[0], bill_liners[1]) <
+                    euc_dist(tear_marks[0], eyes[0]) + euc_dist(tear_marks[0], bill_liners[0])):
+                tear_marks.insert(0, None)
+            else:
+                tear_marks.append(None)
+    elif encoding == [0, 2, 2] or encoding == [1, 2, 2]:
         if all([euc_dist(bill_liners[0], tear_marks[i]) < euc_dist(bill_liners[1], tear_marks[i]) for i in range(2)]):
             if euc_dist(bill_liners[1], tear_marks[0]) < euc_dist(bill_liners[1], tear_marks[1]):
                 tear_marks = tear_marks[::-1]
@@ -354,12 +366,12 @@ def sort_feat(bill, eyes, tear_marks, bill_liners=None):
         if sort_lr(pivotL, bill_liners[0], tear_marks[0]) == 'right' and sort_lr(pivotR, bill_liners[1], tear_marks[1]) == 'left':
             bill_liners = bill_liners[::-1]
             tear_marks = tear_marks[::-1]
-    elif encoding == [2, 2, 1]:
-        pass
-    elif encoding == [2, 1, 2]:
-        pass
-    elif encoding == [1, 2, 2]:
-        pass
+        if encoding[0] == 1:
+            if (euc_dist(eyes[0], bill_liners[1]) + euc_dist(eyes[0], tear_marks[1]) <
+                    euc_dist(eyes[0], bill_liners[0]) + euc_dist(eyes[0], tear_marks[0])):
+                eyes.insert(0, None)
+            else:
+                eyes.append(None)
     else:
         pass
 
