@@ -215,7 +215,7 @@ def run(
                             fxywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gnf).view(-1).tolist()
                             fdets[j] = cls, *fxywh, conf
 
-                        bill, eyes, tear_marks = filter_feat(imc, fdets)
+                        bill, eyes, tear_marks = filter_feat(imc, fdets)[:-1]
                         im0 = plot_feat(im0, bill, eyes, tear_marks, xyxyf[0][:2])
                         bill, eyes, tear_marks = to_txt(im0, bill, eyes, tear_marks, xyxyf[0][:2])
 
