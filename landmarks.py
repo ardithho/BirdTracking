@@ -10,6 +10,7 @@ from ultralytics.data.utils import IMG_FORMATS, VID_FORMATS
 
 STRIDE = 1
 SAVE = True
+PADDING = 20
 
 tracker = Tracker('yolov8/weights/head.pt')
 predictor_head = Predictor('yolov8/weights/head.pt')
@@ -30,8 +31,8 @@ while cap.isOpened():
     ret, frame = cap.retrieve()
     if ret:
         head = tracker.tracks(frame)[0].boxes.cpu().numpy()
-        feat = detect_features(frame, head)
-        birds.update([Bird(head, feat) for head, feat in zip(head, feat)], frame)
+        feat = detect_features(frame, head, PADDING)
+        birds.update([Bird(head, feat, PADDING, *frame.shape[:2][::-1]) for head, feat in zip(head, feat)], frame)
 
         display = birds.plot()
         cv2.imshow('display', display)

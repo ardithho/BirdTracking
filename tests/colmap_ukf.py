@@ -23,6 +23,7 @@ from utils.structs import Bird, Birds
 RESIZE = .5
 STRIDE = 1
 FPS = 120
+PADDING = 20
 
 tracker = Tracker(ROOT / 'yolov8/weights/head.pt')
 predictor_head = Predictor(ROOT / 'yolov8/weights/head.pt')
@@ -70,8 +71,8 @@ while cap.isOpened():
     ret, frame = cap.retrieve()
     if ret:
         head = tracker.tracks(frame)[0].boxes.cpu().numpy()
-        feat = detect_features(frame, head)
-        birds.update([Bird(head, feat) for head, feat in zip(head, feat)], frame)
+        feat = detect_features(frame, head, PADDING)
+        birds.update([Bird(head, feat, PADDING, *frame.shape[:2][::-1]) for head, feat in zip(head, feat)], frame)
         bird = birds['m'] if birds['m'] is not None else birds['f']
         if bird is not None:
             head_pts, feat_pts = get_head_feat_pts(bird)
@@ -106,8 +107,6 @@ while cap.isOpened():
         out = cv2.vconcat([cv2.resize(birds.plot(), (w, h), interpolation=cv2.INTER_CUBIC),
                            cv2.resize(sim.screen, (w, h), interpolation=cv2.INTER_CUBIC)])
         cv2.imshow('out', cv2.resize(out, None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
-        # if bird is not None and head_pts.shape[0] >= 4:
-        #     cv2.waitKey(0)
         writer.write(out)
 
         if cv2.waitKey(1) == ord('q'):

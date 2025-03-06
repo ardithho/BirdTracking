@@ -69,7 +69,6 @@ def bound_feat(im, bill, bill_conf, eyes, tear_marks):
 
 def group_feat(feats):
     feats = np.array(feats)
-    print(feats.shape)
 
     # Extract the two sets of points
     pts1 = feats[:, 0, :]  # (n, 2)

@@ -12,6 +12,7 @@ from ultralytics.data.utils import IMG_FORMATS, VID_FORMATS
 
 
 STRIDE = 30
+PADDING = 20
 
 tracker = Tracker('yolov8/weights/head.pt')
 predictor_head = Predictor('yolov8/weights/head.pt')
@@ -47,10 +48,10 @@ while capL.isOpened() and capR.isOpened():
     if retL and retR:
         headL = tracker.tracks(frameL)[0].boxes.cpu().numpy()
         headR = tracker.tracks(frameR)[0].boxes.cpu().numpy()
-        featL = detect_features(frameL, headL)
-        featR = detect_features(frameR, headR)
-        birdsL.update([Bird(head, feat) for head, feat in zip(headL, featL)], frameL)
-        birdsR.update([Bird(head, feat) for head, feat in zip(headR, featR)], frameR)
+        featL = detect_features(frameL, headL, PADDING, *frameL.shape[:2][::-1])
+        featR = detect_features(frameR, headR, PADDING, *frameR.shape[:2][::-1])
+        birdsL.update([Bird(head, feat, PADDING) for head, feat in zip(headL, featL)], frameL)
+        birdsR.update([Bird(head, feat, PADDING) for head, feat in zip(headR, featR)], frameR)
 
         birdL = birdsL['m'] if birdsL['m'] is not None else birdsL['f']
         birdR = birdsR['m'] if birdsR['m'] is not None else birdsR['f']

@@ -17,11 +17,14 @@ class Predictor:
 
 
 feat_model = Predictor(ROOT / 'weights/liner.pt')
-def detect_features(img, boxes):
+def detect_features(im, boxes, padding=0):
     feats = []
     for xyxy in boxes.xyxy:
+        h, w = im.shape[:2]
         x0, y0, x1, y1 = list(map(round, xyxy))
-        feats.append(feat_model.predictions(source=img[y0:y1, x0:x1])[0].boxes.cpu().numpy())
+        x0, x1 = max(x0-padding, 0), min(x1+padding, w)
+        y0, y1 = max(y0-padding, 0), min(y1+padding, h)
+        feats.append(feat_model.predictions(source=im[y0:y1, x0:x1])[0].boxes.cpu().numpy())
     return feats
 
 
