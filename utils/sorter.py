@@ -1,5 +1,6 @@
 import cv2
 import math
+import numpy as np
 
 import sys
 from pathlib import Path
@@ -62,6 +63,19 @@ def bound_feat(im, bill, bill_conf, eyes, tear_marks):
         elif bill_conf < 0.75:
             bill = None
     return bill, eyes, tear_marks
+
+
+def group_feat(feats):
+    feats = np.array(feats)
+    # Extract the two sets of points
+    pts1 = feats[:, 0, :]  # (n, 2)
+    pts2 = feats[:, 1, :]  # (n, 2)
+    # Compute squared Euclidean distances for each feature pair
+    dists = np.sum((pts1 - pts2) ** 2, axis=1)
+    # Assign points to two groups (greedy approach minimizes distance)
+    grp1 = np.where(dists < dists.mean(), pts1, pts2)
+    grp2 = np.where(dists < dists.mean(), pts2, pts1)
+    return np.array([grp1, grp2])
 
 
 # determine left right of a pair of features
@@ -382,8 +396,14 @@ def sort_feat(bill, eyes, tear_marks, bill_liners=None):
             else:
                 eyes.append(None)
     else:
-        pass
-
+        grouped = group_feat([eyes, tear_marks, bill_liners])
+        eyes = grouped[:, 0, :]
+        tear_marks = grouped[:, 1, :]
+        bill_liners = grouped[:, 2, :]
+        if sort_lr(bill_liners[0], eyes[0], tear_marks[0]) == 'right' and sort_lr(bill_liners[1], eyes[1], tear_marks[1]) == 'left':
+            eyes = eyes[::-1]
+            bill_liners = bill_liners[::-1]
+            tear_marks = tear_marks[::-1]
     return bill, eyes, tear_marks, bill_liners
 
 
