@@ -1,6 +1,8 @@
 import cv2
 import math
 import numpy as np
+from scipy.spatial.distance import cdist
+from scipy.optimize import linear_sum_assignment
 
 import sys
 from pathlib import Path
@@ -67,14 +69,26 @@ def bound_feat(im, bill, bill_conf, eyes, tear_marks):
 
 def group_feat(feats):
     feats = np.array(feats)
+    print(feats.shape)
+
     # Extract the two sets of points
     pts1 = feats[:, 0, :]  # (n, 2)
     pts2 = feats[:, 1, :]  # (n, 2)
-    # Compute squared Euclidean distances for each feature pair
-    dists = np.sum((pts1 - pts2) ** 2, axis=1)
-    # Assign points to two groups (greedy approach minimizes distance)
-    grp1 = np.where(dists < dists.mean(), pts1, pts2)
-    grp2 = np.where(dists < dists.mean(), pts2, pts1)
+
+    # Compute pairwise Euclidean distances within each set (A and B)
+    distance_matrix_A = cdist(pts1, pts1, metric='euclidean')
+    distance_matrix_B = cdist(pts2, pts2, metric='euclidean')
+
+    # Sum distance matrices to get a cost matrix for assignment
+    cost_matrix = distance_matrix_A + distance_matrix_B
+
+    # Solve assignment using the Hungarian algorithm
+    row_idx, col_idx = linear_sum_assignment(cost_matrix)
+
+    # Assign points based on the optimal matching
+    grp1 = pts1[row_idx]  # One point from each pair
+    grp2 = pts2[col_idx]  # The other point from each pair
+
     return np.array([grp1, grp2])
 
 
@@ -89,13 +103,16 @@ def sort_lr(pivot, top, bot):
 
 # sort left right features
 def sort_feat(bill, eyes, tear_marks, bill_liners=None):
-    encoding = [len(eyes), len(tear_marks), len(bill_liners)]
+    encoding = [len(eyes), len(tear_marks)]
     if len(eyes) == 0:
         eyes = [None, None]  # L, R
     if len(tear_marks) == 0:
         tear_marks = [None, None]  # L, R
     if bill_liners is None or len(bill_liners) == 0:
         bill_liners = [None, None]  # L, R
+        encoding.append(0)
+    else:
+        encoding.append(len(bill_liners))
 
     if encoding == [1, 0, 0]:
         if bill is not None:
@@ -156,23 +173,23 @@ def sort_feat(bill, eyes, tear_marks, bill_liners=None):
     elif encoding == [0, 1, 1]:
         if bill is not None:
             if sort_lr(bill, bill_liners[0], tear_marks[0]) == 'left':
-                bill_liners.append(None)
                 tear_marks.append(None)
+                bill_liners.append(None)
             else:
-                bill_liners.insert(0, None)
                 tear_marks.insert(0, None)
+                bill_liners.insert(0, None)
         else:
-            bill_liners.append(None)
             tear_marks.append(None)
+            bill_liners.append(None)
     elif encoding == [1, 1, 1]:
         if sort_lr(bill_liners[0], eyes[0], tear_marks[0]) == 'left':
             eyes.append(None)
-            bill_liners.append(None)
             tear_marks.append(None)
+            bill_liners.append(None)
         else:
             eyes.insert(0, None)
-            bill_liners.insert(0, None)
             tear_marks.insert(0, None)
+            bill_liners.insert(0, None)
     elif encoding == [2, 1, 0]:
         if bill is not None:
             if cosine(eyes[0], tear_marks[0], bill) >= cosine(eyes[1], tear_marks[0], bill):
@@ -335,6 +352,39 @@ def sort_feat(bill, eyes, tear_marks, bill_liners=None):
                     tear_marks.append(None)
                 else:
                     tear_marks.insert(0, None)
+    elif encoding == [2, 1, 1]:
+        if (euc_dist(eyes[1], tear_marks[0]) + euc_dist(eyes[1], bill_liners[0]) <
+        euc_dist(eyes[0], tear_marks[0]) + euc_dist(eyes[0], bill_liners[0])):
+            eyes = eyes[::-1]
+        if sort_lr(bill_liners[0], eyes[0], tear_marks[0]) == 'left':
+            tear_marks.append(None)
+            bill_liners.append(None)
+        else:
+            eyes = eyes[::-1]
+            tear_marks.insert(0, None)
+            bill_liners.insert(0, None)
+    elif encoding == [1, 2, 1]:
+        if (euc_dist(tear_marks[1], eyes[0]) + euc_dist(tear_marks[1], bill_liners[0]) <
+                euc_dist(tear_marks[0], eyes[0]) + euc_dist(tear_marks[0], bill_liners[0])):
+            tear_marks = tear_marks[::-1]
+        if sort_lr(bill_liners[0], eyes[0], tear_marks[0]) == 'left':
+            eyes.append(None)
+            bill_liners.append(None)
+        else:
+            tear_marks = tear_marks[::-1]
+            eyes.insert(0, None)
+            bill_liners.insert(0, None)
+    elif encoding == [1, 1, 2]:
+        if (euc_dist(bill_liners[1], eyes[0]) + euc_dist(bill_liners[1], tear_marks[0]) <
+                euc_dist(bill_liners[0], eyes[0]) + euc_dist(bill_liners[0], tear_marks[0])):
+            bill_liners = bill_liners[::-1]
+        if sort_lr(bill_liners[0], eyes[0], tear_marks[0]) == 'left':
+            eyes.append(None)
+            tear_marks.append(None)
+        else:
+            bill_liners = bill_liners[::-1]
+            eyes.insert(0, None)
+            tear_marks.insert(0, None)
     elif encoding == [2, 2, 0] or encoding == [2, 2, 1]:
         if all([euc_dist(eyes[0], tear_marks[i]) < euc_dist(eyes[1], tear_marks[i]) for i in range(2)]):
             if euc_dist(eyes[1], tear_marks[0]) < euc_dist(eyes[1], tear_marks[1]):
@@ -384,22 +434,22 @@ def sort_feat(bill, eyes, tear_marks, bill_liners=None):
                 tear_marks = tear_marks[::-1]
         elif euc_dist(bill_liners[0], tear_marks[1]) < euc_dist(bill_liners[0], tear_marks[0]):
             tear_marks = tear_marks[::-1]
-        pivotL = bill if bill is not None else eyes[1]
-        pivotR = bill if bill is not None else eyes[0]
+        pivotL = bill if bill is not None else bill_liners[1]
+        pivotR = bill if bill is not None else bill_liners[0]
         if sort_lr(pivotL, bill_liners[0], tear_marks[0]) == 'right' and sort_lr(pivotR, bill_liners[1], tear_marks[1]) == 'left':
             bill_liners = bill_liners[::-1]
             tear_marks = tear_marks[::-1]
         if encoding[0] == 1:
-            if (euc_dist(eyes[0], bill_liners[1]) + euc_dist(eyes[0], tear_marks[1]) <
-                    euc_dist(eyes[0], bill_liners[0]) + euc_dist(eyes[0], tear_marks[0])):
+            if (euc_dist(eyes[0], tear_marks[1]) + euc_dist(eyes[0], bill_liners[1]) <
+            euc_dist(eyes[0], tear_marks[0]) + euc_dist(eyes[0], bill_liners[0])):
                 eyes.insert(0, None)
             else:
                 eyes.append(None)
-    else:
+    elif encoding == [2, 2, 2]:
         grouped = group_feat([eyes, tear_marks, bill_liners])
-        eyes = grouped[:, 0, :]
-        tear_marks = grouped[:, 1, :]
-        bill_liners = grouped[:, 2, :]
+        eyes = grouped[:, 0]
+        tear_marks = grouped[:, 1]
+        bill_liners = grouped[:, 2]
         if sort_lr(bill_liners[0], eyes[0], tear_marks[0]) == 'right' and sort_lr(bill_liners[1], eyes[1], tear_marks[1]) == 'left':
             eyes = eyes[::-1]
             bill_liners = bill_liners[::-1]

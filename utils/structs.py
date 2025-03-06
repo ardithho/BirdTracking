@@ -53,7 +53,8 @@ class Bird:
         bill = bill[0] if len(bill) > 0 else None
         eyes = process_labels([feat.xy for feat in self.featsUnsorted if feat.cls in FEAT_DICT['eyes']], 2)
         tear_marks = process_labels([feat.xy for feat in self.featsUnsorted if feat.cls in FEAT_DICT['tear_marks']], 2)
-        return to_dict(*sort_feat(bill, eyes, tear_marks))
+        bill_liners = process_labels([feat.xy for feat in self.featsUnsorted if feat.cls in FEAT_DICT['bill_liners']], 2)
+        return to_dict(*sort_feat(bill, eyes, tear_marks, bill_liners))
 
     def mask(self, im):
         im_shape = im.shape[:2]
@@ -150,12 +151,14 @@ class Birds:
             frame = plot_box(frame, self['m'].xyxy, (255, 0, 0))
             frame = plot_feat(frame, self['m'].feats['bill'],
                               [self['m'].feats['left_eye'], self['m'].feats['right_eye']],
-                              [self['m'].feats['left_tear'], self['m'].feats['right_tear']])
+                              [self['m'].feats['left_tear'], self['m'].feats['right_tear']],
+                              [self['m'].feats['left_liner'], self['m'].feats['right_liner']])
         if self['f'] is not None:
             frame = plot_box(frame, self['f'].xyxy, (255, 0, 255))
             frame = plot_feat(frame, self['f'].feats['bill'],
                               [self['f'].feats['left_eye'], self['f'].feats['right_eye']],
-                              [self['f'].feats['left_tear'], self['f'].feats['right_tear']])
+                              [self['f'].feats['left_tear'], self['f'].feats['right_tear']],
+                              [self['f'].feats['left_liner'], self['f'].feats['right_liner']])
         return frame
 
     def __getitem__(self, sex):
