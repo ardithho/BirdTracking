@@ -150,6 +150,15 @@ def sort_feat(bill, eyes, tear_marks, bill_liners=None):
         else:
             bill_liners.append(None)
             tear_marks.append(None)
+    elif encoding == [1, 1, 1]:
+        if sort_lr(bill_liners[0], eyes[0], tear_marks[0]) == 'left':
+            eyes.append(None)
+            bill_liners.append(None)
+            tear_marks.append(None)
+        else:
+            eyes.insert(0, None)
+            bill_liners.insert(0, None)
+            tear_marks.insert(0, None)
     elif encoding == [2, 1, 0]:
         if bill is not None:
             if cosine(eyes[0], tear_marks[0], bill) >= cosine(eyes[1], tear_marks[0], bill):
