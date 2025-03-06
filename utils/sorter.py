@@ -7,6 +7,7 @@ ROOT = Path(__file__).parent.parent
 sys.path.append(str(ROOT))
 
 from utils.colour import bill_mask
+from utils.configs import FEAT_DICT
 from utils.general import euc_dist, angle, cosine, cnt_centroid
 
 
@@ -214,8 +215,8 @@ def process_labels(labels, n, dist=3, im_shape=None):
     return out_labels
 
 
-def filter_feat(im, det, classes):
-    bill_labels = sorted([label for label in det if label[0] == classes[0] and label[-1] >= 0.1], key=lambda x: x[-1],
+def filter_feat(im, det):
+    bill_labels = sorted([label for label in det if label[0] == FEAT_DICT['bill'] and label[-1] >= 0.1], key=lambda x: x[-1],
                           reverse=True)
     if bill_labels:
         # choose bill with the highest confidence
@@ -227,10 +228,10 @@ def filter_feat(im, det, classes):
         bill_conf = 0
 
     # sort by confidence
-    eyes_labels = sorted([label for label in det if label[0] in classes[1] and label[-1] >= 0.1], key=lambda x: x[-1])
+    eyes_labels = sorted([label for label in det if label[0] in FEAT_DICT['eyes'] and label[-1] >= 0.1], key=lambda x: x[-1])
     eyes = process_labels(eyes_labels, 2, im.shape[:2])
 
-    tear_labels = sorted([label for label in det if label[0] in classes[2] and label[-1] >= 0.1], key=lambda x: x[-1])
+    tear_labels = sorted([label for label in det if label[0] in FEAT_DICT['tear_marks'] and label[-1] >= 0.1], key=lambda x: x[-1])
     tear_marks = process_labels(tear_labels, 2, im.shape[:2])
     return sort_feat(*bound_feat(im, bill, bill_conf, eyes, tear_marks))
 

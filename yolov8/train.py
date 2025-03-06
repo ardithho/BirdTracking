@@ -94,4 +94,4 @@ if __name__ == '__main__':
     data['val'] = '../valid/images'
     with open(data_file, 'w') as f:
         yaml.dump(data, f)
-    model = train_model(data_file, model, batch=32, name=name, epochs=400)
+    model = train_model(data_file, model, batch=32, imgsz=128, name=name, epochs=400)
