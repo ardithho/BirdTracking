@@ -6,7 +6,7 @@ ROOT = Path(__file__).parent.parent
 sys.path.append(str(ROOT))
 
 
-cfg_dir = ROOT / 'data/configs/yolo.yaml'
+cfg_dir = ROOT / 'data/configs'
 yolo_cfg_path = cfg_dir / 'yolo.yaml'
 blender_cfg_path = cfg_dir / 'blender.yaml'
 
