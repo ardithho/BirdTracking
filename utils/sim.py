@@ -10,7 +10,7 @@ sys.path.append(str(ROOT))
 
 from utils.box import Box
 from utils.colour import bgr_mask
-from utils.configs import CLS_DICT
+from utils.configs import CLS_DICT, COLOUR_DICT
 from utils.general import cnt_centroid, DEG2RAD
 from utils.sorter import process_labels
 
@@ -77,11 +77,12 @@ def extract_feature(im, colour, n, cls):
     return out
 
 
-def extract_features(im, colour_bill=(255, 0, 0), colour_eye=(255, 255, 0), colour_tear=(0, 255, 0)):
-    bill = extract_feature(im, colour_bill, 1, CLS_DICT['bill'])
-    eyes = extract_feature(im, colour_eye, 2, CLS_DICT['left_eye'])
-    tear_marks = extract_feature(im, colour_tear, 2, CLS_DICT['left_tear'])
-    return [*bill, *eyes, *tear_marks]
+def extract_features(im):
+    bill = extract_feature(im, COLOUR_DICT['bill'], 1, CLS_DICT['bill'])
+    eyes = extract_feature(im, COLOUR_DICT['eyes'], 2, CLS_DICT['left_eye'])
+    tear_marks = extract_feature(im, COLOUR_DICT['tear_marks'], 2, CLS_DICT['left_tear'])
+    bill_liners = extract_feature(im, COLOUR_DICT['bill_liners'], 2, CLS_DICT['left_liner'])
+    return [*bill, *eyes, *tear_marks, *bill_liners]
 
 
 if __name__ == '__main__':
