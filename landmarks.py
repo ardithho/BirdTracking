@@ -1,5 +1,4 @@
 import cv2
-import numpy as np
 
 from yolov8.predict import Predictor, detect_features
 from yolov8.track import Tracker
@@ -9,8 +8,9 @@ from ultralytics.data.utils import IMG_FORMATS, VID_FORMATS
 
 
 STRIDE = 1
+RESIZE = 0.5
 SAVE = True
-PADDING = 20
+PADDING = 30
 
 tracker = Tracker('yolov8/weights/head.pt')
 predictor_head = Predictor('yolov8/weights/head.pt')
@@ -35,8 +35,10 @@ while cap.isOpened():
         birds.update([Bird(head, feat, PADDING, *frame.shape[:2][::-1]) for head, feat in zip(head, feat)], frame)
 
         display = birds.plot()
-        cv2.imshow('display', display)
-        if SAVE: writer.write(display)
+        cv2.imshow('display',
+                   cv2.resize(display, None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
+        if SAVE:
+            writer.write(display)
         key = cv2.waitKey(1)
         if key == ord('q'):
             break
