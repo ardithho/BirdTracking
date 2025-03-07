@@ -19,18 +19,20 @@ from utils.structs import Bird, Birds
 
 
 RESIZE = .5
-STRIDE = 4
+STRIDE = 1
+FPS = 120
+PADDING = 30
 
 tracker = Tracker(ROOT / 'yolov8/weights/head.pt')
 predictor_head = Predictor(ROOT / 'yolov8/weights/head.pt')
 
-vid_path = ROOT / 'data/vid/fps120/K203_K238_1_GH040045.mp4'
+vid_path = ROOT / 'data/vid/fps120/GH140045_solo.mp4'
 
 cfg_path = ROOT / 'data/calibration/cam.yaml'
 blender_cfg = ROOT / 'data/blender/configs/cam.yaml'
 
 h, w = (720, 1280)
-writer = cv2.VideoWriter(str(ROOT / 'data/out/colmap_pnp.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, h * 2))
+writer = cv2.VideoWriter(str(ROOT / 'data/out/colmap_pnp.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), FPS//STRIDE, (w, h * 2))
 
 stereo = Stereo(path=cfg_path)
 with open(cfg_path, 'r') as f:
@@ -65,8 +67,8 @@ while cap.isOpened():
     ret, frame = cap.retrieve()
     if ret:
         head = tracker.tracks(frame)[0].boxes.cpu().numpy()
-        feat = detect_features(frame, head)
-        birds.update([Bird(head, feat) for head, feat in zip(head, feat)], frame)
+        feat = detect_features(frame, head, PADDING)
+        birds.update([Bird(head, feat, PADDING, *frame.shape[:2][::-1]) for head, feat in zip(head, feat)], frame)
         bird = birds['m'] if birds['m'] is not None else birds['f']
         if bird is not None:
             head_pts, feat_pts = get_head_feat_pts(bird)

@@ -23,7 +23,7 @@ from utils.structs import Bird, Birds
 RESIZE = .5
 STRIDE = 1
 FPS = 120
-PADDING = 20
+PADDING = 30
 
 tracker = Tracker(ROOT / 'yolov8/weights/head.pt')
 predictor_head = Predictor(ROOT / 'yolov8/weights/head.pt')
