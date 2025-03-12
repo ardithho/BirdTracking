@@ -88,9 +88,6 @@ def camera_data(cam):
                   [0, fy, cy],
                   [0, 0, 1]])
 
-    # cam_loc = cam.location
-    # cam_rot = cam.rotation_euler
-    # ext = np.asarray(cam.matrix_world)[:3, :]
     ext = extrinsic_mat(cam)
     return k, ext
 
