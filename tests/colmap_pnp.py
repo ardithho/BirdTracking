@@ -1,7 +1,4 @@
 import pycolmap
-import yaml
-import cv2
-import numpy as np
 
 import sys
 from pathlib import Path
@@ -72,7 +69,7 @@ while cap.isOpened():
         bird = birds['m'] if birds['m'] is not None else birds['f']
         if bird is not None:
             head_pts, feat_pts = get_head_feat_pts(bird)
-            if head_pts.shape[0] > 0:
+            if head_pts.shape[0] >= 4:
                 pnp = pycolmap.estimate_and_refine_absolute_pose(feat_pts, head_pts, cam)
                 if pnp is not None:
                     rig = pnp['cam_from_world']  # Rigid3d
@@ -84,10 +81,9 @@ while cap.isOpened():
                     R, _ = cv2.Rodrigues(r)
                     R = R.T
                     T[:3, :3] = R @ prev_T[:3, :3].T
-                    if head_pts.shape[0] >= 4:
-                        print('es:', *np.rint(cv2.Rodrigues(T[:3, :3])[0] * RAD2DEG))
-                        print('esT:', *np.rint(cv2.Rodrigues(R)[0] * RAD2DEG))
-                        print('')
+                    print('es:', *np.rint(cv2.Rodrigues(T[:3, :3])[0] * RAD2DEG))
+                    print('esT:', *np.rint(cv2.Rodrigues(R)[0] * RAD2DEG))
+                    print('')
                     prev_T[:3, :3] = R
                     sim.update(T)
         cv2.imshow('frame', cv2.resize(birds.plot(), None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
