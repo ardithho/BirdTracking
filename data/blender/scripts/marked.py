@@ -121,6 +121,7 @@ for obj in mesh:
 bpy.ops.object.join()
 
 head = bpy.context.active_object
+head.hide_render = False
 T = np.eye(4)
 for i in range(100):
     f.write(' '.join([str(i+1), *map(str, T.flatten())]) + '\n')
