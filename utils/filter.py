@@ -1,5 +1,6 @@
 import numpy as np
-from pykalman import UnscentedKalmanFilter
+from pykalman import UnscentedKalmanFilter, MerweScaledSigmaPoints
+from scipy.spatial.transform import Rotation as R
 
 
 STATE_DIMS = 14
@@ -100,11 +101,98 @@ class ParticleFilter:
             self.particles[:, i] = np.random.normal(measurement[i], self.measurement_noise[i], self.num_particles)
 
     def resample(self):
-        """ Resamples particles based on importance weights (low variance resampling). """
-        indices = np.random.choice(self.num_particles, self.num_particles, p=self.weights)
-        self.particles = self.particles[indices]
-        self.weights = np.ones(self.num_particles) / self.num_particles  # Reset weights
+        n_eff = 1.0 / np.sum(self.weights ** 2)  # Effective particle count
+        if n_eff < self.num_particles / 2:  # Only resample if necessary
+            indices = np.random.choice(self.num_particles, self.num_particles, p=self.weights)
+            self.particles = self.particles[indices]
+            self.weights = np.ones(self.num_particles) / self.num_particles  # Reset weights
 
     def estimate(self):
         """ Estimates the best pose (weighted mean). """
         return np.average(self.particles, axis=0, weights=self.weights)
+
+
+class ParticleFilterQuat:
+    """ Particle Filter for 3D pose tracking using Quaternions and Translation. """
+
+    def __init__(self, num_particles=500, process_noise_rot=0.05, process_noise_trans=0.2,
+                 measurement_noise_rot=0.1, measurement_noise_trans=0.3):
+        self.num_particles = num_particles
+
+        # State: [qx, qy, qz, qw, x, y, z]
+        self.particles = np.zeros((num_particles, 7))
+
+        # Initialize quaternions (small random rotation)
+        random_rotations = R.random(num_particles)
+        self.particles[:, :4] = random_rotations.as_quat()  # (qx, qy, qz, qw)
+
+        # Initialize translations with small noise
+        self.particles[:, 4:] = np.random.uniform(-0.1, 0.1, (num_particles, 3))
+
+        # Weights initialized uniformly
+        self.weights = np.ones(num_particles) / num_particles
+
+        # Process noise (quaternion + translation)
+        self.process_noise_rot = process_noise_rot
+        self.process_noise_trans = process_noise_trans
+
+        # Explicit Measurement Noise
+        self.measurement_noise_rot = measurement_noise_rot  # Rotation noise (radians)
+        self.measurement_noise_trans = measurement_noise_trans  # Translation noise (meters)
+
+    def transition(self):
+        """ Motion model: Apply random perturbation to rotation and translation. """
+        random_rot = R.from_euler('xyz', np.random.normal(0, self.process_noise_rot, (self.num_particles, 3)))
+        new_quats = (R.from_quat(self.particles[:, :4]) * random_rot).as_quat()
+        self.particles[:, :4] = new_quats  # Update quaternion states
+
+        # Apply translation noise
+        self.particles[:, 4:] += np.random.normal(0, self.process_noise_trans, (self.num_particles, 3))
+
+    def observe(self, measurement, continuous=True):
+        """ Measurement update: Updates particle weights based on observation likelihood. """
+        if measurement is None:
+            return
+
+        if not continuous:
+            self.sample(measurement)
+
+        # Rotation Measurement Update
+        measured_rotation = R.from_quat(measurement[:4])
+        particle_rotations = R.from_quat(self.particles[:, :4])
+        angular_diffs = particle_rotations.inv() * measured_rotation
+        angle_errors = angular_diffs.magnitude()  # Compute angular difference
+
+        # Compute Gaussian likelihood for rotation
+        rot_likelihood = np.exp(-0.5 * (angle_errors / self.measurement_noise_rot) ** 2)
+
+        # Translation Measurement Update
+        translation_diffs = np.linalg.norm(self.particles[:, 4:] - measurement[4:], axis=1)
+
+        # Compute Gaussian likelihood for translation
+        trans_likelihood = np.exp(-0.5 * (translation_diffs / self.measurement_noise_trans) ** 2)
+
+        # Combine Likelihoods
+        self.weights = rot_likelihood * trans_likelihood
+        self.weights += 1e-300  # Avoid zero weights
+        self.weights /= np.sum(self.weights)  # Normalise
+
+    def sample(self, measurement):
+        for i in range(4):
+            self.particles[:, i] = np.random.normal(measurement[i], self.measurement_noise_rot, self.num_particles)
+        for i in range(3):
+            self.particles[:, 4+i] = np.random.normal(measurement[4+i], self.measurement_noise_trans, self.num_particles)
+
+    def resample(self):
+        """ Low-variance resampling to maintain particle diversity. """
+        n_eff = 1.0 / np.sum(self.weights ** 2)  # Effective sample size
+        if n_eff < self.num_particles / 2:  # Only resample if necessary
+            indices = np.random.choice(self.num_particles, self.num_particles, p=self.weights)
+            self.particles = self.particles[indices]
+            self.weights = np.ones(self.num_particles) / self.num_particles  # Reset weights
+
+    def estimate(self):
+        """ Estimate the best pose (weighted mean). """
+        avg_quat = R.from_quat(self.particles[:, :4]).mean().as_quat()  # Average quaternion
+        avg_trans = np.average(self.particles[:, 4:], axis=0, weights=self.weights)  # Weighted translation
+        return np.hstack((avg_quat, avg_trans))
