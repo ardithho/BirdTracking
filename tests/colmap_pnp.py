@@ -15,9 +15,10 @@ from utils.sim import *
 from utils.structs import Bird, Birds
 
 
-RESIZE = .5
+RESIZE = .5  # resize display window
 STRIDE = 1
 FPS = 120
+SPEED = .5
 PADDING = 30
 
 tracker = Tracker(ROOT / 'yolov8/weights/head.pt')
@@ -29,7 +30,7 @@ cfg_path = ROOT / 'data/calibration/cam.yaml'
 blender_cfg = ROOT / 'data/blender/configs/cam.yaml'
 
 h, w = (720, 1280)
-writer = cv2.VideoWriter(str(ROOT / 'data/out/colmap_pnp.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), FPS//STRIDE, (w, h * 2))
+writer = cv2.VideoWriter(str(ROOT / 'data/out/colmap_pnp.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), FPS//STRIDE*SPEED, (w, h * 2))
 
 stereo = Stereo(path=cfg_path)
 with open(cfg_path, 'r') as f:
@@ -88,18 +89,17 @@ while cap.isOpened():
                     # T[:3, 3] = t.T - prev_T[:3, 3]
                     print('es:', *np.rint(cv2.Rodrigues(T[:3, :3])[0] * RAD2DEG))
                     print('esT:', *np.rint(cv2.Rodrigues(R)[0] * RAD2DEG))
+                    print('t:', t)
                     print('')
                     prev_T[:3, :3] = R
                     prev_T[:3, 3] = t.T
-                    print(t)
                     sim.update(T)
         cv2.imshow('frame', cv2.resize(birds.plot(), None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
 
         out = cv2.vconcat([cv2.resize(birds.plot(), (w, h), interpolation=cv2.INTER_CUBIC),
                            cv2.resize(sim.screen, (w, h), interpolation=cv2.INTER_CUBIC)])
         cv2.imshow('out', cv2.resize(out, None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
-        # if bird is not None and head_pts.shape[0] >= 4:
-        #     cv2.waitKey(0)
+
         writer.write(out)
 
         if cv2.waitKey(1) == ord('q'):
