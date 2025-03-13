@@ -1,7 +1,4 @@
 import pycolmap
-import yaml
-import cv2
-import numpy as np
 from scipy.spatial.transform import Rotation
 
 import sys
@@ -78,19 +75,19 @@ while cap.isOpened():
         bird = birds['m'] if birds['m'] is not None else birds['f']
         if bird is not None:
             head_pts, feat_pts = get_head_feat_pts(bird)
-            if head_pts.shape[0] > 0:
+            if head_pts.shape[0] >= 4:
                 pnp = pycolmap.estimate_and_refine_absolute_pose(feat_pts, head_pts, cam)
                 if pnp is not None:
                     rig = pnp['cam_from_world']  # Rigid3d
                     R = rig.rotation.matrix()
                     R = R @ ext[:3, :3].T  # undo camera extrinsic rotation
                     r = cv2.Rodrigues(R)[0]
-                    obs = np.array([*Rotation.from_euler('xyz', -r.flatten()).as_quat(), *-rig.translation])
+                    obs = np.array([*Rotation.from_rotvec(-r.flatten()).as_quat(), *-rig.translation])
                     state_mean, state_cov = ukf.filter_update(
                         filtered_state_mean=state_mean,
                         filtered_state_covariance=state_cov,
-                        observation=np.array(obs),
-                        observation_covariance=OBS_COV_HIGH if head_pts.shape[0] < 4 else OBS_COV_LOW
+                        observation=obs,
+                        observation_covariance=OBS_COV_LOW
                     )
                     # colmap to o3d notation
                     r = Rotation.from_quat(state_mean[:4]).as_rotvec()
@@ -100,10 +97,9 @@ while cap.isOpened():
                     T[:3, :3] = R @ prev_T[:3, :3].T
                     prev_T[:3, :3] = R
                     sim.update(T)
-                    if head_pts.shape[0] >= 4:
-                        print('es:', *np.rint(cv2.Rodrigues(T[:3, :3])[0] * RAD2DEG))
-                        print('esT:', *np.rint(cv2.Rodrigues(R)[0] * RAD2DEG))
-                        print('')
+                    print('es:', *np.rint(cv2.Rodrigues(T[:3, :3])[0] * RAD2DEG))
+                    print('esT:', *np.rint(cv2.Rodrigues(R)[0] * RAD2DEG))
+                    print('')
         cv2.imshow('frame', cv2.resize(birds.plot(), None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
 
         out = cv2.vconcat([cv2.resize(birds.plot(), (w, h), interpolation=cv2.INTER_CUBIC),

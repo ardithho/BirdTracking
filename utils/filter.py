@@ -45,3 +45,66 @@ ukf = UnscentedKalmanFilter(
     initial_state_mean=initial_state,
     initial_state_covariance=initial_covariance
 )
+
+
+class ParticleFilter:
+    """ Particle Filter for 3D pose tracking (rx, ry, rz, tx, ty, tz). """
+    def __init__(self, num_particles=500, process_noise=None, measurement_noise=None):
+        self.num_particles = num_particles
+
+        # State: [rx, ry, rz, tx, ty, tz]
+        self.particles = np.zeros((num_particles, 6))
+
+        # Initialize particles randomly (small noise around origin)
+        self.particles[:, :3] = np.random.uniform(-0.1, 0.1, (num_particles, 3))  # Rotation noise
+        self.particles[:, 3:] = np.random.uniform(-0.1, 0.1, (num_particles, 3))  # Translation noise
+
+        # Weights initialized uniformly
+        self.weights = np.ones(num_particles) / num_particles
+
+        # Default noise levels
+        self.process_noise = process_noise if process_noise is not None else np.array(
+            [0.05, 0.05, 0.05, 0.1, 0.1, 0.1])
+        self.measurement_noise = measurement_noise if measurement_noise is not None else np.array(
+            [0.01, 0.01, 0.01, 0.05, 0.05, 0.05])
+
+    def transition(self):
+        """ Motion model: Applies process noise to simulate movement. """
+        noise = np.random.normal(0, self.process_noise, self.particles.shape)
+        self.particles += noise  # Apply noise to all particles
+
+    def observe(self, measurement, continuous=True):
+        """ Measurement update: Updates particle weights based on observation likelihood. """
+        if measurement is None:
+            return
+
+        if not continuous:
+            self.sample(measurement)
+
+        # Compute error between particles and the measured pose
+        diff = self.particles - measurement
+
+        # Normalize angles to [-π, π]
+        diff[:, :3] = (diff[:, :3] + np.pi) % (2 * np.pi) - np.pi
+
+        # Gaussian likelihood function
+        likelihood = np.exp(-0.5 * np.sum((diff / self.measurement_noise) ** 2, axis=1))
+
+        # Update weights
+        self.weights = likelihood
+        self.weights += 1e-300  # Avoid zero weights
+        self.weights /= np.sum(self.weights)  # Normalize
+
+    def sample(self, measurement):
+        for i in range(len(measurement)):
+            self.particles[:, i] = np.random.normal(measurement[i], self.measurement_noise[i], self.num_particles)
+
+    def resample(self):
+        """ Resamples particles based on importance weights (low variance resampling). """
+        indices = np.random.choice(self.num_particles, self.num_particles, p=self.weights)
+        self.particles = self.particles[indices]
+        self.weights = np.ones(self.num_particles) / self.num_particles  # Reset weights
+
+    def estimate(self):
+        """ Estimates the best pose (weighted mean). """
+        return np.average(self.particles, axis=0, weights=self.weights)
