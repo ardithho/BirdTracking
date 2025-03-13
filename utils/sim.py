@@ -57,8 +57,13 @@ class Sim:
     def close(self):
         self.vis.destroy_window()
 
-
-sim = Sim()
+    def set_camera(self, ext):
+        R = ext[:3, :3]
+        t = ext[:3, 3]
+        self.vis.get_view_control().set_front(-R.T @ t)
+        self.vis.get_view_control().set_lookat([0, 0, 0])
+        self.vis.get_view_control().set_up([0, 1, 0])
+        self.vis.update_renderer()
 
 
 def extract_feature(im, colour, n, cls):
@@ -87,6 +92,8 @@ def extract_features(im):
 
 if __name__ == '__main__':
     import numpy as np
+
+    sim = Sim()
     T = np.eye(4)
     # rad = 0 * np.pi / 180
     # T[0, 0] = np.cos(rad)

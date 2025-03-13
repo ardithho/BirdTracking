@@ -50,6 +50,8 @@ cam = pycolmap.Camera(
             *dist[:4]),  # dist: k1, k2, p1, p2
     )
 
+sim = Sim()
+
 cap = cv2.VideoCapture(str(vid_path))
 birds = Birds()
 T = np.eye(4)
@@ -73,18 +75,23 @@ while cap.isOpened():
                 pnp = pycolmap.estimate_and_refine_absolute_pose(feat_pts, head_pts, cam)
                 if pnp is not None:
                     rig = pnp['cam_from_world']  # Rigid3d
+                    t = -rig.translation
                     R = rig.rotation.matrix()
                     R = R @ ext[:3, :3].T  # undo camera extrinsic rotation
                     r = cv2.Rodrigues(R)[0]
                     # colmap to o3d notation
                     r[0] *= -1
+                    t[0] *= -1
                     R, _ = cv2.Rodrigues(r)
                     R = R.T
                     T[:3, :3] = R @ prev_T[:3, :3].T
+                    # T[:3, 3] = t.T - prev_T[:3, 3]
                     print('es:', *np.rint(cv2.Rodrigues(T[:3, :3])[0] * RAD2DEG))
                     print('esT:', *np.rint(cv2.Rodrigues(R)[0] * RAD2DEG))
                     print('')
                     prev_T[:3, :3] = R
+                    prev_T[:3, 3] = t.T
+                    print(t)
                     sim.update(T)
         cv2.imshow('frame', cv2.resize(birds.plot(), None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
 

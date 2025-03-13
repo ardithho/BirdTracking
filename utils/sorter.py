@@ -69,26 +69,23 @@ def bound_feat(im, bill, bill_conf, eyes, tear_marks):
 
 def group_feat(feats):
     feats = np.array(feats)
+    n_feats = feats.shape[0]
+    if n_feats == 2:
+        combinations = np.array([[0, 0], [0, 1]])
+    else:
+        combinations = np.array([[0, 0, 0], [0, 0, 1], [0, 1, 0], [1, 0, 0]])
 
-    # Extract the two sets of points
-    pts1 = feats[:, 0, :]  # (n, 2)
-    pts2 = feats[:, 1, :]  # (n, 2)
+    best = combinations[0]
+    best_dist = (np.sum(cdist(feats[list(range(n_feats)), combinations[0]], feats[list(range(n_feats)), combinations[0]], 'euclidean'))
+                 + np.sum(cdist(feats[list(range(n_feats)), 1-combinations[0]], feats[list(range(n_feats)), 1-combinations[0]], 'euclidean')))
+    for combination in combinations:
+        dist = (np.sum(cdist(feats[list(range(n_feats)), combination], feats[list(range(n_feats)), combination], 'euclidean'))
+                + np.sum(cdist(feats[list(range(n_feats)), 1-combination], feats[list(range(n_feats)), 1-combination], 'euclidean')))
+        if dist < best_dist:
+            best = combination
+            best_dist = dist
 
-    # Compute pairwise Euclidean distances within each set (A and B)
-    distance_matrix_A = cdist(pts1, pts1, metric='euclidean')
-    distance_matrix_B = cdist(pts2, pts2, metric='euclidean')
-
-    # Sum distance matrices to get a cost matrix for assignment
-    cost_matrix = distance_matrix_A + distance_matrix_B
-
-    # Solve assignment using the Hungarian algorithm
-    row_idx, col_idx = linear_sum_assignment(cost_matrix)
-
-    # Assign points based on the optimal matching
-    grp1 = pts1[row_idx]  # One point from each pair
-    grp2 = pts2[col_idx]  # The other point from each pair
-
-    return np.array([grp1, grp2])
+    return np.array([feats[list(range(n_feats)), best], feats[list(range(n_feats)), 1-best]])
 
 
 # determine left right of a pair of features

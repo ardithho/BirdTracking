@@ -39,25 +39,6 @@ index = 2
 im1 = cv2.imread(os.path.join(input_dir, f'{index:03}.png'))
 im2 = cv2.imread(os.path.join(input_dir, f'{index+1:03}.png'))
 
-# thresh = .5
-# method = 'orb'
-#
-# vio, R, t, _ = estimate_vio(im1, im2, K=K, thresh=thresh, method=method)
-# if vio:
-#     print('vo:', *np.rint(cv2.Rodrigues(R.T)[0]*RAD2DEG))
-#     print('gt:', *np.rint(cv2.Rodrigues(transforms[index][:3, :3])[0]*RAD2DEG))
-
-# im1 = im1[100:-100, 500:-500]
-# im2 = im2[100:-100, 500:-500]
-# kp1, kp2, matches = find_matches(im1, im2, thresh=thresh, method=method)
-# match = cv2.drawMatches(im1, kp1, im2, kp2, matches, None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
-# cv2.imwrite(f'data/out/matches_{index+1}.jpg', match)
-# cv2.imshow('match', match)
-# cv2.waitKey(0)
-# cv2.destroyAllWindows()
-
-
-
 extractor = SuperPoint(max_num_keypoints=2048).eval().cuda()  # load the extractor
 matcher = LightGlue(features='superpoint').eval().cuda()  # load the matcher
 

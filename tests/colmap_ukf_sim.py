@@ -48,7 +48,9 @@ cam = pycolmap.Camera(
     height=stereo.camL.h,
     params=(K[0, 0],  # focal length
             K[0, 2], K[1, 2]),  # cx, cy
-)
+    )
+
+sim = Sim()
 
 cap = cv2.VideoCapture(str(vid_path))
 birds = Birds()

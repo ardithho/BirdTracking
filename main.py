@@ -31,6 +31,8 @@ capR = cv2.VideoCapture(vidR)
 capL.set(cv2.CAP_PROP_POS_FRAMES, stereo.offsetL+1800)
 capR.set(cv2.CAP_PROP_POS_FRAMES, stereo.offsetR+1800)
 
+sim = Sim()
+
 birdsL = Birds()
 birdsR = Birds()
 prev_frames = None

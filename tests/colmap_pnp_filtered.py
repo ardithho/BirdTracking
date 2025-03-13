@@ -54,6 +54,8 @@ cam = pycolmap.Camera(
             *dist[:4]),  # dist: k1, k2, p1, p2
     )
 
+sim = Sim()
+
 cap = cv2.VideoCapture(str(ROOT / 'data/vid/fps120/K203_K238_1_GH040045.mp4'))
 birds = Birds()
 T = np.eye(4)

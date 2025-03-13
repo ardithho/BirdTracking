@@ -21,6 +21,8 @@ with open(cfg_path, 'r') as f:
     R = ext[:3, :3]
     t = ext[:3, 3]
 
+sim = Sim()
+
 T = np.eye(4)
 q = np.array([0, 0, 0, 1])
 # r = np.array([0, 0, 0], dtype=np.float64)

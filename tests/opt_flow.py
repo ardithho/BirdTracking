@@ -33,6 +33,8 @@ with open(cfg_path, 'r') as f:
     K = np.asarray(cfg['KR']).reshape(3, 3)
     dist = np.asarray(cfg['distR'])
 
+sim = Sim()
+
 cap = cv2.VideoCapture(str(vid_path))
 birds = Birds()
 prev_frame = None

@@ -107,6 +107,8 @@ while cap.isOpened():
     else:
         break
 
+sim = Sim()
+
 frame_no = 0
 cap = cv2.VideoCapture(str(vid_path))
 T = np.eye(4)

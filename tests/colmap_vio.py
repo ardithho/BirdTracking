@@ -55,6 +55,8 @@ cam = pycolmap.Camera(
     )
 options = pycolmap.TwoViewGeometryOptions(compute_relative_pose=True)
 
+sim = Sim()
+
 cap = cv2.VideoCapture(str(vid_path))
 birds = Birds()
 frame_no = 0

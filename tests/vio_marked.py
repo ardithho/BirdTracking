@@ -37,6 +37,8 @@ with open(trans_path, 'r') as f:
     lines = f.readlines()
     transforms = [np.array(list(map(float, line.strip().split()[1:]))).reshape((4, 4)) for line in lines]
 
+sim = Sim()
+
 cap = cv2.VideoCapture(str(vid_path))
 birds = Birds()
 prev_frame = None

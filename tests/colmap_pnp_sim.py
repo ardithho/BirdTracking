@@ -47,6 +47,8 @@ cam = pycolmap.Camera(
             K[0, 2], K[1, 2]),  # cx, cy
 )
 
+sim = Sim()
+
 cap = cv2.VideoCapture(str(vid_path))
 birds = Birds()
 frame_no = 0

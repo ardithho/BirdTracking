@@ -34,6 +34,8 @@ with open(cfg_path, 'r') as f:
     K = np.asarray(cfg['KR']).reshape(3, 3)
     dist = np.asarray(cfg['distR'])
 
+sim = Sim()
+
 cap = cv2.VideoCapture(str(ROOT / 'data/vid/fps120/K203_K238_1_GH040045.mp4'))
 birds = Birds()
 sim.flip()
@@ -56,7 +58,7 @@ while cap.isOpened():
             pnp, r, t, _ = solvePnP(bird, K, dist)
             if pnp:
                 R, _ = cv2.Rodrigues(r)
-                T[:3, :3] = prev_T[:3, :3].T @ R
+                T[:3, :3] = R @ prev_T[:3, :3].T
                 # T[:3, 3] = t.T - prev_T[:3, 3]
                 prev_T[:3, :3] = R
                 # prev_T[:3, 3] = t.T
