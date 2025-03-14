@@ -1,5 +1,5 @@
 import numpy as np
-from pykalman import UnscentedKalmanFilter, MerweScaledSigmaPoints
+from pykalman import UnscentedKalmanFilter
 from scipy.spatial.transform import Rotation as R
 
 
@@ -49,8 +49,8 @@ ukf = UnscentedKalmanFilter(
 
 
 class ParticleFilter:
-    """ Particle Filter for 3D pose tracking (rx, ry, rz, tx, ty, tz). """
-    def __init__(self, num_particles=500, process_noise=None, measurement_noise=None):
+    """ Particle Filter with Adaptive Diffusion Control for 3D pose tracking (rx, ry, rz, tx, ty, tz). """
+    def __init__(self, num_particles=2500, process_noise=None, measurement_noise=None):
         self.num_particles = num_particles
 
         # State: [rx, ry, rz, tx, ty, tz]
@@ -64,13 +64,26 @@ class ParticleFilter:
         self.weights = np.ones(num_particles) / num_particles
 
         # Default noise levels
-        self.process_noise = process_noise if process_noise is not None else np.array(
-            [0.05, 0.05, 0.05, 0.1, 0.1, 0.1])
+        self.base_process_noise = np.array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1])  # Base process noise
         self.measurement_noise = measurement_noise if measurement_noise is not None else np.array(
             [0.01, 0.01, 0.01, 0.05, 0.05, 0.05])
 
+        # Adaptive Diffusion Control Parameters
+        self.alpha = 0.5  # Controls how aggressively noise adapts
+        self.min_noise = 0.01  # Lower bound for process noise
+        self.max_noise = 1.0  # Upper bound for process noise
+
+    def compute_adaptive_noise(self):
+        """ Adjusts process noise based on particle spread (Adaptive Diffusion Control). """
+        spread = np.std(self.particles, axis=0)  # Compute spread of particles
+
+        # Scale process noise adaptively (between min_noise and max_noise)
+        adaptive_noise = self.base_process_noise * (1 + self.alpha * (spread / np.mean(spread)))
+        self.process_noise = np.clip(adaptive_noise, self.min_noise, self.max_noise)
+
     def transition(self):
-        """ Motion model: Applies process noise to simulate movement. """
+        """ Motion model: Applies adaptive process noise to simulate movement. """
+        self.compute_adaptive_noise()  # Update process noise adaptively
         noise = np.random.normal(0, self.process_noise, self.particles.shape)
         self.particles += noise  # Apply noise to all particles
 
@@ -79,7 +92,7 @@ class ParticleFilter:
         if measurement is None:
             return
 
-        if not continuous:
+        if not continuous or np.max(np.linalg.norm(self.particles[:, 3:]-measurement[3:], axis=1)) > 2.0:
             self.sample(measurement)
 
         # Compute error between particles and the measured pose
@@ -102,7 +115,7 @@ class ParticleFilter:
 
     def resample(self):
         n_eff = 1.0 / np.sum(self.weights ** 2)  # Effective particle count
-        if n_eff < self.num_particles / 2:  # Only resample if necessary
+        if n_eff < self.num_particles * 0.75:  # Only resample if necessary
             indices = np.random.choice(self.num_particles, self.num_particles, p=self.weights)
             self.particles = self.particles[indices]
             self.weights = np.ones(self.num_particles) / self.num_particles  # Reset weights
