@@ -5,12 +5,13 @@ from yolov8.predict import Predictor, detect_features
 from yolov8.track import Tracker
 from utils.camera import Stereo
 from utils.structs import Bird, Birds
-from utils.reconstruct import solvePnP, triangulate
+from utils.reconstruct import triangulate
 from utils.sim import *
 
 from ultralytics.data.utils import IMG_FORMATS, VID_FORMATS
 
 
+RESIZE = .5  # resize display window
 STRIDE = 30
 PADDING = 20
 
@@ -67,8 +68,8 @@ while capL.isOpened() and capR.isOpened():
                 prev_T[:3, :3] = R
                 # prev_T[:3, 3] = t.T
                 sim.update(T)
-        display = cv2.hconcat([cv2.resize(birdsL.plot(), None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC),
-                               cv2.resize(birdsR.plot(), None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC)])
+        display = cv2.hconcat([cv2.resize(birdsL.plot(), None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC),
+                               cv2.resize(birdsR.plot(), None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC)])
         cv2.imshow('display', display)
         key = cv2.waitKey(1)
         if key == ord('q'):
@@ -83,6 +84,3 @@ capL.release()
 capR.release()
 cv2.destroyAllWindows()
 sim.close()
-
-
-
