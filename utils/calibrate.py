@@ -84,3 +84,37 @@ def obj_pts(c, r):
     o = np.zeros((math.prod((c, r)), 3), np.float32)
     o[:, :2] = np.mgrid[0:c, 0:r].T.reshape(-1, 2)
     return o
+
+
+if __name__ == '__main__':
+    im = cv2.imread(str(ROOT / 'data/calibration/fps10/chessboard.jpg'))
+    # im = cv2.imread(str(ROOT / 'data/calibration/K203_K238/chessboard/l/3411.jpg'))
+    gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+    shape = (4, 7)
+
+    # termination criteria
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+
+    # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
+    objp = np.zeros((shape[0]*shape[1], 3), np.float32)
+    objp[:, :2] = np.mgrid[0:shape[0], 0:shape[1]].T.reshape(-1, 2)
+
+    # Arrays to store object points and image points from all the images.
+    objpts = []  # 3d point in real world space
+    imgpts = []  # 2d points in image plane.
+
+    # Find the chess board corners
+    ret, corners = cv2.findChessboardCorners(gray, shape, None)
+    if ret:
+        objpts.append(objp)
+
+        corners = cv2.cornerSubPix(gray, corners, (11,11), (-1,-1), criteria)
+        imgpts.append(corners)
+
+        # Draw and display the corners
+        cv2.drawChessboardCorners(im, shape, corners, ret)
+        cv2.imshow('corners', im)
+        cv2.waitKey(0)
+        cv2.imwrite(str(ROOT / 'data/out/chessboard_corners.jpg'), im)
+
+    cv2.destroyAllWindows()
