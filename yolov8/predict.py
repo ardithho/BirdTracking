@@ -16,18 +16,21 @@ class Predictor:
         return self.model.predict(source, save=save, verbose=verbose, iou=iou, **kwargs)
 
 
-feat_model = Predictor(ROOT / 'weights/feat.pt')
-def detect_features(img, boxes):
+feat_model = Predictor(ROOT / 'weights/liner.pt')
+def detect_features(im, boxes, padding=0, **kwargs):
     feats = []
     for xyxy in boxes.xyxy:
+        h, w = im.shape[:2]
         x0, y0, x1, y1 = list(map(round, xyxy))
-        feats.append(feat_model.predictions(source=img[y0:y1, x0:x1])[0].boxes.cpu().numpy())
+        x0, x1 = max(x0-padding, 0), min(x1+padding, w)
+        y0, y1 = max(y0-padding, 0), min(y1+padding, h)
+        feats.append(feat_model.predictions(im[y0:y1, x0:x1], **kwargs)[0].boxes.cpu().numpy())
     return feats
 
 
 def run(
         weights=ROOT / 'weights/pose.pt',  # model path or triton URL
-        source=PROJECT_ROOT / 'data/images',  # file/dir/URL/glob/screen/0(webcam)
+        source=PROJECT_ROOT / 'data/img',  # file/dir/URL/glob/screen/0(webcam)
         conf=0.25,  # confidence threshold
         iou=0.7,  # NMS IOU threshold
         imgsz=640,  # inference size

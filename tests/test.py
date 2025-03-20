@@ -12,11 +12,13 @@ from utils.sim import *
 
 RESIZE = .5
 BLENDER_ROOT = ROOT / 'data/blender'
-cfg_path = BLENDER_ROOT/ 'configs/cam.yaml'
+cfg_path = BLENDER_ROOT / 'configs/cam.yaml'
 
 rotations = [Rotation.from_euler('xyz', np.array((0, 0, 0))*DEG2RAD).as_quat(),
              Rotation.from_euler('xyz', np.array((0, 0, 5))*DEG2RAD).as_quat(),
              Rotation.from_euler('xyz', np.array((0, 0, 90))*DEG2RAD).as_quat()]
+
+sim = Sim()
 
 T = np.eye(4)
 prev_T = T.copy()

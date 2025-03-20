@@ -88,9 +88,6 @@ def camera_data(cam):
                   [0, fy, cy],
                   [0, 0, 1]])
 
-    # cam_loc = cam.location
-    # cam_rot = cam.rotation_euler
-    # ext = np.asarray(cam.matrix_world)[:3, :]
     ext = extrinsic_mat(cam)
     return k, ext
 
@@ -124,6 +121,7 @@ for obj in mesh:
 bpy.ops.object.join()
 
 head = bpy.context.active_object
+head.hide_render = False
 T = np.eye(4)
 for i in range(100):
     f.write(' '.join([str(i+1), *map(str, T.flatten())]) + '\n')

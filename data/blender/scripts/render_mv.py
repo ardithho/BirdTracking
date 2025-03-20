@@ -1,6 +1,5 @@
 import bpy
 import os
-
 import cv2
 import yaml
 import numpy as np
@@ -113,6 +112,7 @@ for obj in mesh:
 bpy.ops.object.join()
 
 head = bpy.context.active_object
+head.hide_render = False
 scene.camera = bpy.data.objects[cam_name]
 T = np.eye(4)
 for i in range(100):

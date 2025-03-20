@@ -8,6 +8,7 @@ JSON2YOLO/
 .idea/
 data/
 !data/detect/
+misc/
 
 yolov5/.git/
 yolov5/.github/

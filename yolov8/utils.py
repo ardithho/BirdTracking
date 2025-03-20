@@ -17,7 +17,7 @@ PROJECT_ROOT = Path(os.path.relpath(PROJECT_ROOT, Path.cwd()))  # relative
 # initialise parser
 parser = argparse.ArgumentParser()
 parser.add_argument('--weights', type=str, default=ROOT / 'weights/pose.pt', help='model path or triton URL')
-parser.add_argument('--source', type=str, default=PROJECT_ROOT / 'data/images', help='file/dir/URL/glob/screen/0(webcam)')
+parser.add_argument('--source', type=str, default=PROJECT_ROOT / 'data/img', help='file/dir/URL/glob/screen/0(webcam)')
 parser.add_argument('--conf', type=float, default=0.25, help='confidence threshold')
 parser.add_argument('--iou', type=float, default=0.7, help='NMS IoU threshold')
 parser.add_argument('--imgsz', '--img', '--img-size', nargs='+', type=int, default=640, help='inference size')

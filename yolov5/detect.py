@@ -112,8 +112,6 @@ def run(
     stride, names, pt = model_head.stride, model_head.names, model_head.pt
     imgsz = check_img_size(imgsz, s=stride)  # check image size
     model_feat = DetectMultiBackend(weights_tear, device=device, dnn=dnn, data=data, fp16=half)
-    # class_order = [0, [1, 2], []]  # head, eyes, tear marks
-    class_order = [0, [1, 4], [2, 5]]
 
     # Dataloader
     bs = 1  # batch_size
@@ -217,7 +215,7 @@ def run(
                             fxywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gnf).view(-1).tolist()
                             fdets[j] = cls, *fxywh, conf
 
-                        bill, eyes, tear_marks = filter_feat(imc, fdets, class_order)
+                        bill, eyes, tear_marks = filter_feat(imc, fdets)[:-1]
                         im0 = plot_feat(im0, bill, eyes, tear_marks, xyxyf[0][:2])
                         bill, eyes, tear_marks = to_txt(im0, bill, eyes, tear_marks, xyxyf[0][:2])
 

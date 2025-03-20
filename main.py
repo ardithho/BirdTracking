@@ -5,13 +5,15 @@ from yolov8.predict import Predictor, detect_features
 from yolov8.track import Tracker
 from utils.camera import Stereo
 from utils.structs import Bird, Birds
-from utils.reconstruct import solvePnP, triangulate
+from utils.reconstruct import triangulate
 from utils.sim import *
 
 from ultralytics.data.utils import IMG_FORMATS, VID_FORMATS
 
 
+RESIZE = .5  # resize display window
 STRIDE = 30
+PADDING = 20
 
 tracker = Tracker('yolov8/weights/head.pt')
 predictor_head = Predictor('yolov8/weights/head.pt')
@@ -30,6 +32,8 @@ capR = cv2.VideoCapture(vidR)
 capL.set(cv2.CAP_PROP_POS_FRAMES, stereo.offsetL+1800)
 capR.set(cv2.CAP_PROP_POS_FRAMES, stereo.offsetR+1800)
 
+sim = Sim()
+
 birdsL = Birds()
 birdsR = Birds()
 prev_frames = None
@@ -47,10 +51,10 @@ while capL.isOpened() and capR.isOpened():
     if retL and retR:
         headL = tracker.tracks(frameL)[0].boxes.cpu().numpy()
         headR = tracker.tracks(frameR)[0].boxes.cpu().numpy()
-        featL = detect_features(frameL, headL)
-        featR = detect_features(frameR, headR)
-        birdsL.update([Bird(head, feat) for head, feat in zip(headL, featL)], frameL)
-        birdsR.update([Bird(head, feat) for head, feat in zip(headR, featR)], frameR)
+        featL = detect_features(frameL, headL, PADDING, *frameL.shape[:2][::-1])
+        featR = detect_features(frameR, headR, PADDING, *frameR.shape[:2][::-1])
+        birdsL.update([Bird(head, feat, PADDING) for head, feat in zip(headL, featL)], frameL)
+        birdsR.update([Bird(head, feat, PADDING) for head, feat in zip(headR, featR)], frameR)
 
         birdL = birdsL['m'] if birdsL['m'] is not None else birdsL['f']
         birdR = birdsR['m'] if birdsR['m'] is not None else birdsR['f']
@@ -64,8 +68,8 @@ while capL.isOpened() and capR.isOpened():
                 prev_T[:3, :3] = R
                 # prev_T[:3, 3] = t.T
                 sim.update(T)
-        display = cv2.hconcat([cv2.resize(birdsL.plot(), None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC),
-                               cv2.resize(birdsR.plot(), None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC)])
+        display = cv2.hconcat([cv2.resize(birdsL.plot(), None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC),
+                               cv2.resize(birdsR.plot(), None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC)])
         cv2.imshow('display', display)
         key = cv2.waitKey(1)
         if key == ord('q'):
@@ -80,6 +84,3 @@ capL.release()
 capR.release()
 cv2.destroyAllWindows()
 sim.close()
-
-
-

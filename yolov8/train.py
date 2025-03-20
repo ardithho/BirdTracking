@@ -3,15 +3,23 @@ from ultralytics import YOLO
 from roboflow import Roboflow
 
 
+def load_dataset(api_key='jyKUZIKA3yySfSqRdXqI',
+                 workspace='bird-tracking-yvxlp',
+                 project_name='', version=1):
+    rf = Roboflow(api_key=api_key)
+    project = rf.workspace(workspace).project(project_name)
+    return project.version(version).download('yolov8', f'datasets/{project_name}-{version}')
+
+
+
 def load_dataset_full(api_key='jyKUZIKA3yySfSqRdXqI',
                       workspace='bird-tracking-yvxlp',
                       project_name='bird-full', version=1):
     """
     Load the dataset for full detection.
     """
-    rf = Roboflow(api_key=api_key)
-    project = rf.workspace(workspace).project(project_name)
-    return project.version(version).download('yolov8', f'datasets/{project_name}-{version}')
+    return load_dataset(api_key=api_key, workspace=workspace,
+                        project_name=project_name, version=version)
 
 
 def load_dataset_head(api_key='jyKUZIKA3yySfSqRdXqI',
@@ -20,9 +28,8 @@ def load_dataset_head(api_key='jyKUZIKA3yySfSqRdXqI',
     """
     Load the dataset for head detection.
     """
-    rf = Roboflow(api_key=api_key)
-    project = rf.workspace(workspace).project(project_name)
-    return project.version(version).download('yolov8', f'datasets/{project_name}-{version}')
+    return load_dataset(api_key=api_key, workspace=workspace,
+                        project_name=project_name, version=version)
 
 
 def load_dataset_feat(api_key='jyKUZIKA3yySfSqRdXqI',
@@ -31,9 +38,18 @@ def load_dataset_feat(api_key='jyKUZIKA3yySfSqRdXqI',
     """
     Load the dataset for feat detection.
     """
-    rf = Roboflow(api_key=api_key)
-    project = rf.workspace(workspace).project(project_name)
-    return project.version(version).download('yolov8', f'datasets/{project_name}-{version}')
+    return load_dataset(api_key=api_key, workspace=workspace,
+                        project_name=project_name, version=version)
+
+
+def load_dataset_liner(api_key='jyKUZIKA3yySfSqRdXqI',
+                       workspace='bird-tracking-yvxlp',
+                       project_name='bird-feature-liner', version=1):
+    """
+    Load the dataset for liner detection.
+    """
+    return load_dataset(api_key=api_key, workspace=workspace,
+                        project_name=project_name, version=version)
 
 
 def load_dataset_pose(api_key='jyKUZIKA3yySfSqRdXqI',
@@ -42,9 +58,8 @@ def load_dataset_pose(api_key='jyKUZIKA3yySfSqRdXqI',
     """
     Load the dataset for pose estimation.
     """
-    rf = Roboflow(api_key=api_key)
-    project = rf.workspace(workspace).project(project_name)
-    return project.version(version).download('yolov8', f'datasets/{project_name}-{version}')
+    return load_dataset(api_key=api_key, workspace=workspace,
+                        project_name=project_name, version=version)
 
 
 def train_model(data, model='yolov8s.yaml', epochs=200, batch=16, imgsz=640, name='train'):
@@ -68,7 +83,7 @@ def train_model(data, model='yolov8s.yaml', epochs=200, batch=16, imgsz=640, nam
 
 
 if __name__ == '__main__':
-    name = 'pose'
+    name = 'liner'
     model = 'yolov8s-pose.yaml' if name == 'pose' else 'yolov8s.yaml'
     dataset = None
     exec(f'dataset = load_dataset_{name}()')
@@ -79,4 +94,4 @@ if __name__ == '__main__':
     data['val'] = '../valid/images'
     with open(data_file, 'w') as f:
         yaml.dump(data, f)
-    model = train_model(data_file, model, batch=32, name=name, epochs=400)
+    model = train_model(data_file, model, batch=32, imgsz=128, name=name, epochs=400)

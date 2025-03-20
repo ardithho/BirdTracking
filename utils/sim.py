@@ -8,11 +8,11 @@ from pathlib import Path
 ROOT = Path(__file__).parent.parent
 sys.path.append(str(ROOT))
 
+from utils.box import Box
+from utils.colour import bgr_mask
+from utils.configs import CLS_DICT, COLOUR_DICT
 from utils.general import cnt_centroid, DEG2RAD
 from utils.sorter import process_labels
-from utils.colour import bgr_mask
-from utils.structs import CLS_DICT
-from utils.box import Box
 
 
 class Sim:
@@ -57,8 +57,13 @@ class Sim:
     def close(self):
         self.vis.destroy_window()
 
-
-sim = Sim()
+    def set_camera(self, ext):
+        R = ext[:3, :3]
+        t = ext[:3, 3]
+        self.vis.get_view_control().set_front(-R.T @ t)
+        self.vis.get_view_control().set_lookat([0, 0, 0])
+        self.vis.get_view_control().set_up([0, 1, 0])
+        self.vis.update_renderer()
 
 
 def extract_feature(im, colour, n, cls):
@@ -77,15 +82,18 @@ def extract_feature(im, colour, n, cls):
     return out
 
 
-def extract_features(im, colour_bill=(255, 0, 0), colour_eye=(255, 255, 0), colour_tear=(0, 255, 0)):
-    bill = extract_feature(im, colour_bill, 1, CLS_DICT['bill'])
-    eyes = extract_feature(im, colour_eye, 2, CLS_DICT['left_eye'])
-    tear_marks = extract_feature(im, colour_tear, 2, CLS_DICT['left_tear'])
-    return [*bill, *eyes, *tear_marks]
+def extract_features(im):
+    bill = extract_feature(im, COLOUR_DICT['bill'], 1, CLS_DICT['bill'])
+    eyes = extract_feature(im, COLOUR_DICT['eyes'], 2, CLS_DICT['left_eye'])
+    tear_marks = extract_feature(im, COLOUR_DICT['tear_marks'], 2, CLS_DICT['left_tear'])
+    bill_liners = extract_feature(im, COLOUR_DICT['bill_liners'], 2, CLS_DICT['left_liner'])
+    return [*bill, *eyes, *tear_marks, *bill_liners]
 
 
 if __name__ == '__main__':
     import numpy as np
+
+    sim = Sim()
     T = np.eye(4)
     # rad = 0 * np.pi / 180
     # T[0, 0] = np.cos(rad)

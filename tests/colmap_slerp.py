@@ -1,7 +1,4 @@
 import pycolmap
-import yaml
-import cv2
-import os
 from scipy.spatial.transform import Rotation
 
 import sys
@@ -52,6 +49,8 @@ cam = pycolmap.Camera(
             K[0, 2], K[1, 2],  # cx, cy
             *dist[:4]),  # dist: k1, k2, p1, p2
     )
+
+sim = Sim()
 
 cap = cv2.VideoCapture(str(vid_path))
 birds = Birds()

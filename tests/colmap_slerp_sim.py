@@ -1,7 +1,4 @@
 import pycolmap
-import yaml
-import cv2
-import os
 from scipy.spatial.transform import Rotation, Slerp
 
 import sys
@@ -106,6 +103,8 @@ while cap.isOpened():
         frame_no += 1
     else:
         break
+
+sim = Sim()
 
 frame_no = 0
 cap = cv2.VideoCapture(str(vid_path))

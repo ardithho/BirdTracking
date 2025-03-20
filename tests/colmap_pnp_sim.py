@@ -1,7 +1,4 @@
 import pycolmap
-import yaml
-import cv2
-import os
 
 import sys
 from pathlib import Path
@@ -46,6 +43,8 @@ cam = pycolmap.Camera(
     params=(K[0, 0],  # focal length
             K[0, 2], K[1, 2]),  # cx, cy
 )
+
+sim = Sim()
 
 cap = cv2.VideoCapture(str(vid_path))
 birds = Birds()

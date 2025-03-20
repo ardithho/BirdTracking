@@ -1,4 +1,3 @@
-import yaml
 import cv2
 import numpy as np
 
@@ -7,12 +6,7 @@ from pathlib import Path
 ROOT = Path(__file__).parent.parent
 sys.path.append(str(ROOT))
 
-from utils.structs import CLS_DICT
-
-
-cfg_path = ROOT / 'data/blender/configs/config.yaml'
-with open(cfg_path, 'r') as f:
-    HEAD_CFG = yaml.safe_load(f)
+from utils.configs import CLS_DICT, HEAD_CFG
 
 
 def get_head_feat_pts(bird):
