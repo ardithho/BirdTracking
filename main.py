@@ -1,8 +1,7 @@
-import cv2
-import numpy as np
-
 from yolov8.predict import Predictor, detect_features
 from yolov8.track import Tracker
+
+from utils.box import pad_boxes
 from utils.camera import Stereo
 from utils.structs import Bird, Birds
 from utils.reconstruct import triangulate
@@ -49,12 +48,12 @@ while capL.isOpened() and capR.isOpened():
     retL, frameL = capL.retrieve()
     retR, frameR = capR.retrieve()
     if retL and retR:
-        headL = tracker.tracks(frameL)[0].boxes.cpu().numpy()
-        headR = tracker.tracks(frameR)[0].boxes.cpu().numpy()
-        featL = detect_features(frameL, headL, PADDING, *frameL.shape[:2][::-1])
-        featR = detect_features(frameR, headR, PADDING, *frameR.shape[:2][::-1])
-        birdsL.update([Bird(head, feat, PADDING) for head, feat in zip(headL, featL)], frameL)
-        birdsR.update([Bird(head, feat, PADDING) for head, feat in zip(headR, featR)], frameR)
+        headL = pad_boxes(tracker.tracks(frameL)[0].boxes.cpu().numpy(), frameL.shape, PADDING)
+        headR = pad_boxes(tracker.tracks(frameR)[0].boxes.cpu().numpy(), frameR.shape, PADDING)
+        featL = detect_features(frameL, headL)
+        featR = detect_features(frameR, headR)
+        birdsL.update([Bird(head, feat) for head, feat in zip(headL, featL)], frameL)
+        birdsR.update([Bird(head, feat) for head, feat in zip(headR, featR)], frameR)
 
         birdL = birdsL['m'] if birdsL['m'] is not None else birdsL['f']
         birdR = birdsR['m'] if birdsR['m'] is not None else birdsR['f']

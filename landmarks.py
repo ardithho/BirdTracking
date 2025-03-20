@@ -2,18 +2,20 @@ import cv2
 
 from yolov8.predict import Predictor, detect_features
 from yolov8.track import Tracker
+
+from utils.box import pad_boxes
 from utils.structs import Bird, Birds
 
 from ultralytics.data.utils import IMG_FORMATS, VID_FORMATS
 
 
+RESIZE = .5
 STRIDE = 1
-RESIZE = 0.5
 SAVE = True
 PADDING = 30
 
 tracker = Tracker('yolov8/weights/head.pt')
-predictor_head = Predictor('yolov8/weights/head.pt')
+predictor = Predictor('yolov8/weights/head.pt')
 
 vid = 'data/vid/fps120/K203_K238_1_GH040045.mp4'
 cap = cv2.VideoCapture(vid)
@@ -30,9 +32,9 @@ while cap.isOpened():
         _ = cap.grab()
     ret, frame = cap.retrieve()
     if ret:
-        head = tracker.tracks(frame)[0].boxes.cpu().numpy()
-        feat = detect_features(frame, head, PADDING)
-        birds.update([Bird(head, feat, PADDING, *frame.shape[:2][::-1]) for head, feat in zip(head, feat)], frame)
+        head = pad_boxes(predictor.predictions(frame)[0].boxes.cpu().numpy(), frame.shape, PADDING)
+        feat = detect_features(frame, head)
+        birds.update([Bird(head, feat) for head, feat in zip(head, feat)], frame)
 
         display = birds.plot()
         cv2.imshow('display',

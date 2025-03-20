@@ -1,8 +1,4 @@
 import pycolmap
-import yaml
-import cv2
-import numpy as np
-import os
 
 import sys
 from pathlib import Path
@@ -12,6 +8,7 @@ sys.path.append(str(ROOT))
 from yolov8.predict import Predictor, detect_features
 from yolov8.track import Tracker
 
+from utils.box import pad_boxes
 from utils.camera import Stereo
 from utils.general import RAD2DEG
 from utils.odometry import find_matches, find_matching_pts, draw_kp_matches
@@ -21,6 +18,7 @@ from utils.structs import Bird, Birds
 
 RESIZE = 1.
 STRIDE = 1
+PADDING = 30
 METHOD = 'lg'
 BLENDER_ROOT = ROOT / 'data/blender'
 
@@ -72,7 +70,7 @@ while cap.isOpened():
             break
     ret, frame = cap.retrieve()
     if ret:
-        head = tracker.tracks(frame)[0].boxes.cpu().numpy()
+        head = pad_boxes(predictor.predictions(frame)[0].boxes.cpu().numpy(), frame.shape, PADDING)
         feat = detect_features(frame, head)
         birds.update([Bird(head, feat) for head, feat in zip(head, feat)], frame)
         bird = birds['m'] if birds['m'] is not None else birds['f']

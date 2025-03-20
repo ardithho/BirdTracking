@@ -21,34 +21,17 @@ class Feature:
 
 
 class Bird:
-    def __init__(self, head, feats, padding=0, frame_width=1920, frame_height=1080):
+    def __init__(self, head, feats):
         self.conf = head.conf[0]
         self.id = int(head.id[0]) if head.id is not None else -1
         self.xywh = head.xywh[0]
         self.xywhn = head.xywhn[0]
         self.xyxy = head.xyxy[0]
         self.xyxyn = head.xyxyn[0]
-        self.frame_width = frame_width
-        self.frame_height = frame_height
-        self.relocalise(padding)
         self.area = self.xywh[2] * self.xywh[3]
         self.arean = self.xywhn[2] * self.xywhn[3]
         self.featsUnsorted = self.globalise(feats)
         self.feats = self.sort()
-
-    def relocalise(self, padding):
-        self.xyxy[0] = max(self.xyxy[0]-padding, 0)
-        self.xyxy[1] = max(self.xyxy[1]-padding, 0)
-        self.xyxy[2] = min(self.xyxy[2]+padding, self.frame_width)
-        self.xyxy[3] = min(self.xyxy[3]+padding, self.frame_height)
-
-        self.xywh[0] = (self.xyxy[0] + self.xyxy[2]) / 2
-        self.xywh[1] = (self.xyxy[1] + self.xyxy[3]) / 2
-        self.xywh[2] = self.xyxy[2] - self.xyxy[0]
-        self.xywh[3] = self.xyxy[3] - self.xyxy[1]
-
-        self.xyxyn = self.xyxy / np.array([*self.xywh[2:], *self.xywh[2:]])
-        self.xywhn[:2] = self.xywh[:2] / self.xywh[2:]
 
     def globalise(self, feats):
         '''

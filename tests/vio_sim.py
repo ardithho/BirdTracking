@@ -1,15 +1,10 @@
-import yaml
-import cv2
-import numpy as np
-
 import sys
 from pathlib import Path
 ROOT = Path(__file__).parent.parent
 sys.path.append(str(ROOT))
 
 from utils.general import RAD2DEG
-from utils.camera import Stereo
-from utils.structs import Bird, Birds
+from utils.structs import Birds
 from utils.sim import *
 from utils.odometry import estimate_vio, find_matches, find_matching_pts, draw_kp_matches
 

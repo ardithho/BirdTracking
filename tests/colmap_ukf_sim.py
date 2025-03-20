@@ -1,7 +1,4 @@
 import pycolmap
-import yaml
-import cv2
-import os
 from scipy.spatial.transform import Rotation
 
 import sys

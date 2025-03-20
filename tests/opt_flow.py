@@ -1,7 +1,3 @@
-import yaml
-import cv2
-import numpy as np
-
 import sys
 from pathlib import Path
 ROOT = Path(__file__).parent.parent
@@ -10,16 +6,16 @@ sys.path.append(str(ROOT))
 from yolov8.predict import Predictor, detect_features
 from yolov8.track import Tracker
 
+from utils.box import pad_boxes
 from utils.general import RAD2DEG
-from utils.camera import Stereo
 from utils.structs import Bird, Birds
 from utils.sim import *
-from utils.odometry import optical_flow, find_matches, find_matching_pts, draw_kp_matches
+from utils.odometry import optical_flow, find_matching_pts, draw_kp_matches
 
 STRIDE = 4
 
 tracker = Tracker(ROOT / 'yolov8/weights/head.pt')
-predictor_head = Predictor(ROOT / 'yolov8/weights/head.pt')
+predictor = Predictor(ROOT / 'yolov8/weights/head.pt')
 
 vid_path = ROOT / 'data/vid/fps120/K203_K238_1_GH040045.mp4'
 
@@ -42,7 +38,6 @@ frame_no = 0
 sim.flip()
 T = np.eye(4)
 sim.update(T)
-print(sim.screen.shape)
 while cap.isOpened():
     for i in range(STRIDE):
         if cap.isOpened():
@@ -51,7 +46,7 @@ while cap.isOpened():
             break
     ret, frame = cap.retrieve()
     if ret:
-        head = tracker.tracks(frame)[0].boxes.cpu().numpy()
+        head = pad_boxes(predictor.predictions(frame)[0].boxes.cpu().numpy(), frame.shape, PADDING)
         feat = detect_features(frame, head)
         birds.update([Bird(head, feat) for head, feat in zip(head, feat)], frame)
         bird = birds['m'] if birds['m'] is not None else birds['f']

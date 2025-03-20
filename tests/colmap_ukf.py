@@ -9,6 +9,7 @@ sys.path.append(str(ROOT))
 from yolov8.predict import Predictor, detect_features
 from yolov8.track import Tracker
 
+from utils.box import pad_boxes
 from utils.camera import Stereo
 from utils.general import RAD2DEG
 from utils.filter import ukf, OBS_COV_HIGH, OBS_COV_LOW
@@ -23,7 +24,7 @@ FPS = 120
 PADDING = 30
 
 tracker = Tracker(ROOT / 'yolov8/weights/head.pt')
-predictor_head = Predictor(ROOT / 'yolov8/weights/head.pt')
+predictor = Predictor(ROOT / 'yolov8/weights/head.pt')
 
 vid_path = ROOT / 'data/vid/fps120/GH140045_solo.mp4'
 
@@ -69,9 +70,9 @@ while cap.isOpened():
             break
     ret, frame = cap.retrieve()
     if ret:
-        head = tracker.tracks(frame)[0].boxes.cpu().numpy()
-        feat = detect_features(frame, head, PADDING)
-        birds.update([Bird(head, feat, PADDING, *frame.shape[:2][::-1]) for head, feat in zip(head, feat)], frame)
+        head = pad_boxes(predictor.predictions(frame)[0].boxes.cpu().numpy(), frame.shape, PADDING)
+        feat = detect_features(frame, head)
+        birds.update([Bird(head, feat) for head, feat in zip(head, feat)], frame)
         bird = birds['m'] if birds['m'] is not None else birds['f']
         if bird is not None:
             head_pts, feat_pts = get_head_feat_pts(bird)

@@ -1,7 +1,3 @@
-import yaml
-import cv2
-import numpy as np
-
 import sys
 from pathlib import Path
 ROOT = Path(__file__).parent.parent
@@ -10,16 +6,17 @@ sys.path.append(str(ROOT))
 from yolov8.predict import Predictor, detect_features
 from yolov8.track import Tracker
 
-from utils.camera import Stereo
-from utils.structs import Bird, Birds
+from utils.box import pad_boxes
 from utils.reconstruct import solvePnP
+from utils.structs import Bird, Birds
 from utils.sim import *
 
 
 STRIDE = 4
+PADDING = 30
 
 tracker = Tracker(ROOT / 'yolov8/weights/head.pt')
-predictor_head = Predictor(ROOT / 'yolov8/weights/head.pt')
+predictor = Predictor(ROOT / 'yolov8/weights/head.pt')
 
 vidL = ROOT / 'data/vid/fps120/K203_K238/GOPRO2/GH010039.MP4'
 vidR = ROOT / 'data/vid/fps120/K203_K238/GOPRO1/GH010045.MP4'
@@ -50,7 +47,7 @@ while cap.isOpened():
             break
     ret, frame = cap.retrieve()
     if ret:
-        head = tracker.tracks(frame)[0].boxes.cpu().numpy()
+        head = pad_boxes(predictor.predictions(frame)[0].boxes.cpu().numpy(), frame.shape, PADDING)
         feat = detect_features(frame, head)
         birds.update([Bird(head, feat) for head, feat in zip(head, feat)], frame)
         bird = birds['m'] if birds['m'] is not None else birds['f']

@@ -12,18 +12,15 @@ class Predictor:
     def predict(self, **kwargs):
         self.model.predict(**kwargs)
 
-    def predictions(self, source, save=False, verbose=False, iou=0.4, **kwargs):
+    def predictions(self, source, save=False, verbose=False, iou=0.5, **kwargs):
         return self.model.predict(source, save=save, verbose=verbose, iou=iou, **kwargs)
 
 
 feat_model = Predictor(ROOT / 'weights/liner.pt')
-def detect_features(im, boxes, padding=0, **kwargs):
+def detect_features(im, boxes, **kwargs):
     feats = []
     for xyxy in boxes.xyxy:
-        h, w = im.shape[:2]
         x0, y0, x1, y1 = list(map(round, xyxy))
-        x0, x1 = max(x0-padding, 0), min(x1+padding, w)
-        y0, y1 = max(y0-padding, 0), min(y1+padding, h)
         feats.append(feat_model.predictions(im[y0:y1, x0:x1], **kwargs)[0].boxes.cpu().numpy())
     return feats
 

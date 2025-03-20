@@ -9,6 +9,7 @@ sys.path.append(str(ROOT))
 from yolov8.predict import Predictor, detect_features
 from yolov8.track import Tracker
 
+from utils.box import pad_boxes
 from utils.camera import Stereo
 from utils.general import RAD2DEG, cosine, slerp
 from utils.reconstruct import get_head_feat_pts
@@ -18,10 +19,11 @@ from utils.structs import Bird, Birds
 
 RESIZE = .5
 STRIDE = 1
+PADDING = 30
 OFFSET = 10
 
 tracker = Tracker(ROOT / 'yolov8/weights/head.pt')
-predictor_head = Predictor(ROOT / 'yolov8/weights/head.pt')
+predictor = Predictor(ROOT / 'yolov8/weights/head.pt')
 
 vid_path = ROOT / 'data/vid/fps120/K203_K238_1_GH040045.mp4'
 
@@ -71,7 +73,7 @@ while cap.isOpened():
             break
     ret, frame = cap.retrieve()
     if ret:
-        head = tracker.tracks(frame)[0].boxes.cpu().numpy()
+        head = pad_boxes(predictor.predictions(frame)[0].boxes.cpu().numpy(), frame.shape, PADDING)
         feat = detect_features(frame, head)
         birds.update([Bird(head, feat) for head, feat in zip(head, feat)], frame)
         bird = birds['m'] if birds['m'] is not None else birds['f']
