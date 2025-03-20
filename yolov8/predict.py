@@ -30,8 +30,8 @@ def detect_features(im, boxes, padding=0, **kwargs):
 
 def run(
         weights=ROOT / 'weights/pose.pt',  # model path or triton URL
-        source=PROJECT_ROOT / 'data/images',  # file/dir/URL/glob/screen/0(webcam)
-        conf=0.5,  # confidence threshold
+        source=PROJECT_ROOT / 'data/img',  # file/dir/URL/glob/screen/0(webcam)
+        conf=0.25,  # confidence threshold
         iou=0.7,  # NMS IOU threshold
         imgsz=640,  # inference size
         half=False,  # use FP16 half-precision inference
