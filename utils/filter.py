@@ -115,7 +115,7 @@ class ParticleFilter:
 
     def resample(self):
         n_eff = 1.0 / np.sum(self.weights ** 2)  # Effective particle count
-        if n_eff < self.num_particles * 0.75:  # Only resample if necessary
+        if n_eff < self.num_particles * 0.5:  # Only resample if necessary
             indices = np.random.choice(self.num_particles, self.num_particles, p=self.weights)
             self.particles = self.particles[indices]
             self.weights = np.ones(self.num_particles) / self.num_particles  # Reset weights
