@@ -64,7 +64,8 @@ class ParticleFilter:
         self.weights = np.ones(num_particles) / num_particles
 
         # Default noise levels
-        self.base_process_noise = np.array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1])  # Base process noise
+        self.base_process_noise = process_noise if process_noise is not None else np.array(
+            [0.1, 0.1, 0.1, 0.1, 0.1, 0.1])  # Base process noise
         self.measurement_noise = measurement_noise if measurement_noise is not None else np.array(
             [0.01, 0.01, 0.01, 0.05, 0.05, 0.05])
 

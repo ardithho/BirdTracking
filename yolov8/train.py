@@ -34,7 +34,7 @@ def load_dataset_head(api_key='jyKUZIKA3yySfSqRdXqI',
 
 def load_dataset_feat(api_key='jyKUZIKA3yySfSqRdXqI',
                       workspace='bird-tracking-yvxlp',
-                      project_name='bird-feature-detailed', version=9):
+                      project_name='bird-feature-detailed', version=10):
     """
     Load the dataset for feat detection.
     """
@@ -44,7 +44,7 @@ def load_dataset_feat(api_key='jyKUZIKA3yySfSqRdXqI',
 
 def load_dataset_liner(api_key='jyKUZIKA3yySfSqRdXqI',
                        workspace='bird-tracking-yvxlp',
-                       project_name='bird-feature-liner', version=1):
+                       project_name='bird-feature-liner', version=2):
     """
     Load the dataset for liner detection.
     """
@@ -94,4 +94,4 @@ if __name__ == '__main__':
     data['val'] = '../valid/images'
     with open(data_file, 'w') as f:
         yaml.dump(data, f)
-    model = train_model(data_file, model, batch=32, imgsz=128, name=name, epochs=400)
+    model = train_model(data_file, model, batch=32, imgsz=256, name=name, epochs=400)
