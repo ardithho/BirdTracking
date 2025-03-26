@@ -62,7 +62,7 @@ def load_dataset_pose(api_key='jyKUZIKA3yySfSqRdXqI',
                         project_name=project_name, version=version)
 
 
-def train_model(data, model='yolov8s.yaml', epochs=100, batch=16, imgsz=640, name='train'):
+def train_model(data, model='yolov8s.yaml', epochs=100, batch=16, imgsz=640, name='train', **kwargs):
     """
     Train the model for object detection.
 
@@ -78,7 +78,7 @@ def train_model(data, model='yolov8s.yaml', epochs=100, batch=16, imgsz=640, nam
     - model (YOLO): The trained model.
     """
     model = YOLO(model)
-    model.train(data=data, epochs=epochs, batch=batch, imgsz=imgsz, name=name)
+    model.train(data=data, epochs=epochs, batch=batch, imgsz=imgsz, name=name, **kwargs)
     return model
 
 
