@@ -64,7 +64,8 @@ class ParticleFilter:
         self.weights = np.ones(num_particles) / num_particles
 
         # Default noise levels
-        self.base_process_noise = np.array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1])  # Base process noise
+        self.base_process_noise = process_noise if process_noise is not None else np.array(
+            [0.1, 0.1, 0.1, 0.1, 0.1, 0.1])  # Base process noise
         self.measurement_noise = measurement_noise if measurement_noise is not None else np.array(
             [0.01, 0.01, 0.01, 0.05, 0.05, 0.05])
 
@@ -115,7 +116,7 @@ class ParticleFilter:
 
     def resample(self):
         n_eff = 1.0 / np.sum(self.weights ** 2)  # Effective particle count
-        if n_eff < self.num_particles * 0.75:  # Only resample if necessary
+        if n_eff < self.num_particles * 0.5:  # Only resample if necessary
             indices = np.random.choice(self.num_particles, self.num_particles, p=self.weights)
             self.particles = self.particles[indices]
             self.weights = np.ones(self.num_particles) / self.num_particles  # Reset weights

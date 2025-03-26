@@ -66,10 +66,10 @@ class Bird:
 
 
 class Birds:
-    def __init__(self, tracked=False, iou=0.7):
+    def __init__(self, tracked=False, iou=0.7, cache=5):
         self.current = {}
-        self.caches = {'m': Cache(), 'f': Cache()}
-        self.frames = Cache()
+        self.caches = {'m': Cache(cache), 'f': Cache(cache)}
+        self.frames = Cache(cache)
         self.ids = None
         self.tracked = tracked
         self.iou = iou
@@ -144,6 +144,18 @@ class Birds:
                 else:
                     self.ids[birds[0].id+1] = 'm'
                     self.ids[birds[0].id] = 'f'
+    #
+    # def interpolate(self):
+    #     for id in self.ids.values():
+    #         if self.current[id] is not None:
+    #             cache = self.caches[id]
+    #             curr_bird = self.current[id]
+    #             for i in range(cache.size-2):
+    #                 for feat in curr_bird.feats:
+    #                     if feat.cls in cache[i].feats_cls:
+    #                         for j in range(i, cache.size-1):
+    #                             if feat.cls not in cache[j].feats_cls:
+    #                                 new_feat = Feature()
 
     def plot(self):
         frame = self.frames[-1]
@@ -176,10 +188,8 @@ class Cache:
         self.cache[self.ptr] = obj
         self.ptr = (self.ptr + 1) % self.size
 
-    def interpolate(self):
-        x = self[0]
-
     def __getitem__(self, idx):
+        # 0 is the old item
         return self.cache[(self.ptr + idx) % self.size]
 
     def __setitem__(self, idx, obj):

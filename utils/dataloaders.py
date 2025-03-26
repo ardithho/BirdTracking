@@ -139,9 +139,9 @@ class DetectionsDataloader:
                             for i in range(1, skip + 1):
                                 self.detections[startNo+i][headNo][featNo] = [y[j]+diff[j]*(i/skip) for j in range(2)]
         # write feature skips
-        featSkip = [[0] * self.n for i in range(2)]
-        featSkips = [[[0] * self.n for i in range(2)] for i in range(self.noOfFrames)]
-        featDetected = [[False] * self.n for i in range(2)]
+        featSkip = [[0] * self.n for _ in range(2)]
+        featSkips = [[[0] * self.n for _ in range(2)] for i in range(self.noOfFrames)]
+        featDetected = [[False] * self.n for _ in range(2)]
         for frameNo in range(self.firstHead, self.noOfFrames):
             curr = self.detections[frameNo]
             for i in range(2):
