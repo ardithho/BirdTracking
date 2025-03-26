@@ -62,17 +62,17 @@ def load_dataset_pose(api_key='jyKUZIKA3yySfSqRdXqI',
                         project_name=project_name, version=version)
 
 
-def train_model(data, model='yolov8s.yaml', epochs=200, batch=16, imgsz=640, name='train'):
+def train_model(data, model='yolov8s.yaml', epochs=100, batch=16, imgsz=640, name='train'):
     """
-    Train the model for toy recognition.
+    Train the model for object detection.
 
     Parameters:
     - data (str): The dataset to train the model on.
-    - model (str): The model to use. Default is "yolov8".
+    - model (str): The model to use. Default is "yolov8s".
     - epochs (int): The number of epochs to train for. Default is 100.
     - batch (int): The batch size to use. Default is 16.
-    - imgsz (int): The size of the images. Default is 416.
-    - weights (str): The weights to use. Default is "yolov8.pt".
+    - imgsz (int): The size of the images. Default is 640.
+    - weights (str): The weights to use. Default is "yolov8s.pt".
 
     Returns:
     - model (YOLO): The trained model.
