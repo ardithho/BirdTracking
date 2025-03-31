@@ -1,12 +1,23 @@
 from ultralytics import YOLO
-from .utils import parser, parse_opt, ROOT, PROJECT_ROOT
+
+import os
+import sys
+from pathlib import Path
+ROOT = Path(os.path.abspath(__file__)).parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.append(str(ROOT))
+YOLO_ROOT = ROOT / 'yolov8'
+if str(YOLO_ROOT) not in sys.path:
+    sys.path.append(str(YOLO_ROOT))
+
+from yolov8.utils import parser, parse_opt
 
 
 class Predictor:
     """
     Detect bird head features using our pre-trained model.
     """
-    def __init__(self, model_path=ROOT / 'weights/pose.pt'):
+    def __init__(self, model_path=YOLO_ROOT / 'weights/pose.pt'):
         self.model = YOLO(model_path)
 
     def predict(self, **kwargs):
@@ -16,7 +27,7 @@ class Predictor:
         return self.model.predict(source, save=save, verbose=verbose, iou=iou, **kwargs)
 
 
-feat_model = Predictor(ROOT / 'weights/liner.pt')
+feat_model = Predictor(YOLO_ROOT / 'weights/liner.pt')
 def detect_features(im, boxes, **kwargs):
     feats = []
     for xyxy in boxes.xyxy:
@@ -26,8 +37,8 @@ def detect_features(im, boxes, **kwargs):
 
 
 def run(
-        weights=ROOT / 'weights/pose.pt',  # model path or triton URL
-        source=PROJECT_ROOT / 'data/img',  # file/dir/URL/glob/screen/0(webcam)
+        weights=YOLO_ROOT / 'weights/pose.pt',  # model path or triton URL
+        source=ROOT / 'data/img',  # file/dir/URL/glob/screen/0(webcam)
         conf=0.25,  # confidence threshold
         iou=0.7,  # NMS IOU threshold
         imgsz=640,  # inference size

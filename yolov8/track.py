@@ -1,12 +1,23 @@
 from ultralytics import YOLO
-from .utils import parser, parse_opt, ROOT
+
+import os
+import sys
+from pathlib import Path
+ROOT = Path(os.path.abspath(__file__)).parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.append(str(ROOT))
+YOLO_ROOT = ROOT / 'yolov8'
+if str(YOLO_ROOT) not in sys.path:
+    sys.path.append(str(YOLO_ROOT))
+
+from yolov8.utils import parser, parse_opt
 
 
 class Tracker:
     """
     Track bird head features using our pre-trained model and default YOLO tracker.
     """
-    def __init__(self, model_path=ROOT / 'weights/pose.pt'):
+    def __init__(self, model_path=YOLO_ROOT / 'weights/pose.pt'):
         self.model = YOLO(model_path)
 
     def track(self, **kwargs):
@@ -17,8 +28,8 @@ class Tracker:
 
 
 def run(
-        weights=ROOT / 'weights/pose.pt',  # model path or triton URL
-        source=ROOT / 'data/images',  # file/dir/URL/glob/screen/0(webcam)
+        weights=YOLO_ROOT / 'weights/pose.pt',  # model path or triton URL
+        source=YOLO_ROOT / 'data/images',  # file/dir/URL/glob/screen/0(webcam)
         conf=0.25,  # confidence threshold
         iou=0.7,  # NMS IOU threshold
         imgsz=640,  # inference size

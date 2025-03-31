@@ -2,13 +2,23 @@ import yaml
 from ultralytics import YOLO
 from roboflow import Roboflow
 
+import os
+import sys
+from pathlib import Path
+ROOT = Path(os.path.abspath(__file__)).parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.append(str(ROOT))
+YOLO_ROOT = ROOT / 'yolov8'
+if str(YOLO_ROOT) not in sys.path:
+    sys.path.append(str(YOLO_ROOT))
+
 
 def load_dataset(api_key='jyKUZIKA3yySfSqRdXqI',
                  workspace='bird-tracking-yvxlp',
                  project_name='', version=1):
     rf = Roboflow(api_key=api_key)
     project = rf.workspace(workspace).project(project_name)
-    return project.version(version).download('yolov8', f'datasets/{project_name}-{version}')
+    return project.version(version).download('yolov8', YOLO_ROOT / f'datasets/{project_name}-{version}')
 
 
 

@@ -1,23 +1,20 @@
 import argparse
+
 import os
 import sys
 from pathlib import Path
-
-
-ROOT = os.path.join(Path.cwd(), 'yolov8')  # YOLOv8 root directory
+ROOT = Path(os.path.abspath(__file__)).parent.parent
 if str(ROOT) not in sys.path:
-    sys.path.append(str(ROOT))  # add ROOT to PATH
-ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
+    sys.path.append(str(ROOT))
+YOLO_ROOT = ROOT / 'yolov8'
+if str(YOLO_ROOT) not in sys.path:
+    sys.path.append(str(YOLO_ROOT))
 
-PROJECT_ROOT = Path.cwd()  # this project root directory
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.append(str(PROJECT_ROOT))  # add PROJECT_ROOT to PATH
-PROJECT_ROOT = Path(os.path.relpath(PROJECT_ROOT, Path.cwd()))  # relative
 
 # initialise parser
 parser = argparse.ArgumentParser()
-parser.add_argument('--weights', type=str, default=ROOT / 'weights/pose.pt', help='model path or triton URL')
-parser.add_argument('--source', type=str, default=PROJECT_ROOT / 'data/img', help='file/dir/URL/glob/screen/0(webcam)')
+parser.add_argument('--weights', type=str, default=YOLO_ROOT / 'weights/pose.pt', help='model path or triton URL')
+parser.add_argument('--source', type=str, default=ROOT / 'data/img', help='file/dir/URL/glob/screen/0(webcam)')
 parser.add_argument('--conf', type=float, default=0.25, help='confidence threshold')
 parser.add_argument('--iou', type=float, default=0.7, help='NMS IoU threshold')
 parser.add_argument('--imgsz', '--img', '--img-size', nargs='+', type=int, default=640, help='inference size')
