@@ -86,7 +86,13 @@ while cap.isOpened():
                 r[0] *= -1
                 rmat = R.from_euler('xyz', r, degrees=True).as_matrix()
                 rmat = rmat.T
+
+                tvec = -rig.translation
+                tvec += ext[:3, 3]
+                tvec[0] *= -1
+
                 T[:3, :3] = rmat @ prev_T[:3, :3].T
+                T[:3, 3] = tvec - prev_T[:3, 3]
 
                 esD = R.from_matrix(T[:3, :3]).as_euler('xyz', degrees=True)
                 gtD = R.from_matrix(transforms[frame_no][:3, :3]).as_euler('xyz', degrees=True)*np.array([1., 1., 1.])
@@ -104,6 +110,7 @@ while cap.isOpened():
                 print('')
 
                 prev_T[:3, :3] = rmat
+                prev_T[:3, 3] = tvec
                 sim.update(T)
 
         cv2.imshow('frame', cv2.resize(birds.plot(), None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
