@@ -1,10 +1,10 @@
 import bpy
 import os
-import cv2
 import yaml
 import numpy as np
 from pathlib import Path
 from mathutils import Matrix
+from scipy.spatial.transform import Rotation as R
 
 
 BLENDER_ROOT = Path(__file__).parent.parent.parent
@@ -122,6 +122,6 @@ for i in range(100):
     scene.render.filepath = os.path.join(f_dir, '%03d.jpg' % (i+1))
     bpy.ops.render.render(write_still=True, use_viewport=True)
 
-    T[:3, :3] = cv2.Rodrigues(np.random.randint(5, 10, 3)*np.pi/180)[0]
+    T[:3, :3] = R.from_euler('xyz', np.random.randint(0, 5, 3), degrees=True).as_matrix()
 
 f.close()

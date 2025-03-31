@@ -1,10 +1,10 @@
 import bpy
 import os
-import cv2
 import yaml
 import numpy as np
 from pathlib import Path
 from mathutils import Matrix
+from scipy.spatial.transform import Rotation as R
 
 
 AXIS = 'y'
@@ -114,7 +114,7 @@ bpy.ops.object.join()
 
 head = bpy.context.active_object
 T = np.eye(4)
-rvec = np.array([0, 0, 0])
+rot = np.array([0, 0, 0])
 for i in range(100):
     f.write(' '.join([str(i+1), *map(str, T.flatten())]) + '\n')
     head.matrix_world = Matrix(T) @ head.matrix_world
@@ -130,7 +130,7 @@ for i in range(100):
     scene.render.filepath = os.path.join(f_dir, '%03d.jpg' % (i+1))
     bpy.ops.render.render(write_still=True, use_viewport=True)
 
-    rvec[axis_dict[AXIS]] = np.random.randint(0, 5)
-    T[:3, :3] = cv2.Rodrigues(rvec*np.pi/180)[0]
+    rot[axis_dict[AXIS]] = np.random.randint(0, 5)
+    T[:3, :3] = R.from_euler('xyz', rot, degrees=True).as_matrix()
 
 f.close()
