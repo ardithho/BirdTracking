@@ -1,12 +1,11 @@
-import cv2
-import yaml
-import os
 from scipy.spatial.transform import Rotation
 
+import os
 import sys
 from pathlib import Path
-ROOT = Path(__file__).parent.parent
-sys.path.append(str(ROOT))
+ROOT = Path(os.path.abspath(__file__)).parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.append(str(ROOT))
 
 from utils.sim import *
 from utils.general import DEG2RAD

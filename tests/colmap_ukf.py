@@ -1,10 +1,12 @@
 import pycolmap
 from scipy.spatial.transform import Rotation
 
+import os
 import sys
 from pathlib import Path
-ROOT = Path(__file__).parent.parent
-sys.path.append(str(ROOT))
+ROOT = Path(os.path.abspath(__file__)).parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.append(str(ROOT))
 
 from yolov8.predict import Predictor, detect_features
 from yolov8.track import Tracker

@@ -2,12 +2,13 @@ import cv2
 import math
 import numpy as np
 from scipy.spatial.distance import cdist
-from scipy.optimize import linear_sum_assignment
 
+import os
 import sys
 from pathlib import Path
-ROOT = Path(__file__).parent.parent
-sys.path.append(str(ROOT))
+ROOT = Path(os.path.abspath(__file__)).parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.append(str(ROOT))
 
 from utils.colour import bill_mask
 from utils.configs import FEAT_DICT

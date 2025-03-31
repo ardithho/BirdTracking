@@ -1,9 +1,11 @@
 from scipy.spatial.transform import Rotation
 
+import os
 import sys
 from pathlib import Path
-ROOT = Path(__file__).parent.parent
-sys.path.append(str(ROOT))
+ROOT = Path(os.path.abspath(__file__)).parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.append(str(ROOT))
 
 from utils.general import DEG2RAD, RAD2DEG
 from utils.filter import ukf, OBS_COV_HIGH, OBS_COV_LOW

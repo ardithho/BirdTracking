@@ -1,9 +1,11 @@
 import yaml
 
+import os
 import sys
 from pathlib import Path
-ROOT = Path(__file__).parent.parent
-sys.path.append(str(ROOT))
+ROOT = Path(os.path.abspath(__file__)).parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.append(str(ROOT))
 
 
 cfg_dir = ROOT / 'data/configs'
