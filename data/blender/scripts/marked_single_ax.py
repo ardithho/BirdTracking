@@ -8,7 +8,6 @@ from scipy.spatial.transform import Rotation as R
 
 
 AXIS = 'y'
-axis_dict = {'x': 0, 'y': 1, 'z': 2}
 BLENDER_ROOT = Path(__file__).parent.parent.parent
 renders_dir = BLENDER_ROOT / 'renders'
 output_dir = os.path.join(renders_dir, f'marked_{AXIS}')
@@ -113,8 +112,8 @@ for obj in mesh:
 bpy.ops.object.join()
 
 head = bpy.context.active_object
+head.hide_render = False
 T = np.eye(4)
-rot = np.array([0, 0, 0])
 for i in range(100):
     f.write(' '.join([str(i+1), *map(str, T.flatten())]) + '\n')
     head.matrix_world = Matrix(T) @ head.matrix_world
@@ -130,7 +129,6 @@ for i in range(100):
     scene.render.filepath = os.path.join(f_dir, '%03d.jpg' % (i+1))
     bpy.ops.render.render(write_still=True, use_viewport=True)
 
-    rot[axis_dict[AXIS]] = np.random.randint(0, 5)
-    T[:3, :3] = R.from_euler('xyz', rot, degrees=True).as_matrix()
+    T[:3, :3] = R.from_euler(AXIS, np.random.randint(0, 5), degrees=True).as_matrix()
 
 f.close()

@@ -1,4 +1,5 @@
 import pycolmap
+from scipy.spatial.transform import Rotation as R
 
 import os
 import sys
@@ -7,13 +8,13 @@ ROOT = Path(os.path.abspath(__file__)).parent.parent
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
-from utils.general import RAD2DEG
 from utils.camera import Stereo
 from utils.structs import Bird, Birds
 from utils.sim import *
 from utils.reconstruct import get_head_feat_pts
 
 
+RESIZE = 0.5
 STRIDE = 1
 BLENDER_ROOT = ROOT / 'data/blender'
 EXTENSION = ''
@@ -55,6 +56,7 @@ T = np.eye(4)
 prev_T = T.copy()
 sim.update(T)
 gt = np.eye(4)
+ae_sum = np.zeros((3,))
 cam_w, cam_h = cap.get(cv2.CAP_PROP_FRAME_WIDTH), cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 dummy_head = Box(0, conf=[1.],
                  xywh=np.array([[cam_w/2, cam_h/2, cam_w, cam_h]]),
@@ -77,31 +79,38 @@ while cap.isOpened():
             pnp = pycolmap.estimate_and_refine_absolute_pose(feat_pts, head_pts, cam)
             if pnp is not None:
                 rig = pnp['cam_from_world']  # Rigid3d
-                R = rig.rotation.matrix()
-                R = R @ ext[:3, :3].T  # undo camera extrinsic rotation
-                r = cv2.Rodrigues(R)[0]
+                rmat = rig.rotation.matrix()
+                rmat = rmat @ ext[:3, :3].T  # undo camera extrinsic rotation
+                r = R.from_matrix(rmat).as_euler('xyz', degrees=True)
                 # colmap to o3d notation
                 r[0] *= -1
-                R, _ = cv2.Rodrigues(r)
-                R = R.T
-                T[:3, :3] = R @ prev_T[:3, :3].T
-                print('es:', *np.rint(cv2.Rodrigues(T[:3, :3])[0]*RAD2DEG))
-                print('gt:', *np.rint(
-                    cv2.Rodrigues(transforms[frame_no][:3, :3])[0][[0, 1, 2]]*np.array([-1., 1., 1.]).reshape((-1, 1))*RAD2DEG))
+                rmat = R.from_euler('xyz', r, degrees=True).as_matrix()
+                rmat = rmat.T
+                T[:3, :3] = rmat @ prev_T[:3, :3].T
 
-                print('esT:', *np.rint(cv2.Rodrigues(R)[0]*RAD2DEG))
-                print('gtT:', *np.rint(
-                    cv2.Rodrigues(gt[:3, :3])[0][[0, 1, 2]]*np.array([-1., 1., 1.]).reshape((-1, 1))*RAD2DEG))
+                esD = R.from_matrix(T[:3, :3]).as_euler('xyz', degrees=True)
+                gtD = R.from_matrix(transforms[frame_no][:3, :3]).as_euler('xyz', degrees=True)*np.array([1., 1., 1.])
+                esT = R.from_matrix(rmat).as_euler('xyz', degrees=True)
+                gtT = R.from_matrix(gt[:3, :3]).as_euler('xyz', degrees=True)*np.array([1., 1., 1.])
 
+                ae = np.abs(gtT - esT)
+                ae_sum += ae
+
+                print('esD:', *np.rint(esD))
+                print('gtD:', *np.rint(gtD))
+                print('esT:', *np.rint(esT))
+                print('gtT:', *np.rint(gtT))
+                print('ae:', *ae)
                 print('')
-                prev_T[:3, :3] = R
+
+                prev_T[:3, :3] = rmat
                 sim.update(T)
 
-        cv2.imshow('frame', cv2.resize(birds.plot(), None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC))
+        cv2.imshow('frame', cv2.resize(birds.plot(), None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
         out = cv2.vconcat([cv2.resize(birds.plot(), (w, h), interpolation=cv2.INTER_CUBIC),
                            cv2.resize(sim.screen, (w, h), interpolation=cv2.INTER_CUBIC)])
 
-        cv2.imshow('out', out)
+        cv2.imshow('out', cv2.resize(out, None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
         writer.write(out)
 
         frame_no += 1
@@ -115,3 +124,5 @@ writer.release()
 cv2.destroyAllWindows()
 sim.close()
 
+mae = ae_sum / frame_no
+print('MAE:', *mae, np.mean(mae))

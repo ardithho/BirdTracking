@@ -1,4 +1,4 @@
-pathL: /home/ardith/Documents/BirdTracking/data/blender/renders/marked/l
+pathL: /home/ardith/Documents/BirdTracking/data/blender/renders/marked_x/l
 KL:
 - 2666.666666666667
 - 0.0
@@ -22,7 +22,7 @@ extL:
 - 0.0
 - 0.7071067690849304
 - -19.999950408935547
-pathR: /home/ardith/Documents/BirdTracking/data/blender/renders/marked/r
+pathR: /home/ardith/Documents/BirdTracking/data/blender/renders/marked_x/r
 KR:
 - 2666.666666666667
 - 0.0
@@ -46,7 +46,7 @@ extR:
 - 0.0
 - 0.7071067690849304
 - -19.999950408935547
-pathF: /home/ardith/Documents/BirdTracking/data/blender/renders/marked/f
+pathF: /home/ardith/Documents/BirdTracking/data/blender/renders/marked_x/f
 KF:
 - 2666.666666666667
 - 0.0

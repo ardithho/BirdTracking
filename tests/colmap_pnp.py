@@ -18,10 +18,10 @@ from utils.sim import *
 from utils.structs import Bird, Birds
 
 
-RESIZE = .5  # resize display window
+RESIZE = 0.5  # resize display window
 STRIDE = 1
 FPS = 120
-SPEED = .5
+SPEED = 0.5
 PADDING = 30
 
 tracker = Tracker(ROOT / 'yolov8/weights/head.pt')
