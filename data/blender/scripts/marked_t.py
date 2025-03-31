@@ -9,7 +9,7 @@ from scipy.spatial.transform import Rotation as R
 
 BLENDER_ROOT = Path(__file__).parent.parent.parent
 renders_dir = BLENDER_ROOT / 'renders'
-output_dir = os.path.join(renders_dir, 'marked')
+output_dir = os.path.join(renders_dir, 'marked_t')
 l_dir = os.path.join(output_dir, 'l')
 r_dir = os.path.join(output_dir, 'r')
 f_dir = os.path.join(output_dir, 'f')
@@ -137,7 +137,7 @@ for i in range(100):
     scene.render.filepath = os.path.join(f_dir, '%03d.jpg' % (i+1))
     bpy.ops.render.render(write_still=True, use_viewport=True)
 
-    T[:3, 3] = np.random.uniform(low=-0.05, high=0.05, size=(3,))
+    T[:3, 3] = np.random.uniform(low=-0.5, high=0.5, size=(3,))
     T[:3, :3] = R.from_euler('xyz', np.random.randint(0, 5, 3), degrees=True).as_matrix()
 
 f.close()
