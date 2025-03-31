@@ -83,7 +83,7 @@ def train_model(data, model='yolov8s.yaml', epochs=100, batch=16, imgsz=640, nam
 
 
 if __name__ == '__main__':
-    name = 'liner'
+    name = 'feat'
     model = 'yolov8s-pose.yaml' if name == 'pose' else 'yolov8s.yaml'
     dataset = None
     exec(f'dataset = load_dataset_{name}()')
