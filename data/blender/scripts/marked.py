@@ -137,7 +137,6 @@ for i in range(100):
     scene.render.filepath = os.path.join(f_dir, '%03d.jpg' % (i+1))
     bpy.ops.render.render(write_still=True, use_viewport=True)
 
-    # T[:3, 3] = np.random.rand(3) * 0.005
     T[:3, :3] = R.from_euler('xyz', np.random.randint(0, 5, 3), degrees=True).as_matrix()
 
 f.close()
