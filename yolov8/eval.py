@@ -13,7 +13,7 @@ if str(YOLO_ROOT) not in sys.path:
 
 if __name__ == '__main__':
     print(ROOT)
-    name = 'head'
+    name = 'liner'
     model = YOLO_ROOT / f'weights/{name}.pt'
     model = YOLO(model)
     metrics = model.val()
