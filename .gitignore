@@ -28,8 +28,6 @@ yolov5/CONTRIBUTING.md
 !yolov5/weights/*.pt
 *.ipynb
 
-yolov8/yolov8n.pt
-
 createLabels.py
 headPose.py
 headTraining.py
