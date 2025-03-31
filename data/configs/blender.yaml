@@ -1,4 +1,4 @@
-# Origin set at centre of head, measured in mm
+# Origin set at centre of head, measured in mm, colmap coordinate system
 # (x, y, z)
 bill:
   - 0.0

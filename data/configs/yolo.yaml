@@ -1,3 +1,4 @@
+# YOLO class dict
 cls:
   bill: 0
   left_liner: 1
