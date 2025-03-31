@@ -11,7 +11,7 @@ sys.path.append(str(ROOT))
 
 from utils.colour import bill_mask
 from utils.configs import FEAT_DICT
-from utils.general import euc_dist, angle, cosine, cnt_centroid
+from utils.general import euc_dist, bearing, cosine, cnt_centroid
 
 
 # filter eyes and tear marks that is within a distance to the bill tip
@@ -90,11 +90,11 @@ def group_feat(feats):
 
 # determine left right of a pair of features
 def sort_lr(pivot, top, bot):
-    eye_angle = angle(pivot, top)
-    tear_angle = angle(pivot, bot)
-    if (eye_angle-tear_angle) % (2*math.pi) < math.pi:
-        return 'left'
-    return 'right'
+    top_bearing = bearing(pivot, top)
+    bottom_bearing = bearing(pivot, bot)
+    if (top_bearing-bottom_bearing) % (2*math.pi) > math.pi:
+        return 'right'
+    return 'left'
 
 
 # sort left right features
@@ -112,7 +112,7 @@ def sort_feat(bill, eyes, tear_marks, bill_liners=None):
 
     if encoding == [1, 0, 0]:
         if bill is not None:
-            if angle(bill, eyes[0]) >= 0:
+            if bearing(bill, eyes[0]) >= 0:
                 eyes.append(None)
             else:
                 eyes.insert(0, None)
@@ -124,7 +124,7 @@ def sort_feat(bill, eyes, tear_marks, bill_liners=None):
             eyes = eyes[::-1]
     elif encoding == [0, 1, 0]:
         if bill is not None:
-            if angle(bill, tear_marks[0]) >= 0:
+            if bearing(bill, tear_marks[0]) >= 0:
                 tear_marks.append(None)
             else:
                 tear_marks.insert(0, None)
@@ -135,7 +135,7 @@ def sort_feat(bill, eyes, tear_marks, bill_liners=None):
             tear_marks = tear_marks[::-1]
     elif encoding == [0, 0, 1]:
         if bill is not None:
-            if angle(bill, bill_liners[0]) >= 0:
+            if bearing(bill, bill_liners[0]) >= 0:
                 bill_liners.append(None)
             else:
                 bill_liners.insert(0, None)

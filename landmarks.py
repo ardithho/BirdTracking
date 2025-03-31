@@ -12,7 +12,7 @@ from ultralytics.data.utils import IMG_FORMATS, VID_FORMATS
 RESIZE = .5
 STRIDE = 1
 SAVE = True
-PADDING = 30
+PADDING = 40
 
 tracker = Tracker('yolov8/weights/head.pt')
 predictor = Predictor('yolov8/weights/head.pt')
