@@ -1,5 +1,5 @@
 import pycolmap
-from scipy.spatial.transform import Rotation
+from scipy.spatial.transform import Rotation as R
 
 import os
 import sys
@@ -9,7 +9,6 @@ if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
 from utils.camera import Stereo
-from utils.general import RAD2DEG
 from utils.filter import ukf, OBS_COV_HIGH, OBS_COV_LOW
 from utils.reconstruct import get_head_feat_pts
 from utils.sim import *
@@ -19,7 +18,7 @@ from utils.structs import Bird, Birds
 RESIZE = .5
 STRIDE = 1
 BLENDER_ROOT = ROOT / 'data/blender'
-EXTENSION = ''
+EXTENSION = '_z'
 NAME = f'marked{EXTENSION}'
 
 renders_dir = BLENDER_ROOT / 'renders'
@@ -29,7 +28,7 @@ cfg_path = input_dir / 'cam.yaml'
 trans_path = input_dir / 'transforms.txt'
 
 h, w = (720, 1280)
-writer = cv2.VideoWriter(str(ROOT / f'data/out/colmap{EXTENSION}_ukf_sim.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, int(h * 2)))
+writer = cv2.VideoWriter(str(ROOT / f'data/out/colmap_ukf_sim{EXTENSION}.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, int(h * 2)))
 
 stereo = Stereo(path=cfg_path)
 with open(cfg_path, 'r') as f:
@@ -54,10 +53,15 @@ sim = Sim()
 cap = cv2.VideoCapture(str(vid_path))
 birds = Birds()
 frame_no = 0
+frame_count = 0
+ae_sum = np.zeros(3)
+te_sum = 0
+
 T = np.eye(4)
 prev_T = T.copy()
 sim.update(T)
 gt = np.eye(4)
+
 state_mean = ukf.initial_state_mean
 state_cov = ukf.initial_state_covariance
 cam_w, cam_h = cap.get(cv2.CAP_PROP_FRAME_WIDTH), cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
@@ -82,11 +86,13 @@ while cap.isOpened():
             pnp = pycolmap.estimate_and_refine_absolute_pose(feat_pts, head_pts, cam)
             if pnp is not None:
                 rig = pnp['cam_from_world']  # Rigid3d
-                R = rig.rotation.matrix()
-                R = R @ ext[:3, :3].T  # undo camera extrinsic rotation
-                r = cv2.Rodrigues(R)[0]
-                print(*r*RAD2DEG)
-                obs = np.array([*Rotation.from_euler('xyz', -r.flatten()).as_quat(), *-rig.translation])
+                rmat = rig.rotation.matrix()
+                rmat = rmat @ ext[:3, :3].T  # undo camera extrinsic rotation
+
+                tvec = -rig.translation
+                tvec -= ext[:3, 3]
+
+                obs = np.array([*R.from_matrix(rmat.T).as_euler('xyz'), *tvec])
                 state_mean, state_cov = ukf.filter_update(
                     filtered_state_mean=state_mean,
                     filtered_state_covariance=state_cov,
@@ -94,27 +100,41 @@ while cap.isOpened():
                     observation_covariance=OBS_COV_HIGH if head_pts.shape[0] < 4 else OBS_COV_LOW
                 )
                 # colmap to o3d notation
-                r = Rotation.from_quat(state_mean[:4]).as_rotvec()
+                r = state_mean[:3]
                 r[0] *= -1
-                R, _ = cv2.Rodrigues(r)
-                # R = R.T
-                T[:3, :3] = R @ prev_T[:3, :3].T
-                print('es:', *np.rint(cv2.Rodrigues(T[:3, :3])[0]*RAD2DEG))
-                print('gt:', *np.rint(
-                    cv2.Rodrigues(transforms[frame_no][:3, :3])[0]*np.array([-1., 1., 1.]).reshape((-1, 1))*RAD2DEG))
+                rmat = R.from_euler('xyz', r).as_matrix()
 
-                print('esT:', *np.rint(cv2.Rodrigues(R)[0]*RAD2DEG))
-                print('gtT:', *np.rint(
-                    cv2.Rodrigues(gt[:3, :3])[0]*np.array([-1., 1., 1.]).reshape((-1, 1))*RAD2DEG))
+                tvec = state_mean[3:6]
+                tvec[0] *= -1
 
-                print('esq:', np.round(Rotation.from_matrix(R).as_quat(), 2))
-                print('gtq:', np.round(
-                    Rotation.from_rotvec(
-                        (cv2.Rodrigues(gt[:3, :3])[0]*np.array([-1., 1., 1.]).reshape((-1, 1))).flatten()).as_quat(),
-                    2))
+                T[:3, :3] = rmat @ prev_T[:3, :3].T
+                T[:3, 3] = tvec - prev_T[:3, 3]
 
+                esD = R.from_matrix(T[:3, :3]).as_euler('xyz', degrees=True)
+                gtD = R.from_matrix(transforms[frame_no][:3, :3]).as_euler('xyz', degrees=True) * np.array([1., 1., 1.])
+                esT = R.from_matrix(rmat).as_euler('xyz', degrees=True)
+                gtT = R.from_matrix(gt[:3, :3]).as_euler('xyz', degrees=True) * np.array([1., 1., 1.])
+                est = tvec
+                gtt = gt[:3, 3]
+
+                ae = np.abs(gtT - esT)
+                ae_sum += ae
+                te = np.linalg.norm(gtt - est)
+                te_sum += te
+                frame_count += 1
+
+                print('esD:', *np.rint(esD))
+                print('gtD:', *np.rint(gtD))
+                print('esT:', *np.rint(esT))
+                print('gtT:', *np.rint(gtT))
+                print('ae:', *ae)
+                print('est:', *est)
+                print('gtt:', *gtt)
+                print('te:', te)
                 print('')
-                prev_T[:3, :3] = R
+
+                prev_T[:3, :3] = rmat
+                prev_T[:3, 3] = tvec
                 sim.update(T)
 
         cv2.imshow('frame', cv2.resize(birds.plot(), None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
@@ -134,3 +154,8 @@ cap.release()
 writer.release()
 cv2.destroyAllWindows()
 sim.close()
+
+mae = ae_sum / frame_no
+print('MAE:', *mae, np.mean(mae))
+mte = te_sum / frame_no
+print('MTE:', mte)

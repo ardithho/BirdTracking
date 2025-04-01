@@ -17,7 +17,7 @@ from utils.reconstruct import get_head_feat_pts
 RESIZE = 0.5
 STRIDE = 1
 BLENDER_ROOT = ROOT / 'data/blender'
-EXTENSION = '_t'
+EXTENSION = '_z'
 NAME = f'marked{EXTENSION}'
 
 renders_dir = BLENDER_ROOT / 'renders'
@@ -27,7 +27,7 @@ cfg_path = input_dir / 'cam.yaml'
 trans_path = input_dir / 'transforms.txt'
 
 h, w = (720, 1280)
-writer = cv2.VideoWriter(str(ROOT / f'data/out/colmap{EXTENSION}.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, int(h * 2)))
+writer = cv2.VideoWriter(str(ROOT / f'data/out/colmap_sim{EXTENSION}.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, int(h * 2)))
 
 stereo = Stereo(path=cfg_path)
 with open(cfg_path, 'r') as f:
@@ -53,12 +53,14 @@ cap = cv2.VideoCapture(str(vid_path))
 birds = Birds()
 frame_no = 0
 frame_count = 0
+ae_sum = np.zeros(3)
+te_sum = 0
+
 T = np.eye(4)
 prev_T = T.copy()
 sim.update(T)
 gt = np.eye(4)
-ae_sum = np.zeros(3)
-te_sum = 0
+
 cam_w, cam_h = cap.get(cv2.CAP_PROP_FRAME_WIDTH), cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 dummy_head = Box(0, conf=[1.],
                  xywh=np.array([[cam_w/2, cam_h/2, cam_w, cam_h]]),
@@ -102,6 +104,7 @@ while cap.isOpened():
                 gtT = R.from_matrix(gt[:3, :3]).as_euler('xyz', degrees=True)*np.array([1., 1., 1.])
                 est = tvec
                 gtt = gt[:3, 3]
+
                 ae = np.abs(gtT - esT)
                 ae_sum += ae
                 te = np.linalg.norm(gtt - est)

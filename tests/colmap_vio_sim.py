@@ -53,12 +53,13 @@ sim = Sim()
 cap = cv2.VideoCapture(str(vid_path))
 frame_no = 0
 frame_count = 0
+ae_sum = np.zeros(3)
+te_sum = 0
+
 T = np.eye(4)
 abs_T = T.copy()
 sim.update(T)
 gt = np.eye(4)
-ae_sum = np.zeros(3)
-te_sum = 0
 prev_frame = None
 while cap.isOpened():
     for i in range(STRIDE):
