@@ -15,12 +15,13 @@ from utils.sim import *
 
 RESIZE = 0.5
 STRIDE = 1
-METHOD = 'orb'
+METHOD = 'lg'
 BLENDER_ROOT = ROOT / 'data/blender'
-NAME = 'vanilla'
+EXTENSION = '_t'
+NAME = f'marked{EXTENSION}'
 
 renders_dir = BLENDER_ROOT / 'renders'
-vid_path = renders_dir / f'vid/{NAME}.mp4'
+vid_path = renders_dir / f'vid/{NAME}_f.mp4'
 input_dir = renders_dir / NAME
 cfg_path = input_dir / 'cam.yaml'
 trans_path = input_dir / 'transforms.txt'
@@ -51,10 +52,13 @@ sim = Sim()
 
 cap = cv2.VideoCapture(str(vid_path))
 frame_no = 0
+frame_count = 0
 T = np.eye(4)
 abs_T = T.copy()
 sim.update(T)
 gt = np.eye(4)
+ae_sum = np.zeros(3)
+te_sum = 0
 prev_frame = None
 while cap.isOpened():
     for i in range(STRIDE):
@@ -94,11 +98,23 @@ while cap.isOpened():
                 gtD = R.from_matrix(transforms[frame_no][:3, :3]).as_euler('xyz', degrees=True) * np.array([1., 1., 1.])
                 esT = R.from_matrix(abs_T[:3, :3]).as_euler('xyz', degrees=True)
                 gtT = R.from_matrix(gt[:3, :3]).as_euler('xyz', degrees=True) * np.array([1., 1., 1.])
+                est = T[:3, 3]
+                gtt = transforms[frame_no][:3, 3]
+
+                ae = np.abs(esD - gtD)
+                ae_sum += ae
+                te = np.linalg.norm(gtt - est)
+                te_sum += te
+                frame_count += 1
 
                 print('esD:', *np.rint(esD))
                 print('gtD:', *np.rint(gtD))
                 print('esT:', *np.rint(esT))
                 print('gtT:', *np.rint(gtT))
+                print('ae:', *ae)
+                print('est:', *est)
+                print('gtt:', *gtt)
+                print('te:', te)
                 print('')
 
                 sim.update(T)
@@ -128,3 +144,8 @@ cap.release()
 writer.release()
 cv2.destroyAllWindows()
 sim.close()
+
+mae = ae_sum / frame_count
+print('MAE:', *mae, np.mean(mae))
+mte = te_sum / frame_count
+print('MTE:', mte)

@@ -52,6 +52,7 @@ sim = Sim()
 cap = cv2.VideoCapture(str(vid_path))
 birds = Birds()
 frame_no = 0
+frame_count = 0
 T = np.eye(4)
 prev_T = T.copy()
 sim.update(T)
@@ -99,20 +100,21 @@ while cap.isOpened():
                 gtD = R.from_matrix(transforms[frame_no][:3, :3]).as_euler('xyz', degrees=True)*np.array([1., 1., 1.])
                 esT = R.from_matrix(rmat).as_euler('xyz', degrees=True)
                 gtT = R.from_matrix(gt[:3, :3]).as_euler('xyz', degrees=True)*np.array([1., 1., 1.])
-
+                est = tvec
+                gtt = gt[:3, 3]
                 ae = np.abs(gtT - esT)
                 ae_sum += ae
-
-                te = np.linalg.norm(tvec - gt[:3, 3])
+                te = np.linalg.norm(gtt - est)
                 te_sum += te
+                frame_count += 1
 
                 print('esD:', *np.rint(esD))
                 print('gtD:', *np.rint(gtD))
                 print('esT:', *np.rint(esT))
                 print('gtT:', *np.rint(gtT))
                 print('ae:', *ae)
-                print('est:', *tvec)
-                print('gtt:', *gt[:3, 3])
+                print('est:', *est)
+                print('gtt:', *gtt)
                 print('te:', te)
                 print('')
 

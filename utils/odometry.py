@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+from scipy.spatial.transform import Rotation as R
 
 import os
 import sys
@@ -30,6 +31,9 @@ def find_matches(prev_frame, curr_frame,
                  prev_mask=None, curr_mask=None, thresh=.8, method='orb'):
     kp1, des1 = extract_features(prev_frame, prev_mask, method)
     kp2, des2 = extract_features(curr_frame, curr_mask, method)
+
+    if des1 is None or des2 is None:
+        return None, None, None
 
     if method == 'orb':
         bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
@@ -82,6 +86,8 @@ def find_matching_pts(prev_frame, curr_frame,
 
     kp0, kp1, matches = find_matches(prev_frame, curr_frame,
                                      prev_mask, curr_mask, thresh, method)
+    if matches is None:
+        return np.array([]), np.array([])
     src_pts = np.float32([kp0[m.queryIdx].pt for m in matches]).reshape(-1, 1, 2)
     dst_pts = np.float32([kp1[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
     return src_pts, dst_pts
@@ -129,10 +135,10 @@ def estimate_vio_pts(src_pts, dst_pts, K, dist=None):
     bestE = None
     min_mag = 1000
     for E in Es:
-        _, R, t, _ = cv2.recoverPose(E, src_pts, dst_pts, K, mask=mask)
-        rvec = cv2.Rodrigues(R)[0]
-        if not np.any(np.abs(cv2.Rodrigues(R.T)[0] * RAD2DEG) > 25):
-            mag = np.linalg.norm(rvec)
+        _, rmat, t, _ = cv2.recoverPose(E, src_pts, dst_pts, K, mask=mask)
+        r = R.from_matrix(rmat).as_euler('xyz', degrees=True)
+        if not np.any(np.abs(r) > 25):
+            mag = np.linalg.norm(r)
             if mag < min_mag:
                 bestE = E
                 min_mag = mag
