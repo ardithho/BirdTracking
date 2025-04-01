@@ -7,16 +7,16 @@ ROOT = Path(os.path.abspath(__file__)).parent.parent
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
-from utils.structs import Birds
-from utils.sim import *
 from utils.odometry import estimate_vio, find_matches, find_matching_pts, draw_kp_matches
+from utils.sim import *
+from utils.structs import Birds
 
 
 RESIZE = 0.5
 STRIDE = 1
-METHOD = 'orb'
+METHOD = 'lg'
 BLENDER_ROOT = ROOT / 'data/blender'
-EXTENSION = ''
+EXTENSION = '_z'
 NAME = f'marked{EXTENSION}'
 
 renders_dir = BLENDER_ROOT / 'renders'
@@ -43,12 +43,13 @@ cap = cv2.VideoCapture(str(vid_path))
 birds = Birds()
 frame_no = 0
 frame_count = 0
+ae_sum = np.zeros(3)
+te_sum = 0
+
 T = np.eye(4)
 abs_T = T.copy()
 sim.update(T)
 gt = np.eye(4)
-ae_sum = np.zeros(3)
-te_sum = 0
 prev_frame = None
 while cap.isOpened():
     for i in range(STRIDE):

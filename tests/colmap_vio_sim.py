@@ -17,7 +17,7 @@ RESIZE = 0.5
 STRIDE = 1
 METHOD = 'lg'
 BLENDER_ROOT = ROOT / 'data/blender'
-EXTENSION = '_t'
+EXTENSION = ''
 NAME = f'marked{EXTENSION}'
 
 renders_dir = BLENDER_ROOT / 'renders'

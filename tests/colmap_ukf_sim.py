@@ -15,7 +15,7 @@ from utils.sim import *
 from utils.structs import Bird, Birds
 
 
-RESIZE = .5
+RESIZE = 0.5
 STRIDE = 1
 BLENDER_ROOT = ROOT / 'data/blender'
 EXTENSION = ''
@@ -70,6 +70,7 @@ dummy_head = Box(0, conf=[1.],
                  xywhn=np.array([[.5, .5, 1., 1.]]),
                  xyxy=np.array([[0., 0., cam_w, cam_h]]),
                  xyxyn=np.array([[0., 0., 1., 1.]]))
+
 while cap.isOpened():
     for i in range(STRIDE):
         if cap.isOpened():
