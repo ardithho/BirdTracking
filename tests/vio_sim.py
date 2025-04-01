@@ -82,16 +82,13 @@ while cap.isOpened():
                 print('')
 
                 sim.update(T)
-            if METHOD == 'lg':
+            if METHOD == 'lg' or METHOD == 'of':
                 kp1, kp2 = find_matching_pts(prev_frame, frame, method=METHOD)
                 match = draw_kp_matches(prev_frame, kp1, frame, kp2)
             else:
                 kp1, kp2, matches = find_matches(prev_frame, frame, thresh=.2, method=METHOD)
                 match = cv2.drawMatches(prev_frame, kp1, frame, kp2, matches, None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
-            # cv2.imshow('frame', cv2.resize(birds.plot(), None, fx=0.4, fy=0.4, interpolation=cv2.INTER_CUBIC))
 
-        # out = cv2.vconcat([cv2.resize(birds.plot(), (w, h), interpolation=cv2.INTER_CUBIC),
-        #                    cv2.resize(sim.screen, (w, h), interpolation=cv2.INTER_CUBIC)])
             out = cv2.vconcat([cv2.resize(match, (w, int(h / 2)), interpolation=cv2.INTER_CUBIC),
                                cv2.resize(sim.screen, (w, h), interpolation=cv2.INTER_CUBIC)])
         else:
