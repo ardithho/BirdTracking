@@ -17,7 +17,7 @@ from utils.reconstruct import get_head_feat_pts
 RESIZE = 0.5
 STRIDE = 1
 BLENDER_ROOT = ROOT / 'data/blender'
-EXTENSION = ''
+EXTENSION = '_t'
 NAME = f'marked{EXTENSION}'
 
 renders_dir = BLENDER_ROOT / 'renders'
@@ -56,7 +56,8 @@ T = np.eye(4)
 prev_T = T.copy()
 sim.update(T)
 gt = np.eye(4)
-ae_sum = np.zeros((3,))
+ae_sum = np.zeros(3)
+te_sum = 0
 cam_w, cam_h = cap.get(cv2.CAP_PROP_FRAME_WIDTH), cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 dummy_head = Box(0, conf=[1.],
                  xywh=np.array([[cam_w/2, cam_h/2, cam_w, cam_h]]),
@@ -88,7 +89,7 @@ while cap.isOpened():
                 rmat = rmat.T
 
                 tvec = -rig.translation
-                tvec += ext[:3, 3]
+                tvec -= ext[:3, 3]
                 tvec[0] *= -1
 
                 T[:3, :3] = rmat @ prev_T[:3, :3].T
@@ -102,11 +103,17 @@ while cap.isOpened():
                 ae = np.abs(gtT - esT)
                 ae_sum += ae
 
+                te = np.linalg.norm(tvec - gt[:3, 3])
+                te_sum += te
+
                 print('esD:', *np.rint(esD))
                 print('gtD:', *np.rint(gtD))
                 print('esT:', *np.rint(esT))
                 print('gtT:', *np.rint(gtT))
                 print('ae:', *ae)
+                print('est:', *tvec)
+                print('gtt:', *gt[:3, 3])
+                print('te:', te)
                 print('')
 
                 prev_T[:3, :3] = rmat
@@ -133,3 +140,5 @@ sim.close()
 
 mae = ae_sum / frame_no
 print('MAE:', *mae, np.mean(mae))
+mte = te_sum / frame_no
+print('MTE:', mte)

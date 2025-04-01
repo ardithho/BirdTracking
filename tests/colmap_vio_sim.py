@@ -1,4 +1,5 @@
 import pycolmap
+from scipy.spatial.transform import Rotation as R
 
 import os
 import sys
@@ -8,14 +9,13 @@ if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
 from utils.camera import Stereo
-from utils.general import RAD2DEG
 from utils.odometry import find_matches, find_matching_pts, draw_kp_matches
 from utils.sim import *
 
 
-RESIZE = 1.
+RESIZE = 0.5
 STRIDE = 1
-METHOD = 'of'
+METHOD = 'orb'
 BLENDER_ROOT = ROOT / 'data/blender'
 NAME = 'vanilla'
 
@@ -76,24 +76,31 @@ while cap.isOpened():
                                                                  options=options)
             if vio is not None:
                 rig = vio.cam2_from_cam1  # Rigid3d
-                R = rig.rotation.matrix()
-                R = R @ ext[:3, :3].T  # undo camera extrinsic rotation
-                r = cv2.Rodrigues(R)[0]
+                rmat = rig.rotation.matrix()
+                r = R.from_matrix(rmat).as_euler('xyz', degrees=True)
                 # colmap to o3d notation
                 r[0] *= -1
-                R, _ = cv2.Rodrigues(r)
-                R = R.T
-                T[:3, :3] = R
+                rmat = R.from_euler('xyz', r, degrees=True).as_matrix()
+                rmat = rmat.T
+
+                tvec = -rig.translation
+                tvec[0] *= -1
+
+                T[:3, :3] = rmat
+                T[:3, 3] = tvec
                 abs_T = T @ abs_T
-                print('es:', *np.rint(cv2.Rodrigues(T[:3, :3])[0]*RAD2DEG))
-                print('gt:', *np.rint(
-                    cv2.Rodrigues(transforms[frame_no][:3, :3])[0]*np.array([-1., 1., 1.]).reshape((-1, 1))*RAD2DEG))
 
-                print('esT:', *np.rint(cv2.Rodrigues(abs_T[:3, :3])[0]*RAD2DEG))
-                print('gtT:', *np.rint(
-                    cv2.Rodrigues(gt[:3, :3])[0]*np.array([-1., 1., 1.]).reshape((-1, 1))*RAD2DEG))
+                esD = R.from_matrix(T[:3, :3]).as_euler('xyz', degrees=True)
+                gtD = R.from_matrix(transforms[frame_no][:3, :3]).as_euler('xyz', degrees=True) * np.array([1., 1., 1.])
+                esT = R.from_matrix(abs_T[:3, :3]).as_euler('xyz', degrees=True)
+                gtT = R.from_matrix(gt[:3, :3]).as_euler('xyz', degrees=True) * np.array([1., 1., 1.])
 
+                print('esD:', *np.rint(esD))
+                print('gtD:', *np.rint(gtD))
+                print('esT:', *np.rint(esT))
+                print('gtT:', *np.rint(gtT))
                 print('')
+
                 sim.update(T)
             if METHOD == 'lg' or METHOD == 'of':
                 kp1, kp2 = find_matching_pts(prev_frame, frame, method=METHOD)

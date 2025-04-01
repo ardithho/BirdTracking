@@ -188,7 +188,7 @@ class DKD(nn.Module):
             patches = self.unfold(scores_map)  # B x (kernel**2) x (H*W)
             self.hw_grid = self.hw_grid.to(scores_map)  # to device
             for b_idx in range(b):
-                patch = patches[b_idx].t()  # (H*W) x (kernel**2)
+                patch = patches[b_idx].tvec()  # (H*W) x (kernel**2)
                 indices_kpt = indices_keypoints[
                     b_idx
                 ]  # one dimension vector, say its size is M
