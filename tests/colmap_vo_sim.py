@@ -27,7 +27,7 @@ cfg_path = input_dir / 'cam.yaml'
 trans_path = input_dir / 'transforms.txt'
 
 h, w = (720, 1280)
-writer = cv2.VideoWriter(str(ROOT / f'data/out/colmap_vio_sim_{METHOD}.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, int(h * 1.5)))
+writer = cv2.VideoWriter(str(ROOT / f'data/out/colmap_vo_sim_{METHOD}.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, int(h * 1.5)))
 
 stereo = Stereo(path=cfg_path)
 with open(cfg_path, 'r') as f:
@@ -73,14 +73,14 @@ while cap.isOpened():
         if prev_frame is not None:
             pts1, pts2 = find_matching_pts(prev_frame, frame, method=METHOD)
             matches = np.asarray(list(zip(list(range(len(pts1))), list(range(len(pts2))))))
-            vio = pycolmap.estimate_calibrated_two_view_geometry(camera1=cam,
-                                                                 points1=pts1.reshape(-1, 2),
-                                                                 camera2=cam,
-                                                                 points2=pts2.reshape(-1, 2),
-                                                                 matches=matches,
-                                                                 options=options)
-            if vio is not None:
-                rig = vio.cam2_from_cam1  # Rigid3d
+            vo = pycolmap.estimate_calibrated_two_view_geometry(camera1=cam,
+                                                                points1=pts1.reshape(-1, 2),
+                                                                camera2=cam,
+                                                                points2=pts2.reshape(-1, 2),
+                                                                matches=matches,
+                                                                options=options)
+            if vo is not None:
+                rig = vo.cam2_from_cam1  # Rigid3d
                 rmat = rig.rotation.matrix()
                 r = R.from_matrix(rmat).as_euler('xyz', degrees=True)
                 # colmap to o3d notation

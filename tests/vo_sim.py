@@ -7,7 +7,7 @@ ROOT = Path(os.path.abspath(__file__)).parent.parent
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
-from utils.odometry import estimate_vio, find_matches, find_matching_pts, draw_kp_matches
+from utils.odometry import estimate_vo, find_matches, find_matching_pts, draw_kp_matches
 from utils.sim import *
 from utils.structs import Birds
 
@@ -26,7 +26,7 @@ cfg_path = input_dir / 'cam.yaml'
 trans_path = input_dir / 'transforms.txt'
 
 h, w = (720, 1280)
-writer = cv2.VideoWriter(str(ROOT / f'data/out/vio_{METHOD}{EXTENSION}.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, int(h * 1.5)))
+writer = cv2.VideoWriter(str(ROOT / f'data/out/vo_{METHOD}{EXTENSION}.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, int(h * 1.5)))
 
 with open(cfg_path, 'r') as f:
     cfg = yaml.safe_load(f)
@@ -61,8 +61,8 @@ while cap.isOpened():
     if ret:
         gt = transforms[frame_no] @ gt
         if prev_frame is not None:
-            vio, rmat, tvec, _ = estimate_vio(prev_frame, frame, K=K, method=METHOD)
-            if vio:
+            vo, rmat, tvec, _ = estimate_vo(prev_frame, frame, K=K, method=METHOD)
+            if vo:
                 r = R.from_matrix(rmat).as_euler('xyz', degrees=True)
                 # colmap to o3d notation
                 r[0] *= -1

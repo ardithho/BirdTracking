@@ -10,11 +10,11 @@ ROOT = Path(os.path.abspath(__file__)).parent.parent
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
-from utils.odometry import estimate_vio_pts
+from utils.odometry import estimate_vo_pts
 from utils.general import RAD2DEG, DEG2RAD
 
 
-save_dir = ROOT / 'data/out/vio'
+save_dir = ROOT / 'data/out/vo'
 cfg_path = ROOT / 'data/blender/marked/cam.yaml'
 with open(cfg_path, 'r') as f:
     cfg = yaml.safe_load(f)
@@ -49,10 +49,10 @@ obj_pts2 = (cv2.Rodrigues(rot.T * DEG2RAD)[0] @ obj_pts1.T).T
 img_pts1, _ = cv2.projectPoints(obj_pts1, rvec, tvec, K, dist)
 img_pts2, _ = cv2.projectPoints(obj_pts2, rvec, tvec, K, dist)
 
-ret, R, t, _ = estimate_vio_pts(img_pts1, img_pts2, K, dist)
+ret, R, t, _ = estimate_vo_pts(img_pts1, img_pts2, K, dist)
 print(*cv2.Rodrigues(R.T)[0] * RAD2DEG)
-vio_pts = (R.T @ obj_pts1.T).T
-print(np.linalg.norm(vio_pts - obj_pts2))
+vo_pts = (R.T @ obj_pts1.T).T
+print(np.linalg.norm(vo_pts - obj_pts2))
 
 fig = plt.figure(figsize=(15, 10))
 
@@ -74,8 +74,8 @@ ax2.set_zlabel('Z')
 
 # Plot Point Cloud 3
 ax3 = fig.add_subplot(233, projection='3d')  # 3rd subplot
-ax3.scatter(vio_pts[:, 0], vio_pts[:, 1], vio_pts[:, 2], c='b', marker='s')
-ax3.set_title('vio pts')
+ax3.scatter(vo_pts[:, 0], vo_pts[:, 1], vo_pts[:, 2], c='b', marker='s')
+ax3.set_title('vo pts')
 ax3.set_xlabel('X')
 ax3.set_ylabel('Y')
 ax3.set_zlabel('Z')
@@ -99,7 +99,7 @@ ax5.legend()
 ax6 = fig.add_subplot(236, projection='3d')  # 1st subplot
 ax6.scatter(obj_pts1[:, 0], obj_pts1[:, 1], obj_pts1[:, 2], c='r', marker='o')
 ax6.scatter(obj_pts2[:, 0], obj_pts2[:, 1], obj_pts2[:, 2], c='g', marker='^')
-ax6.scatter(vio_pts[:, 0], vio_pts[:, 1], vio_pts[:, 2], c='b', marker='s')
+ax6.scatter(vo_pts[:, 0], vo_pts[:, 1], vo_pts[:, 2], c='b', marker='s')
 ax6.set_title('all pts')
 ax6.set_xlabel('X')
 ax6.set_ylabel('Y')

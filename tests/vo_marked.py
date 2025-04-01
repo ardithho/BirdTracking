@@ -6,10 +6,9 @@ if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
 from utils.general import RAD2DEG
-from utils.camera import Stereo
 from utils.structs import Bird, Birds
 from utils.sim import *
-from utils.odometry import bird_vio, draw_bird_matches
+from utils.odometry import bird_vo, draw_bird_matches
 
 
 STRIDE = 1
@@ -23,7 +22,7 @@ cfg_path = input_dir / 'cam.yaml'
 trans_path = input_dir / 'transforms.txt'
 
 h, w = (720, 1280)
-writer = cv2.VideoWriter(str(ROOT / 'data/out/vio_marked.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, int(h * 1.5)))
+writer = cv2.VideoWriter(str(ROOT / 'data/out/vo_marked.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, int(h * 1.5)))
 
 with open(cfg_path, 'r') as f:
     cfg = yaml.safe_load(f)
@@ -62,8 +61,8 @@ while cap.isOpened():
         if prev_frame is not None:
             prev_bird = birds.caches['m'][-2] if birds.caches['m'][-2] is not None else birds.caches['f'][-2]
             # vio, _, R, t, _ = estimate_vio(prev_frame, frame, prev_bird.mask(prev_frame), bird.mask(frame), k)
-            vio, Rs, ts = bird_vio(prev_bird, bird, K=K)
-            if vio:
+            vo, Rs, ts = bird_vo(prev_bird, bird, K=K)
+            if vo:
                 T[:3, :3] = Rs[0].T
                 # T[:3, 3] = -t.T
                 # r, _ = cv2.Rodrigues(R*transforms[frame_no][:3, :3])

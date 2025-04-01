@@ -25,7 +25,7 @@ METHOD = 'lg'
 BLENDER_ROOT = ROOT / 'data/blender'
 
 tracker = Tracker(ROOT / 'yolov8/weights/head.pt')
-predictor_head = Predictor(ROOT / 'yolov8/weights/head.pt')
+predictor = Predictor(ROOT / 'yolov8/weights/head.pt')
 
 vid_path = ROOT / 'data/vid/fps120/K203_K238_1_GH040045.mp4'
 
@@ -33,7 +33,7 @@ cfg_path = ROOT / 'data/calibration/cam.yaml'
 blender_cfg = ROOT / 'data/blender/configs/cam.yaml'
 
 h, w = (720, 1280)
-writer = cv2.VideoWriter(str(ROOT / f'data/out/colmap_vio_{METHOD}.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 4, (w, int(h * 1.5)))
+writer = cv2.VideoWriter(str(ROOT / f'data/out/colmap_vo_{METHOD}.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 4, (w, int(h * 1.5)))
 
 stereo = Stereo(path=cfg_path)
 with open(cfg_path, 'r') as f:
@@ -82,14 +82,14 @@ while cap.isOpened():
             curr_mask = bird.mask(frame)
             pts1, pts2 = find_matching_pts(prev_frame, frame, prev_mask, curr_mask, method=METHOD)
             matches = np.asarray(list(zip(list(range(len(pts1))), list(range(len(pts2))))))
-            vio = pycolmap.estimate_calibrated_two_view_geometry(camera1=cam,
-                                                                 points1=pts1.reshape(-1, 2),
-                                                                 camera2=cam,
-                                                                 points2=pts2.reshape(-1, 2),
-                                                                 matches=matches,
-                                                                 options=options)
-            if vio is not None:
-                rig = vio.cam2_from_cam1  # Rigid3d
+            vo = pycolmap.estimate_calibrated_two_view_geometry(camera1=cam,
+                                                                points1=pts1.reshape(-1, 2),
+                                                                camera2=cam,
+                                                                points2=pts2.reshape(-1, 2),
+                                                                matches=matches,
+                                                                options=options)
+            if vo is not None:
+                rig = vo.cam2_from_cam1  # Rigid3d
                 R = rig.rotation.matrix()
                 R = R @ ext[:3, :3].T  # undo camera extrinsic rotation
                 r = cv2.Rodrigues(R)[0]

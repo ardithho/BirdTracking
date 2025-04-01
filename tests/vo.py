@@ -10,7 +10,7 @@ from yolov8.track import Tracker
 
 from utils.box import pad_boxes
 from utils.general import RAD2DEG
-from utils.odometry import estimate_vio, find_matches
+from utils.odometry import estimate_vo, find_matches
 from utils.sim import *
 from utils.structs import Bird, Birds
 
@@ -26,7 +26,7 @@ vid_path = ROOT / 'data/vid/fps120/K203_K238_1_GH040045.mp4'
 cfg_path = ROOT / 'data/calibration/cam.yaml'
 
 h, w = (720, 1280)
-writer = cv2.VideoWriter(str(ROOT / 'data/out/vio.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 4, (w, int(h * 1.5)))
+writer = cv2.VideoWriter(str(ROOT / 'data/out/vo.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 4, (w, int(h * 1.5)))
 
 with open(cfg_path, 'r') as f:
     cfg = yaml.safe_load(f)
@@ -59,8 +59,8 @@ while cap.isOpened():
         if bird is not None and prev_frame is not None:
             prev_mask = prev_bird.mask(prev_frame)
             curr_mask = bird.mask(frame)
-            vio, R, t, _ = estimate_vio(prev_frame, frame, prev_mask, curr_mask, K, dist, method='sift')
-            if vio:
+            vo, R, t, _ = estimate_vo(prev_frame, frame, prev_mask, curr_mask, K, dist, method='sift')
+            if vo:
                 T[:3, :3] = R.T
                 # T[:3, 3] = -t.T
                 # r, _ = cv2.Rodrigues(R*transforms[frame_no][:3, :3])

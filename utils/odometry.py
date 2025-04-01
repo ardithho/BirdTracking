@@ -113,19 +113,19 @@ def estimate_essential_mat(prev_frame, curr_frame,
 
 
 # visual odometry
-def estimate_vio(prev_frame, curr_frame,
-                 prev_mask=None, curr_mask=None,
-                 K=None, dist=None, thresh=.8, method='orb'):
+def estimate_vo(prev_frame, curr_frame,
+                prev_mask=None, curr_mask=None,
+                K=None, dist=None, thresh=.8, method='orb'):
     # return: retval, R, t, mask
     src_pts, dst_pts = find_matching_pts(prev_frame, curr_frame,
                                          prev_mask, curr_mask, thresh, method)
     # return cv2.recoverPose(src_pts, dst_pts, K, dist, K, dist, threshold=thresh)
     if len(src_pts) > 0:
-        return estimate_vio_pts(src_pts, dst_pts, K, dist)
+        return estimate_vo_pts(src_pts, dst_pts, K, dist)
     return False, None, None, None
 
 
-def estimate_vio_pts(src_pts, dst_pts, K, dist=None):
+def estimate_vo_pts(src_pts, dst_pts, K, dist=None):
     E, mask = cv2.findEssentialMat(src_pts, dst_pts, K, dist, K, dist, threshold=.5)
     if E is None:
         return False, None, None, None
@@ -152,11 +152,11 @@ def optical_flow(prev_frame, curr_frame,
                  K=None, dist=None, thresh=.8):
     src_pts, dst_pts = find_matching_pts(prev_frame, curr_frame, prev_mask, curr_mask, thresh, method='of')
     if len(src_pts) > 0:
-        return estimate_vio_pts(src_pts, dst_pts, K, dist)
+        return estimate_vo_pts(src_pts, dst_pts, K, dist)
     return False, None, None, None
 
 
-def bird_vio(prev_bird, curr_bird, K=None, dist=None, thresh=.8):
+def bird_vo(prev_bird, curr_bird, K=None, dist=None, thresh=.8):
     visible = [k for k in CLS_DICT.keys() if prev_bird.feats[k] is not None and curr_bird.feats[k] is not None]
     if len(visible) < 5:
         return False, None, None

@@ -56,8 +56,8 @@ while cap.isOpened():
         if bird is not None and prev_frame is not None:
             prev_mask = prev_bird.mask(prev_frame)
             curr_mask = bird.mask(frame)
-            vio, R, t, _ = optical_flow(prev_frame, frame, prev_mask, curr_mask, K, dist)
-            if vio:
+            vo, R, t, _ = optical_flow(prev_frame, frame, prev_mask, curr_mask, K, dist)
+            if vo:
                 T[:3, :3] = R.T
                 # T[:3, 3] = -t.T
                 # r, _ = cv2.Rodrigues(R*transforms[frame_no][:3, :3])

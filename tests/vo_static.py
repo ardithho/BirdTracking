@@ -13,7 +13,7 @@ from lightglue import LightGlue, SuperPoint, match_pair, viz2d
 from lightglue.utils import load_image, numpy_image_to_torch
 
 from utils.general import RAD2DEG
-from utils.odometry import estimate_vio, estimate_vio_pts, find_matches
+from utils.odometry import estimate_vo, estimate_vo_pts, find_matches
 
 
 BLENDER_ROOT = ROOT / 'data/blender'
@@ -50,8 +50,8 @@ feats0, feats1, matches01 = match_pair(extractor, matcher, image0, image1)
 kpts0, kpts1, matches = feats0["keypoints"], feats1["keypoints"], matches01["matches"]
 m_kpts0, m_kpts1 = kpts0[matches[..., 0]], kpts1[matches[..., 1]]
 src_pts, dst_pts = m_kpts0.cpu().numpy(), m_kpts1.cpu().numpy()
-vio, R, t, _ = estimate_vio_pts(src_pts, dst_pts, K, dist)
-if vio:
+vo, R, t, _ = estimate_vo_pts(src_pts, dst_pts, K, dist)
+if vo:
     print('vo:', *np.rint(cv2.Rodrigues(R.T)[0]*RAD2DEG))
     print('gt:', *np.rint(cv2.Rodrigues(transforms[index][:3, :3])[0]*RAD2DEG))
 
