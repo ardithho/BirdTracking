@@ -9,7 +9,7 @@ if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
 from utils.camera import Stereo
-from utils.filter import ukf, OBS_COV_HIGH, OBS_COV_LOW
+from utils.filter import ParticleFilter
 from utils.reconstruct import get_head_feat_pts
 from utils.sim import *
 from utils.structs import Bird, Birds
@@ -28,7 +28,7 @@ cfg_path = input_dir / 'cam.yaml'
 trans_path = input_dir / 'transforms.txt'
 
 h, w = (720, 1280)
-writer = cv2.VideoWriter(str(ROOT / f'data/out/colmap_ukf_sim{EXTENSION}.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, int(h * 2)))
+writer = cv2.VideoWriter(str(ROOT / f'data/out/colmap_pf_sim{EXTENSION}.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, int(h * 2)))
 
 stereo = Stereo(path=cfg_path)
 with open(cfg_path, 'r') as f:
@@ -49,6 +49,7 @@ cam = pycolmap.Camera(
     )
 
 sim = Sim()
+pf = ParticleFilter()
 
 cap = cv2.VideoCapture(str(vid_path))
 birds = Birds()
@@ -62,8 +63,6 @@ prev_T = T.copy()
 sim.update(T)
 gt = np.eye(4)
 
-state_mean = ukf.initial_state_mean
-state_cov = ukf.initial_state_covariance
 cam_w, cam_h = cap.get(cv2.CAP_PROP_FRAME_WIDTH), cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 dummy_head = Box(0, conf=[1.],
                  xywh=np.array([[cam_w/2, cam_h/2, cam_w, cam_h]]),
@@ -93,18 +92,17 @@ while cap.isOpened():
                 tvec -= ext[:3, 3]
 
                 obs = np.array([*R.from_matrix(rmat.T).as_euler('xyz'), *tvec])
-                state_mean, state_cov = ukf.filter_update(
-                    filtered_state_mean=state_mean,
-                    filtered_state_covariance=state_cov,
-                    observation=obs,
-                    observation_covariance=OBS_COV_HIGH if head_pts.shape[0] < 4 else OBS_COV_LOW
-                )
+                pf.transition()
+                pf.observe(obs)
+                pf.resample()
+                estimate = pf.estimate()
+
                 # colmap to o3d notation
-                r = state_mean[:3]
+                r = estimate[:3]
                 r[0] *= -1
                 rmat = R.from_euler('xyz', r).as_matrix()
 
-                tvec = state_mean[3:6]
+                tvec = estimate[3:6]
                 tvec[0] *= -1
 
                 T[:3, :3] = rmat @ prev_T[:3, :3].T
