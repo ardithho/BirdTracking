@@ -100,12 +100,12 @@ while cap.isOpened():
                     observation=obs,
                     observation_covariance=OBS_COV_HIGH if head_pts.shape[0] < 4 else OBS_COV_LOW
                 )
-                # colmap to o3d notation
                 r = state_mean[:3]
+                tvec = state_mean[3:6]
+
+                # colmap to o3d notation
                 r[0] *= -1
                 rmat = R.from_euler('xyz', r).as_matrix()
-
-                tvec = state_mean[3:6]
                 tvec[0] *= -1
 
                 T[:3, :3] = rmat @ prev_T[:3, :3].T

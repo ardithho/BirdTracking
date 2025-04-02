@@ -1,5 +1,5 @@
 import pycolmap
-from scipy.spatial.transform import Rotation
+from scipy.spatial.transform import Rotation as R
 
 import os
 import sys
@@ -15,7 +15,7 @@ from utils.box import pad_boxes
 from utils.camera import Stereo
 from utils.filter import ParticleFilter
 from utils.general import RAD2DEG
-from utils.reconstruct import get_head_feat_pts
+from utils.reconstruct import get_head_feat_pts, reproj_error
 from utils.sim import *
 from utils.structs import Bird, Birds
 
@@ -25,11 +25,12 @@ STRIDE = 1
 FPS = 120
 SPEED = .5
 PADDING = 30
+TEST = 5
 
 tracker = Tracker(ROOT / 'yolov8/weights/head.pt')
 predictor = Predictor(ROOT / 'yolov8/weights/head.pt')
 
-vid_path = ROOT / 'data/vid/fps120/GH140045_solo.mp4'
+vid_path = ROOT / f'data/vid/test/test_{TEST}.mp4'
 
 cfg_path = ROOT / 'data/calibration/cam.yaml'
 blender_cfg = ROOT / 'data/blender/configs/cam.yaml'
@@ -46,6 +47,9 @@ with open(cfg_path, 'r') as f:
 with open(blender_cfg, 'r') as f:
     cfg = yaml.safe_load(f)
     ext = np.array(cfg['ext']).reshape(3, 4)
+    cam_rmat = ext[:3, :3]
+    cam_rvec = cv2.Rodrigues(cam_rmat)[0]
+    cam_tvec = ext[:3, 3]
 
 cam = pycolmap.Camera(
     model='OPENCV',
@@ -61,8 +65,12 @@ pf = ParticleFilter()
 
 cap = cv2.VideoCapture(str(vid_path))
 birds = Birds()
+frame_count = 0
+re_sum = 0
+
 T = np.eye(4)
 prev_T = np.eye(4)
+proj_T = np.eye(4)
 sim.update(T)
 continuous = False
 while cap.isOpened():
@@ -75,7 +83,7 @@ while cap.isOpened():
     if ret:
         head = pad_boxes(predictor.predictions(frame)[0].boxes.cpu().numpy(), frame.shape, PADDING)
         feat = detect_features(frame, head)
-        birds.update([Bird(head, feat) for head, feat in zip(head, feat)], frame)
+        birds.update([Bird(head, feat) for head, feat in zip(head, feat)][:1], frame)
         bird = birds['m'] if birds['m'] is not None else birds['f']
         if bird is not None:
             head_pts, feat_pts = get_head_feat_pts(bird)
@@ -83,31 +91,46 @@ while cap.isOpened():
                 pnp = pycolmap.estimate_and_refine_absolute_pose(feat_pts, head_pts, cam)
                 if pnp is not None:
                     rig = pnp['cam_from_world']  # Rigid3d
-                    t = -rig.translation
-                    R = rig.rotation.matrix()
-                    R = R @ ext[:3, :3].T  # undo camera extrinsic rotation
-                    r = cv2.Rodrigues(R)[0]
-                    # colmap to o3d notation
-                    r[0] *= -1
-                    t[0] *= -1
-                    R, _ = cv2.Rodrigues(r)
-                    R = R.T
+                    rmat = rig.rotation.matrix()
+                    rmat = cam_rmat @ rmat  # camera to world
+                    tvec = rig.translation + cam_tvec
+
                     # particle filter
-                    obs = np.array([*Rotation.from_matrix(R).as_euler('xyz'), *t])
+                    obs = np.array([*R.from_matrix(rmat).as_euler('xyz'), *tvec])
                     pf.transition()
                     pf.observe(obs, continuous)
                     pf.resample()
                     estimate = pf.estimate()
-                    R = Rotation.from_euler('xyz', estimate[:3]).as_matrix()
-                    t = estimate[3:]
-                    T[:3, :3] = R @ prev_T[:3, :3].T
-                    # T[:3, 3] = t.T - prev_T[:3, 3]
-                    print('es:', *np.rint(cv2.Rodrigues(T[:3, :3])[0] * RAD2DEG))
-                    print('esT:', *np.rint(cv2.Rodrigues(R)[0] * RAD2DEG))
-                    print('t:', t)
+                    r = estimate[:3]
+                    tvec = estimate[3:]
+
+                    # error projection
+                    proj_T[:3, :3] = R.from_euler('xyz', r).as_matrix()
+                    proj_T[:3, 3] = tvec
+
+                    # colmap to o3d notation
+                    r[0] *= -1
+                    rmat = R.from_euler('xyz', r).as_matrix()
+                    tvec[0] *= -1
+
+                    # camera pose to head pose
+                    rmat = rmat.T
+                    tvec = -tvec
+
+                    T[:3, :3] = rmat @ prev_T[:3, :3].T
+                    # T[:3, 3] = tvec - prev_T[:3, 3]
+                    print('es:', *np.rint(R.from_matrix(T[:3, :3]).as_euler('xyz', degrees=True)))
+                    print('esT:', *np.rint(-r * RAD2DEG))
+
+                    error = reproj_error(feat_pts, head_pts, proj_T, -cam_rvec, -cam_tvec, K, dist)
+                    print('error:', error)
                     print('')
-                    prev_T[:3, :3] = R
-                    prev_T[:3, 3] = t.T
+
+                    re_sum += error
+                    frame_count += 1
+
+                    prev_T[:3, :3] = rmat
+                    prev_T[:3, 3] = tvec.T
                     sim.update(T)
                     continuous = True
                 else:
@@ -133,3 +156,5 @@ cap.release()
 writer.release()
 cv2.destroyAllWindows()
 sim.close()
+
+print('MRE:', re_sum / frame_count)

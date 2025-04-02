@@ -13,7 +13,6 @@ from yolov8.track import Tracker
 
 from utils.box import pad_boxes
 from utils.camera import Stereo
-from utils.general import RAD2DEG
 from utils.reconstruct import get_head_feat_pts, reproj_error, reproj_error_
 from utils.sim import *
 from utils.structs import Bird, Birds
@@ -24,11 +23,12 @@ STRIDE = 1
 FPS = 120
 SPEED = 0.5
 PADDING = 30
+TEST = 1
 
 tracker = Tracker(ROOT / 'yolov8/weights/head.pt')
 predictor = Predictor(ROOT / 'yolov8/weights/head.pt')
 
-vid_path = ROOT / 'data/vid/fps120/GH140045_solo.mp4'
+vid_path = ROOT / f'data/vid/test/test_{TEST}.mp4'
 
 cfg_path = ROOT / 'data/calibration/cam.yaml'
 blender_cfg = ROOT / 'data/blender/configs/cam.yaml'
@@ -79,7 +79,7 @@ while cap.isOpened():
     if ret:
         head = pad_boxes(predictor.predictions(frame)[0].boxes.cpu().numpy(), frame.shape, PADDING)
         feat = detect_features(frame, head)
-        birds.update([Bird(head, feat) for head, feat in zip(head, feat)], frame)
+        birds.update([Bird(head, feat) for head, feat in zip(head, feat)][:1], frame)
         bird = birds['m'] if birds['m'] is not None else birds['f']
         if bird is not None:
             head_pts, feat_pts = get_head_feat_pts(bird)
@@ -92,6 +92,7 @@ while cap.isOpened():
                     r = R.from_matrix(rmat).as_euler('xyz', degrees=True)
                     tvec = rig.translation + cam_tvec
 
+                    # error projection
                     proj_T[:3, :3] = rmat
                     proj_T[:3, 3] = tvec
 
@@ -106,8 +107,8 @@ while cap.isOpened():
 
                     T[:3, :3] = rmat @ prev_T[:3, :3].T
                     # T[:3, 3] = tvec - prev_T[:3, 3]
-                    print('es:', *np.rint(cv2.Rodrigues(T[:3, :3])[0] * RAD2DEG))
-                    print('esT:', *np.rint(cv2.Rodrigues(rmat)[0] * RAD2DEG))
+                    print('es:', *np.rint(R.from_matrix(T[:3, :3]).as_euler('xyz', degrees=True)))
+                    print('esT:', *np.rint(-r))
 
                     error = reproj_error(feat_pts, head_pts, proj_T, -cam_rvec, -cam_tvec, K, dist)
                     print('error:', error)
@@ -121,7 +122,7 @@ while cap.isOpened():
                     frame_count += 1
 
                     prev_T[:3, :3] = rmat
-                    # prev_T[:3, 3] = tvec
+                    prev_T[:3, 3] = tvec
                     sim.update(T)
         cv2.imshow('frame', cv2.resize(birds.plot(), None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
 
