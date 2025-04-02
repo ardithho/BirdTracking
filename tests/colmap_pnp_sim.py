@@ -17,7 +17,7 @@ from utils.reconstruct import get_head_feat_pts
 RESIZE = 0.5
 STRIDE = 1
 BLENDER_ROOT = ROOT / 'data/blender'
-EXTENSION = '_y'
+EXTENSION = '_t'
 NAME = f'marked{EXTENSION}'
 
 renders_dir = BLENDER_ROOT / 'renders'
@@ -54,7 +54,7 @@ birds = Birds()
 frame_no = 0
 frame_count = 0
 ae_sum = np.zeros(3)
-te_sum = 0
+te_sum = np.zeros(3)
 
 T = np.eye(4)
 prev_T = T.copy()
@@ -107,7 +107,7 @@ while cap.isOpened():
 
                 ae = np.abs(gtT - esT)
                 ae_sum += ae
-                te = np.linalg.norm(gtt - est)
+                te = np.abs(gtt - est)
                 te_sum += te
                 frame_count += 1
 
@@ -143,7 +143,7 @@ writer.release()
 cv2.destroyAllWindows()
 sim.close()
 
-mae = ae_sum / frame_no
+mae = ae_sum / frame_count
 print('MAE:', *mae, np.mean(mae))
-mte = te_sum / frame_no
-print('MTE:', mte)
+mte = te_sum / frame_count
+print('MTE:', *mte, np.mean(mte))
