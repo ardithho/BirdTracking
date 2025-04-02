@@ -32,8 +32,6 @@ def reproj_error(img_pts, obj_pts, transform, rvec, tvec, K, dist=None):
     proj_pts, _ = cv2.projectPoints(obj_pts_t, rvec, tvec, K, dist)
     proj_pts = np.squeeze(proj_pts, axis=1)
     img_pts = img_pts.astype(proj_pts.dtype)
-    print(img_pts)
-    print(proj_pts)
     error = cv2.norm(img_pts, proj_pts, cv2.NORM_L2) / len(img_pts)
     return error
 
