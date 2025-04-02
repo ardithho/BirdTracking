@@ -15,7 +15,7 @@ from utils.sim import *
 
 RESIZE = 0.5
 STRIDE = 1
-METHOD = 'lg'
+METHOD = 'orb'
 BLENDER_ROOT = ROOT / 'data/blender'
 EXTENSION = ''
 NAME = f'marked{EXTENSION}'
@@ -115,7 +115,7 @@ while cap.isOpened():
                 print('ae:', *ae)
                 print('est:', *est)
                 print('gtt:', *gtt)
-                print('te:', te)
+                print('te:', *te)
                 print('')
 
                 sim.update(T)

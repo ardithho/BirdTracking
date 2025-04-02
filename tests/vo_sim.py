@@ -16,7 +16,7 @@ RESIZE = 0.5
 STRIDE = 1
 METHOD = 'lg'
 BLENDER_ROOT = ROOT / 'data/blender'
-EXTENSION = '_z'
+EXTENSION = ''
 NAME = f'marked{EXTENSION}'
 
 renders_dir = BLENDER_ROOT / 'renders'
@@ -44,7 +44,7 @@ birds = Birds()
 frame_no = 0
 frame_count = 0
 ae_sum = np.zeros(3)
-te_sum = 0
+te_sum = np.zeros(3)
 
 T = np.eye(4)
 abs_T = T.copy()
@@ -84,7 +84,7 @@ while cap.isOpened():
 
                 ae = np.abs(esD - gtD)
                 ae_sum += ae
-                te = np.linalg.norm(gtt - est)
+                te = np.abs(gtt - est)
                 te_sum += te
                 frame_count += 1
 
@@ -95,7 +95,7 @@ while cap.isOpened():
                 print('ae:', *ae)
                 print('est:', *est)
                 print('gtt:', *gtt)
-                print('te:', te)
+                print('te:', *te)
                 print('')
 
                 sim.update(T)
@@ -129,4 +129,4 @@ sim.close()
 mae = ae_sum / frame_count
 print('MAE:', *mae, np.mean(mae))
 mte = te_sum / frame_count
-print('MTE:', mte)
+print('MTE:', *mte, np.mean(mte))

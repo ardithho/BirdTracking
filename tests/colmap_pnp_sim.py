@@ -17,7 +17,7 @@ from utils.reconstruct import get_head_feat_pts
 RESIZE = 0.5
 STRIDE = 1
 BLENDER_ROOT = ROOT / 'data/blender'
-EXTENSION = '_t'
+EXTENSION = ''
 NAME = f'marked{EXTENSION}'
 
 renders_dir = BLENDER_ROOT / 'renders'
@@ -118,7 +118,7 @@ while cap.isOpened():
                 print('ae:', *ae)
                 print('est:', *est)
                 print('gtt:', *gtt)
-                print('te:', te)
+                print('te:', *te)
                 print('')
 
                 prev_T[:3, :3] = rmat

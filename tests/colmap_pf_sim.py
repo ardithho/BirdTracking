@@ -128,7 +128,7 @@ while cap.isOpened():
                 print('ae:', *ae)
                 print('est:', *est)
                 print('gtt:', *gtt)
-                print('te:', te)
+                print('te:', *te)
                 print('')
 
                 prev_T[:3, :3] = rmat
