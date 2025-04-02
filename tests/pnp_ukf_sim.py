@@ -9,9 +9,10 @@ if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
 from utils.camera import Stereo
-from utils.structs import Bird, Birds
-from utils.sim import *
+from utils.filter import ukf, OBS_COV_HIGH, OBS_COV_LOW
 from utils.reconstruct import get_head_feat_pts
+from utils.sim import *
+from utils.structs import Bird, Birds
 
 
 RESIZE = 0.5
@@ -27,7 +28,7 @@ cfg_path = input_dir / 'cam.yaml'
 trans_path = input_dir / 'transforms.txt'
 
 h, w = (720, 1280)
-writer = cv2.VideoWriter(str(ROOT / f'data/out/colmap_sim{EXTENSION}.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, int(h * 2)))
+writer = cv2.VideoWriter(str(ROOT / f'data/out/pnp_ukf_sim{EXTENSION}.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, int(h * 2)))
 
 stereo = Stereo(path=cfg_path)
 with open(cfg_path, 'r') as f:
@@ -47,7 +48,7 @@ cam = pycolmap.Camera(
     height=stereo.camL.h,
     params=(K[0, 0],  # focal length
             K[0, 2], K[1, 2]),  # cx, cy
-)
+    )
 
 sim = Sim()
 
@@ -63,12 +64,15 @@ prev_T = T.copy()
 sim.update(T)
 gt = np.eye(4)
 
+state_mean = ukf.initial_state_mean
+state_cov = ukf.initial_state_covariance
 cam_w, cam_h = cap.get(cv2.CAP_PROP_FRAME_WIDTH), cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 dummy_head = Box(0, conf=[1.],
                  xywh=np.array([[cam_w/2, cam_h/2, cam_w, cam_h]]),
                  xywhn=np.array([[.5, .5, 1., 1.]]),
                  xyxy=np.array([[0., 0., cam_w, cam_h]]),
                  xyxyn=np.array([[0., 0., 1., 1.]]))
+
 while cap.isOpened():
     for i in range(STRIDE):
         if cap.isOpened():
@@ -87,23 +91,30 @@ while cap.isOpened():
                 rig = pnp['cam_from_world']  # Rigid3d
                 rmat = rig.rotation.matrix()
                 rmat = cam_rmat @ rmat  # camera to world
-                rmat = rmat.T
-                r = R.from_matrix(rmat).as_euler('xyz', degrees=True)
-                print(rig.translation)
                 tvec = -(rig.translation + cam_tvec)
+
+                obs = np.array([*R.from_matrix(rmat.T).as_euler('xyz'), *tvec])
+                state_mean, state_cov = ukf.filter_update(
+                    filtered_state_mean=state_mean,
+                    filtered_state_covariance=state_cov,
+                    observation=obs,
+                    observation_covariance=OBS_COV_HIGH if head_pts.shape[0] < 4 else OBS_COV_LOW
+                )
+                r = state_mean[:3]
+                tvec = state_mean[3:6]
 
                 # colmap to o3d notation
                 r[0] *= -1
-                rmat = R.from_euler('xyz', r, degrees=True).as_matrix()
+                rmat = R.from_euler('xyz', r).as_matrix()
                 tvec[0] *= -1
 
                 T[:3, :3] = rmat @ prev_T[:3, :3].T
                 T[:3, 3] = tvec - prev_T[:3, 3]
 
                 esD = R.from_matrix(T[:3, :3]).as_euler('xyz', degrees=True)
-                gtD = R.from_matrix(transforms[frame_no][:3, :3]).as_euler('xyz', degrees=True)*np.array([1., 1., 1.])
+                gtD = R.from_matrix(transforms[frame_no][:3, :3]).as_euler('xyz', degrees=True) * np.array([1., 1., 1.])
                 esT = R.from_matrix(rmat).as_euler('xyz', degrees=True)
-                gtT = R.from_matrix(gt[:3, :3]).as_euler('xyz', degrees=True)*np.array([1., 1., 1.])
+                gtT = R.from_matrix(gt[:3, :3]).as_euler('xyz', degrees=True) * np.array([1., 1., 1.])
                 est = tvec
                 gtt = gt[:3, 3]
 

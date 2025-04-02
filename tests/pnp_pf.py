@@ -36,7 +36,7 @@ cfg_path = ROOT / 'data/calibration/cam.yaml'
 blender_cfg = ROOT / 'data/blender/configs/cam.yaml'
 
 h, w = (720, 1280)
-writer = cv2.VideoWriter(str(ROOT / 'data/out/colmap_pf.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), FPS//STRIDE*SPEED, (w, h * 2))
+writer = cv2.VideoWriter(str(ROOT / f'data/out/pnp_pf_{TEST}.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), FPS//STRIDE*SPEED, (w, h * 2))
 
 stereo = Stereo(path=cfg_path)
 with open(cfg_path, 'r') as f:
