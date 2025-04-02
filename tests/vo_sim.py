@@ -14,7 +14,7 @@ from utils.structs import Birds
 
 RESIZE = 0.5
 STRIDE = 1
-METHOD = 'lg'
+METHOD = 'orb'
 BLENDER_ROOT = ROOT / 'data/blender'
 EXTENSION = ''
 NAME = f'marked{EXTENSION}'
