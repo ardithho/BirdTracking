@@ -86,9 +86,10 @@ while cap.isOpened():
             if pnp is not None:
                 rig = pnp['cam_from_world']  # Rigid3d
                 rmat = rig.rotation.matrix()
-                rmat = rmat @ cam_rmat  # camera to world
+                rmat = cam_rmat @ rmat  # camera to world
                 rmat = rmat.T
                 r = R.from_matrix(rmat).as_euler('xyz', degrees=True)
+                print(rig.translation)
                 tvec = -(rig.translation + cam_tvec)
 
                 # colmap to o3d notation
