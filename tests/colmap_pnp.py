@@ -1,4 +1,5 @@
 import pycolmap
+from scipy.spatial.transform import Rotation as R
 
 import os
 import sys
@@ -13,7 +14,7 @@ from yolov8.track import Tracker
 from utils.box import pad_boxes
 from utils.camera import Stereo
 from utils.general import RAD2DEG
-from utils.reconstruct import get_head_feat_pts
+from utils.reconstruct import get_head_feat_pts, reproj_error, reproj_error_
 from utils.sim import *
 from utils.structs import Bird, Birds
 
@@ -44,6 +45,9 @@ with open(cfg_path, 'r') as f:
 with open(blender_cfg, 'r') as f:
     cfg = yaml.safe_load(f)
     ext = np.array(cfg['ext']).reshape(3, 4)
+    cam_rmat = ext[:3, :3]
+    cam_rvec = cv2.Rodrigues(cam_rmat)[0]
+    cam_tvec = ext[:3, 3]
 
 cam = pycolmap.Camera(
     model='OPENCV',
@@ -58,8 +62,12 @@ sim = Sim()
 
 cap = cv2.VideoCapture(str(vid_path))
 birds = Birds()
+frame_count = 0
+re_sum = 0
+
 T = np.eye(4)
 prev_T = np.eye(4)
+proj_T = np.eye(4)
 sim.update(T)
 while cap.isOpened():
     for i in range(STRIDE):
@@ -79,23 +87,39 @@ while cap.isOpened():
                 pnp = pycolmap.estimate_and_refine_absolute_pose(feat_pts, head_pts, cam)
                 if pnp is not None:
                     rig = pnp['cam_from_world']  # Rigid3d
-                    t = -rig.translation
-                    R = rig.rotation.matrix()
-                    R = R @ ext[:3, :3].T  # undo camera extrinsic rotation
-                    r = cv2.Rodrigues(R)[0]
+                    rmat = rig.rotation.matrix()
+                    rmat = rmat @ cam_rmat.T  # undo camera extrinsic rotation
+                    r = R.from_matrix(rmat).as_euler('xyz', degrees=True)
+                    tvec = -rig.translation
+                    tvec -= cam_tvec
+
+                    proj_T[:3, :3] = rmat
+                    proj_T[:3, 3] = tvec
+
                     # colmap to o3d notation
                     r[0] *= -1
-                    t[0] *= -1
-                    R, _ = cv2.Rodrigues(r)
-                    R = R.T
-                    T[:3, :3] = R @ prev_T[:3, :3].T
-                    # T[:3, 3] = t.T - prev_T[:3, 3]
+                    rmat = R.from_euler('xyz', r, degrees=True).as_matrix()
+                    rmat = rmat.T
+                    tvec[0] *= -1
+
+                    T[:3, :3] = rmat @ prev_T[:3, :3].T
+                    T[:3, 3] = tvec.T - prev_T[:3, 3]
                     print('es:', *np.rint(cv2.Rodrigues(T[:3, :3])[0] * RAD2DEG))
-                    print('esT:', *np.rint(cv2.Rodrigues(R)[0] * RAD2DEG))
-                    print('t:', t)
+                    print('esT:', *np.rint(cv2.Rodrigues(rmat)[0] * RAD2DEG))
+
+                    error = reproj_error(feat_pts, head_pts, proj_T, cam_rvec, cam_tvec, K, dist)
+                    print('error:', error)
+                    error_ = reproj_error_(feat_pts, head_pts,
+                                           cv2.Rodrigues(rig.rotation.matrix())[0],
+                                           rig.translation, K, dist)
+                    print('error_:', error_)
                     print('')
-                    prev_T[:3, :3] = R
-                    prev_T[:3, 3] = t.T
+
+                    re_sum += error_
+                    frame_count += 1
+
+                    prev_T[:3, :3] = rmat
+                    prev_T[:3, 3] = tvec.T
                     sim.update(T)
         cv2.imshow('frame', cv2.resize(birds.plot(), None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
 
@@ -114,3 +138,5 @@ cap.release()
 writer.release()
 cv2.destroyAllWindows()
 sim.close()
+
+print('MRE:', re_sum / frame_count)

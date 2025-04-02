@@ -17,6 +17,37 @@ def get_head_feat_pts(bird):
     return head_pts, feat_pts
 
 
+def reproj_error(img_pts, obj_pts, transform, rvec, tvec, K, dist=None):
+    """
+    :param img_pts: (N, 2)
+    :param obj_pts: (N, 3)
+    :param transform: (4, 4) transformation matrix
+    :param rvec: camera rotation extrinsic
+    :param tvec: camera translation extrinsic
+    :param K: camera matrix
+    :param dist: distortion coefficients
+    :return: reprojection error
+    """
+    obj_pts_t = (transform[:3, :3] @ obj_pts.T).T + transform[:3, 3]
+    proj_pts, _ = cv2.projectPoints(obj_pts_t, rvec, tvec, K, dist)
+    proj_pts = np.squeeze(proj_pts, axis=1)
+    img_pts = img_pts.astype(proj_pts.dtype)
+    print(img_pts)
+    print(proj_pts)
+    error = cv2.norm(img_pts, proj_pts, cv2.NORM_L2) / len(img_pts)
+    return error
+
+
+def reproj_error_(img_pts, obj_pts, rvec, tvec, K, dist=None):
+    proj_pts, _ = cv2.projectPoints(obj_pts, rvec, tvec, K, dist)
+    proj_pts = np.squeeze(proj_pts, axis=1)
+    img_pts = img_pts.astype(proj_pts.dtype)
+    print(img_pts)
+    print(proj_pts)
+    error = cv2.norm(img_pts, proj_pts, cv2.NORM_L2) / len(img_pts)
+    return error
+
+
 def solvePnP(bird, K, dist=None):
     head_pts, feat_pts = get_head_feat_pts(bird)
     if head_pts.shape[0] >= 4:
