@@ -88,22 +88,22 @@ while cap.isOpened():
                 if pnp is not None:
                     rig = pnp['cam_from_world']  # Rigid3d
                     rmat = rig.rotation.matrix()
-                    rmat = rmat @ cam_rmat.T  # undo camera extrinsic rotation
+                    rmat = rmat @ cam_rmat  # camera to world
+                    rmat = rmat.T
                     r = R.from_matrix(rmat).as_euler('xyz', degrees=True)
-                    tvec = -rig.translation
-                    tvec -= cam_tvec
+                    # tvec = -(rig.translation - cam_tvec)
+                    tvec = -(rig.translation + cam_tvec)
 
-                    proj_T[:3, :3] = rmat
-                    proj_T[:3, 3] = tvec
+                    proj_T[:3, :3] = rig.rotation.matrix() @ cam_rmat.T
+                    proj_T[:3, 3] = rig.translation - cam_tvec
 
                     # colmap to o3d notation
                     r[0] *= -1
                     rmat = R.from_euler('xyz', r, degrees=True).as_matrix()
-                    rmat = rmat.T
                     tvec[0] *= -1
 
                     T[:3, :3] = rmat @ prev_T[:3, :3].T
-                    T[:3, 3] = tvec.T - prev_T[:3, 3]
+                    T[:3, 3] = tvec - prev_T[:3, 3]
                     print('es:', *np.rint(cv2.Rodrigues(T[:3, :3])[0] * RAD2DEG))
                     print('esT:', *np.rint(cv2.Rodrigues(rmat)[0] * RAD2DEG))
 
@@ -119,7 +119,7 @@ while cap.isOpened():
                     frame_count += 1
 
                     prev_T[:3, :3] = rmat
-                    prev_T[:3, 3] = tvec.T
+                    prev_T[:3, 3] = tvec
                     sim.update(T)
         cv2.imshow('frame', cv2.resize(birds.plot(), None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
 

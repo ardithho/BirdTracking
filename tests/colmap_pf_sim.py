@@ -35,6 +35,8 @@ with open(cfg_path, 'r') as f:
     cfg = yaml.safe_load(f)
     K = np.array(cfg['KF']).reshape(3, 3)
     ext = np.array(cfg['extF']).reshape(3, 4)
+    cam_rmat = ext[:3, :3]
+    cam_tvec = ext[:3, 3]
 
 with open(trans_path, 'r') as f:
     lines = f.readlines()
@@ -86,10 +88,8 @@ while cap.isOpened():
             if pnp is not None:
                 rig = pnp['cam_from_world']  # Rigid3d
                 rmat = rig.rotation.matrix()
-                rmat = rmat @ ext[:3, :3].T  # undo camera extrinsic rotation
-
-                tvec = -rig.translation
-                tvec -= ext[:3, 3]
+                rmat = rmat @ cam_rmat  # camera to world
+                tvec = -(rig.translation + cam_tvec)
 
                 obs = np.array([*R.from_matrix(rmat.T).as_euler('xyz'), *tvec])
                 pf.transition()
