@@ -26,7 +26,7 @@ RESIZE = .5
 STRIDE = 1
 FPS = 120
 PADDING = 30
-TEST = 5
+TEST = 6
 
 tracker = Tracker(ROOT / 'yolov8/weights/head.pt')
 predictor = Predictor(ROOT / 'yolov8/weights/head.pt')

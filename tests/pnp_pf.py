@@ -30,13 +30,21 @@ TEST = 5
 tracker = Tracker(ROOT / 'yolov8/weights/head.pt')
 predictor = Predictor(ROOT / 'yolov8/weights/head.pt')
 
-vid_path = ROOT / f'data/vid/test/test_{TEST}.mp4'
+data_dir = ROOT / 'data'
+out_dir = data_dir / 'out/pnp'
+img_dir = out_dir / f'pnp_{TEST}'
+os.makedirs(out_dir, exist_ok=True)
+os.makedirs(img_dir, exist_ok=True)
 
-cfg_path = ROOT / 'data/calibration/cam.yaml'
-blender_cfg = ROOT / 'data/blender/configs/cam.yaml'
+vid_path = data_dir / f'vid/test/test_{TEST}.mp4'
+
+cfg_path = data_dir / 'calibration/cam.yaml'
+blender_cfg = data_dir / 'blender/configs/cam.yaml'
 
 h, w = (720, 1280)
-writer = cv2.VideoWriter(str(ROOT / f'data/out/pnp_pf_{TEST}.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), FPS//STRIDE*SPEED, (w, h * 2))
+writer = cv2.VideoWriter(str(out_dir / f'pnp_pf_{TEST}.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), FPS//STRIDE*SPEED, (w, h * 2))
+error_path = out_dir / f'pnp_pf_error_{TEST}.txt'
+errors = []
 
 stereo = Stereo(path=cfg_path)
 with open(cfg_path, 'r') as f:
@@ -65,6 +73,7 @@ pf = ParticleFilter()
 
 cap = cv2.VideoCapture(str(vid_path))
 birds = Birds()
+frame_no = 0
 frame_count = 0
 re_sum = 0
 
@@ -146,8 +155,13 @@ while cap.isOpened():
         cv2.imshow('out', cv2.resize(out, None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
 
         writer.write(out)
+        frame_no += 1
 
-        if cv2.waitKey(1) == ord('q'):
+        key = cv2.waitKey(1)
+        if key == ord('s') and bird is not None and head_pts.shape[0] >= 4 and pnp is not None:
+            cv2.imwrite(str(img_dir / f'{frame_no}.jpg'), out)
+            errors.append([frame_no, error])
+        elif key == ord('q'):
             break
     else:
         break
@@ -157,4 +171,10 @@ writer.release()
 cv2.destroyAllWindows()
 sim.close()
 
-print('MRE:', re_sum / frame_count)
+mre_text = f'MRE: {round(re_sum / frame_count, 3)}'
+print(mre_text)
+
+with open(error_path, 'w') as f:
+    for id, error in errors:
+        f.write(f'{id} {round(error, 3)}\n')
+    f.write(mre_text)
