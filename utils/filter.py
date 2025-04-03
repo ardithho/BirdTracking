@@ -6,7 +6,7 @@ from scipy.spatial.transform import Rotation as R
 STATE_DIMS = 12
 OBS_DIMS = 6
 
-OBS_COV_LOW = np.eye(OBS_DIMS) * 0.01
+OBS_COV_LOW = np.eye(OBS_DIMS) * 0.05
 OBS_COV_HIGH = np.eye(OBS_DIMS) * 0.5
 
 
