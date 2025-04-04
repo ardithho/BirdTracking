@@ -1,4 +1,3 @@
-import numpy as np
 import pycolmap
 import matplotlib.pyplot as plt
 from scipy.spatial.transform import Rotation as R
@@ -29,7 +28,7 @@ trans_path = input_dir / 'transforms.txt'
 out_dir = ROOT / 'data/out/pnp'
 
 h, w = (720, 1280)
-writer = cv2.VideoWriter(str(out_dir / 'pnp_sim_s.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, int(h * 2)))
+writer = cv2.VideoWriter(str(out_dir / 'pnp_sim_s.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 2, (w, int(h * 2)))
 
 stereo = Stereo(path=cfg_path)
 with open(cfg_path, 'r') as f:
@@ -109,16 +108,11 @@ while cap.isOpened():
                 ae = np.abs(gtT - esT)
                 ae_sum += ae
                 maes.append(np.mean(ae))
-                # te = np.abs(gtt - est)
-                # te_sum += te
                 frame_count += 1
 
                 print('esT:', *np.rint(esT))
                 print('gtT:', *np.rint(gtT))
                 print('ae:', *ae)
-                # print('est:', *est)
-                # print('gtt:', *gtt)
-                # print('te:', *te)
                 print('')
 
                 prev_T[:3, :3] = rmat

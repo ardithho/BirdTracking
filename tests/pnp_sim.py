@@ -1,4 +1,5 @@
 import pycolmap
+import matplotlib.pyplot as plt
 from scipy.spatial.transform import Rotation as R
 
 import os
@@ -17,7 +18,7 @@ from utils.reconstruct import get_head_feat_pts
 RESIZE = 0.5
 STRIDE = 1
 BLENDER_ROOT = ROOT / 'data/blender'
-EXTENSION = ''
+EXTENSION = '_y'
 NAME = f'marked{EXTENSION}'
 
 renders_dir = BLENDER_ROOT / 'renders'
@@ -58,6 +59,7 @@ frame_no = 0
 frame_count = 0
 ae_sum = np.zeros(3)
 te_sum = np.zeros(3)
+maes = []
 
 T = np.eye(4)
 prev_T = T.copy()
@@ -90,7 +92,6 @@ while cap.isOpened():
                 rmat = cam_rmat @ rmat  # camera to world
                 rmat = rmat.T
                 r = R.from_matrix(rmat).as_euler('xyz', degrees=True)
-                print(rig.translation)
                 tvec = -(rig.translation + cam_tvec)
 
                 # colmap to o3d notation
@@ -112,6 +113,7 @@ while cap.isOpened():
                 ae_sum += ae
                 te = np.abs(gtt - est)
                 te_sum += te
+                maes.append(np.mean(ae))
                 frame_count += 1
 
                 print('esD:', *np.rint(esD))
@@ -150,3 +152,7 @@ mae = ae_sum / frame_count
 print('MAE:', *mae, np.mean(mae))
 mte = te_sum / frame_count
 print('MTE:', *mte, np.mean(mte))
+
+plt.hist(np.asarray(maes), bins=50, range=[0, 150])
+plt.savefig(str(out_dir / f'pnp_sim{EXTENSION}_hist.png'))
+plt.show()
