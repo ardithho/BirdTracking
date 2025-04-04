@@ -17,6 +17,7 @@ from utils.reconstruct import get_head_feat_pts
 
 RESIZE = 0.5
 STRIDE = 1
+FPS = 2
 BLENDER_ROOT = ROOT / 'data/blender'
 NAME = f'marked_s'
 
@@ -28,7 +29,7 @@ trans_path = input_dir / 'transforms.txt'
 out_dir = ROOT / 'data/out/pnp'
 
 h, w = (720, 1280)
-writer = cv2.VideoWriter(str(out_dir / 'pnp_sim_s.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 2, (w, int(h * 2)))
+writer = cv2.VideoWriter(str(out_dir / 'pnp_sim_s.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), FPS, (w, int(h * 2)))
 
 stereo = Stereo(path=cfg_path)
 with open(cfg_path, 'r') as f:
@@ -98,12 +99,9 @@ while cap.isOpened():
                 tvec[0] *= -1
 
                 T[:3, :3] = rmat @ prev_T[:3, :3].T
-                # T[:3, 3] = tvec - prev_T[:3, 3]
 
                 esT = R.from_matrix(rmat).as_euler('xyz', degrees=True)
                 gtT = R.from_matrix(gt[:3, :3]).as_euler('xyz', degrees=True)*np.array([1., 1., 1.])
-                # est = tvec
-                # gtt = gt[:3, 3]
 
                 ae = np.abs(gtT - esT)
                 ae_sum += ae
@@ -138,9 +136,9 @@ sim.close()
 
 mae = ae_sum / frame_count
 print('MAE:', *mae, np.mean(mae))
-# mte = te_sum / frame_count
-# print('MTE:', *mte, np.mean(mte))
 
 plt.hist(np.asarray(maes), bins=40, range=[0, 120])
-plt.savefig(str(out_dir / 'pnp_sim_s_hist.png'))
+plt.xlabel('Rotation Mean Absolute Error (degrees)')
+plt.ylabel('Number of Frames')
+plt.savefig(str(out_dir / 'pnp_sim_s_hist.png'), dpi=1000)
 plt.show()

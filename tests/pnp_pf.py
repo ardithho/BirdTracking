@@ -9,7 +9,6 @@ if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
 from yolov8.predict import Predictor, detect_features
-from yolov8.track import Tracker
 
 from utils.box import pad_boxes
 from utils.camera import Stereo
@@ -27,7 +26,6 @@ SPEED = .5
 PADDING = 30
 TEST = 1
 
-tracker = Tracker(ROOT / 'yolov8/weights/head.pt')
 predictor = Predictor(ROOT / 'yolov8/weights/head.pt')
 
 data_dir = ROOT / 'data'

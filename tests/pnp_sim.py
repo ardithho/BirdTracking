@@ -154,5 +154,7 @@ mte = te_sum / frame_count
 print('MTE:', *mte, np.mean(mte))
 
 plt.hist(np.asarray(maes), bins=50, range=[0, 150])
-plt.savefig(str(out_dir / f'pnp_sim{EXTENSION}_hist.png'))
+plt.xlabel('Rotation Mean Absolute Error (degrees)')
+plt.ylabel('Number of Frames')
+plt.savefig(str(out_dir / f'pnp_sim{EXTENSION}_hist.png'), dpi=1000)
 plt.show()
