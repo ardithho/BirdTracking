@@ -36,8 +36,10 @@ vid_path = data_dir / f'vid/test/test_{TEST}.mp4'
 cfg_path = data_dir / 'calibration/cam.yaml'
 blender_cfg = data_dir / 'blender/configs/cam.yaml'
 
+out_path = out_dir / f'pnp_{TEST}.mp4'
+
 h, w = (720, 1280)
-writer = cv2.VideoWriter(str(out_dir / f'pnp_{TEST}.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), FPS//STRIDE*SPEED, (w, h * 2))
+writer = cv2.VideoWriter(str(out_path), cv2.VideoWriter_fourcc(*'mp4v'), FPS//STRIDE*SPEED, (w, h * 2))
 errors = []
 
 stereo = Stereo(path=cfg_path)
@@ -117,9 +119,10 @@ while cap.isOpened():
 
                     error = reproj_error(feat_pts, head_pts, proj_T, -cam_rvec, -cam_tvec, K, dist)
                     print('error:', error)
+                    print('')
 
                     re_sum += error
-                    error.append(error)
+                    errors.append(error)
                     frame_count += 1
 
                     prev_T[:3, :3] = rmat
@@ -153,3 +156,5 @@ plt.xlabel('Time (s)')
 plt.ylabel('Reprojection Error')
 plt.savefig(str(data_dir / 'img/pnp_calib_error.png'), dpi=1000)
 plt.show()
+
+print('Video saved to:', str(out_path))
