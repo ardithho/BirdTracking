@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 
-NAME = 'vanilla'
+NAME = 'marked_s'
 VIEW = 'f'
 BLENDER_ROOT = Path(__file__).parent.parent
 renders_dir = BLENDER_ROOT / 'renders'
