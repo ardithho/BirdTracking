@@ -11,7 +11,7 @@ input_dir = renders_dir / NAME / VIEW
 output_dir = renders_dir / 'vid'
 os.makedirs(output_dir, exist_ok=True)
 
-out_path = os.path.join(output_dir, f'{NAME}.mp4')
+out_path = os.path.join(output_dir, f'{NAME}_{VIEW}.mp4')
 
 w, h = (1920, 1080)
 writer = cv2.VideoWriter(out_path, cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, h))

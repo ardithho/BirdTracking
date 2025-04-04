@@ -7,15 +7,12 @@ from mathutils import Matrix
 from scipy.spatial.transform import Rotation as R
 
 
+CAM_NAME = 'cam_f'
 BLENDER_ROOT = Path(__file__).parent.parent.parent
 renders_dir = BLENDER_ROOT / 'renders'
 output_dir = os.path.join(renders_dir, 'marked_small')
-l_dir = os.path.join(output_dir, 'l')
-r_dir = os.path.join(output_dir, 'r')
-f_dir = os.path.join(output_dir, 'f')
-os.makedirs(l_dir, exist_ok=True)
-os.makedirs(r_dir, exist_ok=True)
-os.makedirs(f_dir, exist_ok=True)
+save_dir = os.path.join(output_dir, CAM_NAME[-1])
+os.makedirs(save_dir, exist_ok=True)
 
 scene = bpy.context.scene
 
@@ -98,13 +95,13 @@ kL, extL = camera_data(camL)
 kR, extR = camera_data(camR)
 kF, extF = camera_data(camF)
 with open(os.path.join(output_dir, 'cam.yaml'), 'w') as f:
-    data = {'pathL': l_dir,
+    data = {'pathL': save_dir,
             'KL': kL.flatten().tolist(),
             'extL': extL.flatten().tolist(),
-            'pathR': r_dir,
+            'pathR': save_dir,
             'KR': kR.flatten().tolist(),
             'extR': extR.flatten().tolist(),
-            'pathF': f_dir,
+            'pathF': save_dir,
             'KF': kF.flatten().tolist(),
             'extF': extF.flatten().tolist()}
     f.write(yaml.dump(data, sort_keys=False))
@@ -121,25 +118,19 @@ bpy.ops.object.join()
 
 head = bpy.context.active_object
 head.hide_render = False
+scene.camera = bpy.data.objects[CAM_NAME]
 T = np.eye(4)
 for i in range(100):
     f.write(' '.join([str(i+1), *map(str, T.flatten())]) + '\n')
-    head.matrix_world = Matrix(T) @ head.matrix_world
-    bpy.ops.object.transform_apply(location=True, rotation=True, scale=False)
+    head.matrix_world = Matrix(T)
+    bpy.ops.object.transform_apply(location=False, rotation=True, scale=False)
 
-    scene.camera = camL
-    scene.render.filepath = os.path.join(l_dir, '%03d.jpg' % (i+1))
-    bpy.ops.render.render(write_still=True, use_viewport=True)
-    scene.camera = camR
-    scene.render.filepath = os.path.join(r_dir, '%03d.jpg' % (i+1))
-    bpy.ops.render.render(write_still=True, use_viewport=True)
-    scene.camera = camF
-    scene.render.filepath = os.path.join(f_dir, '%03d.jpg' % (i+1))
+    scene.render.filepath = os.path.join(save_dir, '%03d.jpg' % (i+1))
     bpy.ops.render.render(write_still=True, use_viewport=True)
 
     x = np.random.randint(-60, 60)  # pitch
     y = np.random.randint(-75, 75)  # yaw
     z = np.random.randint(-180, 180)  # roll
-    T[:3, :3] = R.from_euler('xyz', [x, y ,z], degrees=True).as_matrix()
+    T[:3, :3] = R.from_euler('xyz', [x, y, z], degrees=True).as_matrix()
 
 f.close()
