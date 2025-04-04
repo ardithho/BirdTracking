@@ -1,4 +1,6 @@
+import numpy as np
 import pycolmap
+import matplotlib.pyplot as plt
 from scipy.spatial.transform import Rotation as R
 
 import os
@@ -57,6 +59,7 @@ frame_no = 0
 frame_count = 0
 ae_sum = np.zeros(3)
 te_sum = np.zeros(3)
+maes = []
 
 T = np.eye(4)
 prev_T = T.copy()
@@ -88,7 +91,6 @@ while cap.isOpened():
                 rmat = cam_rmat @ rmat  # camera to world
                 rmat = rmat.T
                 r = R.from_matrix(rmat).as_euler('xyz', degrees=True)
-                print(rig.translation)
                 tvec = -(rig.translation + cam_tvec)
 
                 # colmap to o3d notation
@@ -106,6 +108,7 @@ while cap.isOpened():
 
                 ae = np.abs(gtT - esT)
                 ae_sum += ae
+                maes.append(np.mean(ae))
                 # te = np.abs(gtt - est)
                 # te_sum += te
                 frame_count += 1
@@ -143,3 +146,7 @@ mae = ae_sum / frame_count
 print('MAE:', *mae, np.mean(mae))
 # mte = te_sum / frame_count
 # print('MTE:', *mte, np.mean(mte))
+
+plt.hist(np.asarray(maes), bins=40, range=[0, 120])
+plt.savefig(str(out_dir / 'pnp_sim_s_hist.png'))
+plt.show()

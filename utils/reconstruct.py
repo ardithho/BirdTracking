@@ -12,8 +12,9 @@ from utils.configs import CLS_DICT, HEAD_CFG
 
 
 def get_head_feat_pts(bird):
-    head_pts = np.array([HEAD_CFG[k] for k, v in bird.feats.items() if v is not None], dtype=np.float32)
-    feat_pts = np.array([v for k, v in bird.feats.items() if v is not None], dtype=np.float32)
+    keys = [k for k, v in bird.feats.items() if v is not None]
+    head_pts = np.array([HEAD_CFG[k] for k in keys], dtype=np.float32)
+    feat_pts = np.array([bird.feats[k] for k in keys], dtype=np.float32)
     return head_pts, feat_pts
 
 
