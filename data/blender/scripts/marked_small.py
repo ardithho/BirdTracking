@@ -122,15 +122,18 @@ scene.camera = bpy.data.objects[CAM_NAME]
 T = np.eye(4)
 for i in range(100):
     f.write(' '.join([str(i+1), *map(str, T.flatten())]) + '\n')
-    head.matrix_world = Matrix(T)
+    head.matrix_world = Matrix(T) @ head.matrix_world
     bpy.ops.object.transform_apply(location=False, rotation=True, scale=False)
 
     scene.render.filepath = os.path.join(save_dir, '%03d.jpg' % (i+1))
     bpy.ops.render.render(write_still=True, use_viewport=True)
 
-    x = np.random.randint(-60, 60)  # pitch
-    y = np.random.randint(-75, 75)  # yaw
-    z = np.random.randint(-180, 180)  # roll
-    T[:3, :3] = R.from_euler('xyz', [x, y, z], degrees=True).as_matrix()
+    head.matrix_world = Matrix(T.T) @ head.matrix_world
+
+    x = np.random.randint(-45, 45)  # pitch
+    y = np.random.randint(-45, 45)  # yaw
+    z = np.random.randint(-15, 15)  # roll
+    rmat = R.from_euler('xyz', [x, y, z], degrees=True).as_matrix()
+    T[:3, :3] = rmat
 
 f.close()
