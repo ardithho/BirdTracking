@@ -17,8 +17,7 @@ from utils.reconstruct import get_head_feat_pts
 RESIZE = 0.5
 STRIDE = 1
 BLENDER_ROOT = ROOT / 'data/blender'
-EXTENSION = ''
-NAME = f'marked{EXTENSION}'
+NAME = f'marked_s'
 
 renders_dir = BLENDER_ROOT / 'renders'
 vid_path = renders_dir / f'vid/{NAME}_f.mp4'
@@ -28,7 +27,7 @@ trans_path = input_dir / 'transforms.txt'
 out_dir = ROOT / 'data/out/pnp'
 
 h, w = (720, 1280)
-writer = cv2.VideoWriter(str(out_dir / f'pnp_sim{EXTENSION}.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, int(h * 2)))
+writer = cv2.VideoWriter(str(out_dir / 'pnp_sim_s.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 10, (w, int(h * 2)))
 
 stereo = Stereo(path=cfg_path)
 with open(cfg_path, 'r') as f:
@@ -62,7 +61,6 @@ te_sum = np.zeros(3)
 T = np.eye(4)
 prev_T = T.copy()
 sim.update(T)
-gt = np.eye(4)
 
 cam_w, cam_h = cap.get(cv2.CAP_PROP_FRAME_WIDTH), cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 dummy_head = Box(0, conf=[1.],
@@ -78,7 +76,7 @@ while cap.isOpened():
             break
     ret, frame = cap.retrieve()
     if ret:
-        gt = transforms[frame_no] @ gt
+        gt = transforms[frame_no]
         birds.update([Bird(dummy_head, extract_features(frame))], frame)
         bird = birds['m'] if birds['m'] is not None else birds['f']
         head_pts, feat_pts = get_head_feat_pts(bird)
@@ -99,33 +97,28 @@ while cap.isOpened():
                 tvec[0] *= -1
 
                 T[:3, :3] = rmat @ prev_T[:3, :3].T
-                T[:3, 3] = tvec - prev_T[:3, 3]
+                # T[:3, 3] = tvec - prev_T[:3, 3]
 
-                esD = R.from_matrix(T[:3, :3]).as_euler('xyz', degrees=True)
-                gtD = R.from_matrix(transforms[frame_no][:3, :3]).as_euler('xyz', degrees=True)*np.array([1., 1., 1.])
                 esT = R.from_matrix(rmat).as_euler('xyz', degrees=True)
                 gtT = R.from_matrix(gt[:3, :3]).as_euler('xyz', degrees=True)*np.array([1., 1., 1.])
-                est = tvec
-                gtt = gt[:3, 3]
+                # est = tvec
+                # gtt = gt[:3, 3]
 
                 ae = np.abs(gtT - esT)
                 ae_sum += ae
-                te = np.abs(gtt - est)
-                te_sum += te
+                # te = np.abs(gtt - est)
+                # te_sum += te
                 frame_count += 1
 
-                print('esD:', *np.rint(esD))
-                print('gtD:', *np.rint(gtD))
                 print('esT:', *np.rint(esT))
                 print('gtT:', *np.rint(gtT))
                 print('ae:', *ae)
-                print('est:', *est)
-                print('gtt:', *gtt)
-                print('te:', *te)
+                # print('est:', *est)
+                # print('gtt:', *gtt)
+                # print('te:', *te)
                 print('')
 
                 prev_T[:3, :3] = rmat
-                prev_T[:3, 3] = tvec
                 sim.update(T)
 
         cv2.imshow('frame', cv2.resize(birds.plot(), None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
@@ -148,5 +141,5 @@ sim.close()
 
 mae = ae_sum / frame_count
 print('MAE:', *mae, np.mean(mae))
-mte = te_sum / frame_count
-print('MTE:', *mte, np.mean(mte))
+# mte = te_sum / frame_count
+# print('MTE:', *mte, np.mean(mte))
