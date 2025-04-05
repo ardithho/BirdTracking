@@ -89,10 +89,12 @@ def obj_pts(c, r):
 
 
 if __name__ == '__main__':
+    import sys
+
     RESIZE = 0.5
     STRIDE = 30
 
-    TEST = 1
+    TEST = int(sys.argv[1]) if len(sys.argv) > 1 else 1
     test_dir = ROOT / 'data/calibration/test'
     vid_path = test_dir / f'test_{TEST}.mp4'
 
@@ -124,18 +126,23 @@ if __name__ == '__main__':
                 imgpts.append(corners)
                 # Draw and display the corners
                 cv2.drawChessboardCorners(frame, shape, corners, ret)
-            cv2.imshow('calibration', cv2.resize(frame, None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
+            cv2.imshow(f'Calibration Test {TEST}', cv2.resize(frame, None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
             if cv2.waitKey(1) == ord('q'):
                 break
         else:
             break
+    cap.release()
+    cv2.destroyAllWindows()
 
     # Calibrate camera
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpts, imgpts, (w, h), None,None)
-    # Re-projection error
-    mean_error = 0
-    for i in range(len(objpts)):
-        imgpts_, _ = cv2.projectPoints(objpts[i], rvecs[i], tvecs[i], mtx, dist)
-        error = cv2.norm(imgpts[i], imgpts_, cv2.NORM_L2) / len(imgpts_)
-        mean_error += error
-    print('Test {} Mean Re-projection Error: {}'.format(TEST, mean_error / len(objpts)))
+    if ret:
+        # Re-projection error
+        mean_error = 0
+        for i in range(len(objpts)):
+            imgpts_, _ = cv2.projectPoints(objpts[i], rvecs[i], tvecs[i], mtx, dist)
+            error = cv2.norm(imgpts[i], imgpts_, cv2.NORM_L2) / len(imgpts_)
+            mean_error += error
+        print('Test {} Mean Re-projection Error: {}'.format(TEST, mean_error / len(objpts)))
+    else:
+        print('Unable to calibrate camera')
