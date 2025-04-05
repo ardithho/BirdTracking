@@ -151,9 +151,9 @@ mre_text = f'MRE: {round(re_sum / frame_count, 3)}'
 print(mre_text)
 
 plt.plot(np.arange(0, len(errors)/120, 1/120)[:len(errors)], np.asarray(errors), color='r')
-plt.title('Reprojection Error over Time')
+plt.title('Re-projection Error over Time')
 plt.xlabel('Time (s)')
-plt.ylabel('Reprojection Error')
+plt.ylabel('Re-projection Error')
 plt.savefig(str(data_dir / 'img/pnp_calib_error.png'), dpi=1000)
 plt.show()
 

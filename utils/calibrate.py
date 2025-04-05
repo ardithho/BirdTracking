@@ -89,34 +89,56 @@ def obj_pts(c, r):
 
 
 if __name__ == '__main__':
-    im = cv2.imread(str(ROOT / 'data/calibration/fps10/chessboard.jpg'))
-    # im = cv2.imread(str(ROOT / 'data/calibration/K203_K238/chessboard/l/3411.jpg'))
-    gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
-    shape = (4, 7)
+    RESIZE = 0.5
+    STRIDE = 4
+    test_dir = ROOT / 'data/calibration/test'
+    vid_path = test_dir / 'test.mp4'
 
+    shape = (4, 7)
     # termination criteria
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-
     # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
-    objp = np.zeros((shape[0]*shape[1], 3), np.float32)
+    objp = np.zeros((shape[0] * shape[1], 3), np.float32)
     objp[:, :2] = np.mgrid[0:shape[0], 0:shape[1]].T.reshape(-1, 2)
-
     # Arrays to store object points and image points from all the images.
     objpts = []  # 3d point in real world space
     imgpts = []  # 2d points in image plane.
 
-    # Find the chess board corners
-    ret, corners = cv2.findChessboardCorners(gray, shape, None)
-    if ret:
-        objpts.append(objp)
+    calibrate = False
+    cap = cv2.VideoCapture(str(vid_path))
+    w, h = cap.get(cv2.CAP_PROP_FRAME_WIDTH), cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    while cap.isOpened():
+        for i in range(STRIDE):
+            if cap.isOpened():
+                _ = cap.grab()
+            else:
+                break
+        ret, frame = cap.retrieve()
+        if ret:
+            if calibrate:
+                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                ret, corners = cv2.findChessboardCorners(gray, shape, None)
+                if ret:
+                    objpts.append(objp)
+                    corners = cv2.cornerSubPix(gray, corners, (11,11), (-1,-1), criteria)
+                    imgpts.append(corners)
+                    # Draw and display the corners
+                    cv2.drawChessboardCorners(frame, shape, corners, ret)
+            cv2.imshow(cv2.resize(frame, None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
+            key = cv2.waitKey(1)
+            if key == ord('s'):
+                calibrate = True
+            elif key == ord('q'):
+                break
+        else:
+            break
 
-        corners = cv2.cornerSubPix(gray, corners, (11,11), (-1,-1), criteria)
-        imgpts.append(corners)
-
-        # Draw and display the corners
-        cv2.drawChessboardCorners(im, shape, corners, ret)
-        cv2.imshow('corners', im)
-        cv2.waitKey(0)
-        cv2.imwrite(str(ROOT / 'data/out/chessboard_corners.jpg'), im)
-
-    cv2.destroyAllWindows()
+# Calibrate camera
+ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpts, imgpts, (w, h), None,None)
+# Re-projection error
+mean_error = 0
+for i in range(len(objpts)):
+    imgpts_, _ = cv2.projectPoints(objpts[i], rvecs[i], tvecs[i], mtx, dist)
+    error = cv2.norm(imgpts[i], imgpts_, cv2.NORM_L2) / len(imgpts_)
+    mean_error += error
+print("Mean Re-projection Error: {}".format(mean_error / len(objpts)))

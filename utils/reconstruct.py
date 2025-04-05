@@ -27,7 +27,7 @@ def reproj_error(img_pts, obj_pts, transform, rvec, tvec, K, dist=None):
     :param tvec: camera translation extrinsic
     :param K: camera matrix
     :param dist: distortion coefficients
-    :return: reprojection error
+    :return: re-projection error
     """
     obj_pts_t = (transform[:3, :3] @ obj_pts.T).T + transform[:3, 3]
     proj_pts, _ = cv2.projectPoints(obj_pts_t, rvec, tvec, K, dist)
