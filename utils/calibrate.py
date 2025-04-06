@@ -88,7 +88,7 @@ def obj_pts(c, r):
     return o
 
 
-def calibrate(path, shape=(4, 7), stride=30, resize=0.5, flip=False):
+def calibrate(path, shape=(4, 7), stride=30, resize=0.5, flip=False, display=False):
     # termination criteria
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
     # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
@@ -118,8 +118,9 @@ def calibrate(path, shape=(4, 7), stride=30, resize=0.5, flip=False):
                 imgpts.append(corners)
                 # Draw and display the corners
                 cv2.drawChessboardCorners(frame, shape, corners, ret)
-            cv2.imshow('Calibration',
-                       cv2.resize(frame, None, fx=resize, fy=resize, interpolation=cv2.INTER_CUBIC))
+            if display:
+                cv2.imshow('Calibration',
+                           cv2.resize(frame, None, fx=resize, fy=resize, interpolation=cv2.INTER_CUBIC))
             if cv2.waitKey(1) == ord('q'):
                 break
         else:

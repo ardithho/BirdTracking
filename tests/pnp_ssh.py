@@ -129,6 +129,5 @@ while cap.isOpened():
         break
 
 cap.release()
-cv2.destroyAllWindows()
 
 print(f'Pose MRE:', round(re_sum / frame_count, 3))
