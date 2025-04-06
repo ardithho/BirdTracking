@@ -42,7 +42,7 @@ writer = cv2.VideoWriter(str(out_dir / f'pnp_{TEST}.mp4'), cv2.VideoWriter_fourc
 
 K, dist, mre_calib = calibrate(calib_path, flip=FLIP)
 dist = dist.squeeze()
-print(f'Calibration MRE: {mre_calib}')
+print(f'Calibration MRE: {round(mre_calib, 3)}')
 
 with open(blender_cfg, 'r') as f:
     cfg = yaml.safe_load(f)

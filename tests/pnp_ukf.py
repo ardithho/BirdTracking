@@ -41,7 +41,7 @@ blender_cfg = data_dir / 'blender/configs/cam.yaml'
 
 K, dist, mre_calib = calibrate(calib_path, flip=FLIP)
 dist = dist.squeeze()
-print(f'Calibration MRE: {mre_calib}')
+print(f'Calibration MRE: {round(mre_calib, 3)}')
 
 h, w = (720, 1280)
 writer = cv2.VideoWriter(str(out_dir / f'pnp_ukf_{TEST}.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), FPS//STRIDE, (w, h * 2))
