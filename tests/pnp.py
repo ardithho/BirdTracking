@@ -11,7 +11,7 @@ if str(ROOT) not in sys.path:
 from yolov8.predict import Predictor, detect_features
 
 from utils.box import pad_boxes
-from utils.camera import Stereo
+from utils.calibrate import calibrate
 from utils.reconstruct import get_head_feat_pts, reproj_error, reproj_error_
 from utils.sim import *
 from utils.structs import Bird, Birds
@@ -22,31 +22,27 @@ STRIDE = 1
 FPS = 120
 SPEED = 0.5
 PADDING = 30
-TEST = 1
+TEST = int(sys.argv[1]) if len(sys.argv) > 1 else 1
+FLIP = True
 
 predictor = Predictor(ROOT / 'yolov8/weights/head.pt')
 
 data_dir = ROOT / 'data'
+test_dir = data_dir / 'test'
 out_dir = data_dir / 'out/pnp'
-img_dir = out_dir / f'pnp_{TEST}'
 os.makedirs(out_dir, exist_ok=True)
-os.makedirs(img_dir, exist_ok=True)
 
-vid_path = data_dir / f'vid/test/test_{TEST}.mp4'
+vid_path = test_dir / f'vid/test_{TEST}.mp4'
+calib_path = test_dir / f'calib/test_{TEST}.mp4'
 
-cfg_path = data_dir / 'calibration/cam.yaml'
 blender_cfg = data_dir / 'blender/configs/cam.yaml'
 
 h, w = (720, 1280)
 writer = cv2.VideoWriter(str(out_dir / f'pnp_{TEST}.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), FPS//STRIDE*SPEED, (w, h * 2))
-error_path = img_dir / f'pnp_error_{TEST}.txt'
-errors = []
 
-stereo = Stereo(path=cfg_path)
-with open(cfg_path, 'r') as f:
-    cfg = yaml.safe_load(f)
-    K = np.asarray(cfg['KR']).reshape(3, 3)
-    dist = np.asarray(cfg['distR'])
+K, dist, re = calibrate(calib_path, flip=FLIP)
+dist = dist.squeeze()
+print('Test {} Calibration Mean Re-projection Error: {}'.format(TEST, re))
 
 with open(blender_cfg, 'r') as f:
     cfg = yaml.safe_load(f)
@@ -55,18 +51,19 @@ with open(blender_cfg, 'r') as f:
     cam_rvec = cv2.Rodrigues(cam_rmat)[0]
     cam_tvec = ext[:3, 3]
 
+sim = Sim()
+
+cap = cv2.VideoCapture(str(vid_path))
+
 cam = pycolmap.Camera(
     model='OPENCV',
-    width=stereo.camR.w,
-    height=stereo.camR.h,
+    width=int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
+    height=int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)),
     params=(K[0, 0], K[1, 1],  # fx, fy
             K[0, 2], K[1, 2],  # cx, cy
             *dist[:4]),  # dist: k1, k2, p1, p2
     )
 
-sim = Sim()
-
-cap = cv2.VideoCapture(str(vid_path))
 birds = Birds()
 frame_no = 0
 frame_count = 0
@@ -84,6 +81,8 @@ while cap.isOpened():
             break
     ret, frame = cap.retrieve()
     if ret:
+        if FLIP:
+            frame = cv2.flip(frame, 0)
         head = pad_boxes(predictor.predictions(frame)[0].boxes.cpu().numpy(), frame.shape, PADDING)
         feat = detect_features(frame, head)
         birds.update([Bird(head, feat) for head, feat in zip(head, feat)][:1], frame)
@@ -140,11 +139,7 @@ while cap.isOpened():
         writer.write(out)
         frame_no += 1
 
-        key = cv2.waitKey(1)
-        if key == ord('s') and bird is not None and head_pts.shape[0] >= 4 and pnp is not None:
-            cv2.imwrite(str(img_dir / f'{frame_no}.jpg'), out)
-            errors.append([frame_no, error])
-        elif key == ord('q'):
+        if cv2.waitKey(1) == ord('q'):
             break
     else:
         break
@@ -156,8 +151,3 @@ sim.close()
 
 mre_text = f'MRE: {round(re_sum / frame_count, 3)}'
 print(mre_text)
-
-with open(error_path, 'w') as f:
-    for id, error in errors:
-        f.write(f'{id} {round(error, 3)}\n')
-    f.write(mre_text)

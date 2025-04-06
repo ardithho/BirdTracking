@@ -88,17 +88,7 @@ def obj_pts(c, r):
     return o
 
 
-if __name__ == '__main__':
-    import sys
-
-    RESIZE = 0.5
-    STRIDE = 30
-
-    TEST = int(sys.argv[1]) if len(sys.argv) > 1 else 1
-    test_dir = ROOT / 'data/calibration/test'
-    vid_path = test_dir / f'test_{TEST}.mp4'
-
-    shape = (4, 7)
+def calibrate(path, shape=(4, 7), stride=30, resize=0.5, flip=False):
     # termination criteria
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
     # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
@@ -108,25 +98,28 @@ if __name__ == '__main__':
     objpts = []  # 3d point in real world space
     imgpts = []  # 2d points in image plane.
 
-    cap = cv2.VideoCapture(str(vid_path))
+    cap = cv2.VideoCapture(str(path))
     w, h = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     while cap.isOpened():
-        for i in range(STRIDE):
+        for i in range(stride):
             if cap.isOpened():
                 _ = cap.grab()
             else:
                 break
         ret, frame = cap.retrieve()
         if ret:
+            if flip:
+                frame = cv2.flip(frame, 0)
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             ret_, corners = cv2.findChessboardCorners(gray, shape, None)
             if ret_:
                 objpts.append(objp)
-                corners = cv2.cornerSubPix(gray, corners, (11,11), (-1,-1), criteria)
+                corners = cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
                 imgpts.append(corners)
                 # Draw and display the corners
                 cv2.drawChessboardCorners(frame, shape, corners, ret)
-            cv2.imshow(f'Calibration Test {TEST}', cv2.resize(frame, None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
+            cv2.imshow('Calibration',
+                       cv2.resize(frame, None, fx=resize, fy=resize, interpolation=cv2.INTER_CUBIC))
             if cv2.waitKey(1) == ord('q'):
                 break
         else:
@@ -135,14 +128,27 @@ if __name__ == '__main__':
     cv2.destroyAllWindows()
 
     # Calibrate camera
-    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpts, imgpts, (w, h), None,None)
+    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpts, imgpts, (w, h), None, None)
+    # Re-projection error
+    mean_error = 0
     if ret:
-        # Re-projection error
-        mean_error = 0
         for i in range(len(objpts)):
             imgpts_, _ = cv2.projectPoints(objpts[i], rvecs[i], tvecs[i], mtx, dist)
             error = cv2.norm(imgpts[i], imgpts_, cv2.NORM_L2) / len(imgpts_)
             mean_error += error
-        print('Test {} Mean Re-projection Error: {}'.format(TEST, mean_error / len(objpts)))
-    else:
-        print('Unable to calibrate camera')
+        mean_error /= len(objpts)
+    return mtx, dist, mean_error
+
+
+if __name__ == '__main__':
+    import sys
+
+    RESIZE = 0.5
+    STRIDE = 30
+
+    TEST = int(sys.argv[1]) if len(sys.argv) > 1 else 1
+    test_dir = ROOT / 'data/test/calib'
+    vid_path = test_dir / f'test_{TEST}.mp4'
+
+    mtx, dist, mre = calibrate(vid_path, stride=STRIDE, resize=RESIZE)
+    print('Test {} Mean Re-projection Error: {}'.format(TEST, mre))
