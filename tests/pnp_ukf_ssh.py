@@ -15,7 +15,6 @@ from yolov8.predict import Predictor, detect_features
 
 from utils.box import pad_boxes
 from utils.calibrate import calibrate
-from utils.general import RAD2DEG
 from utils.filter import ukf, OBS_COV_LOW
 from utils.reconstruct import get_head_feat_pts, reproj_error
 from utils.structs import Bird, Birds
@@ -77,6 +76,8 @@ while cap.isOpened():
             break
     ret, frame = cap.retrieve()
     if ret:
+        if FLIP:
+            frame = cv2.flip(frame, 0)
         head = pad_boxes(predictor.predictions(frame)[0].boxes.cpu().numpy(), frame.shape, PADDING)
         feat = detect_features(frame, head)
         birds.update([Bird(head, feat) for head, feat in zip(head, feat)][:1], frame)
