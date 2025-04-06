@@ -22,7 +22,7 @@ from utils.structs import Bird, Birds
 
 STRIDE = 1
 PADDING = 30
-FLIP = True
+FLIP = False
 TEST = int(sys.argv[1]) if len(sys.argv) > 1 else 1
 print('Test', TEST)
 
