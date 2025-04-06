@@ -82,6 +82,8 @@ while cap.isOpened():
             break
     ret, frame = cap.retrieve()
     if ret:
+        if FLIP:
+            frame = cv2.rotate(frame, cv2.ROTATE_180)
         head = pad_boxes(predictor.predictions(frame)[0].boxes.cpu().numpy(), frame.shape, PADDING)
         feat = detect_features(frame, head)
         birds.update([Bird(head, feat) for head, feat in zip(head, feat)][:1], frame)

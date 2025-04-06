@@ -40,7 +40,7 @@ blender_cfg = data_dir / 'blender/configs/cam.yaml'
 h, w = (720, 1280)
 writer = cv2.VideoWriter(str(out_dir / f'pnp_{TEST}.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), FPS//STRIDE*SPEED, (w, h * 2))
 
-K, dist, mre_calib = calibrate(calib_path, flip=FLIP)
+K, dist, mre_calib = calibrate(calib_path, flip=FLIP, display=True)
 dist = dist.squeeze()
 
 with open(blender_cfg, 'r') as f:
@@ -78,7 +78,7 @@ while cap.isOpened():
     ret, frame = cap.retrieve()
     if ret:
         if FLIP:
-            frame = cv2.flip(frame, 0)
+            frame = cv2.rotate(frame, cv2.ROTATE_180)
         head = pad_boxes(predictor.predictions(frame)[0].boxes.cpu().numpy(), frame.shape, PADDING)
         feat = detect_features(frame, head)
         birds.update([Bird(head, feat) for head, feat in zip(head, feat)][:1], frame)
@@ -108,7 +108,7 @@ while cap.isOpened():
                     tvec = -tvec
 
                     T[:3, :3] = rmat @ prev_T[:3, :3].T
-                    T[:3, 3] = tvec - prev_T[:3, 3]
+                    # T[:3, 3] = tvec - prev_T[:3, 3]
                     print('es:', *np.rint(R.from_matrix(T[:3, :3]).as_euler('xyz', degrees=True)))
                     print('esT:', *np.rint(-r))
 
@@ -124,7 +124,7 @@ while cap.isOpened():
                     frame_count += 1
 
                     prev_T[:3, :3] = rmat
-                    prev_T[:3, 3] = tvec
+                    # prev_T[:3, 3] = tvec
                     sim.update(T)
         cv2.imshow('frame', cv2.resize(birds.plot(), None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
 

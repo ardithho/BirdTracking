@@ -109,7 +109,7 @@ def calibrate(path, shape=(4, 7), stride=30, resize=0.5, flip=False, display=Fal
         ret, frame = cap.retrieve()
         if ret:
             if flip:
-                frame = cv2.flip(frame, 0)
+                frame = cv2.rotate(frame, cv2.ROTATE_180)
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             ret_, corners = cv2.findChessboardCorners(gray, shape, None)
             if ret_:
