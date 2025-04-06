@@ -8,7 +8,7 @@ VIEW = 'f'
 BLENDER_ROOT = Path(__file__).parent.parent
 renders_dir = BLENDER_ROOT / 'renders'
 input_dir = renders_dir / NAME / VIEW
-output_dir = renders_dir / 'vid'
+output_dir = renders_dir / 'bird'
 os.makedirs(output_dir, exist_ok=True)
 
 out_path = os.path.join(output_dir, f'{NAME}_{VIEW}.mp4')

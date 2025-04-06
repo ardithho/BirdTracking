@@ -7,7 +7,7 @@ NAME = 'marked'
 BLENDER_ROOT = Path(__file__).parent.parent
 renders_dir = BLENDER_ROOT / 'renders'
 input_dir = renders_dir / NAME
-output_dir = renders_dir / 'vid'
+output_dir = renders_dir / 'bird'
 
 l_dir = os.path.join(input_dir, 'l')
 r_dir = os.path.join(input_dir, 'r')

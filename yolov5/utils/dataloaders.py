@@ -237,9 +237,9 @@ class LoadScreenshots:
 
 
 class LoadImages:
-    # YOLOv5 image/video dataloader, i.e. `python predict.py --source image.jpg/vid.mp4`
+    # YOLOv5 image/video dataloader, i.e. `python predict.py --source image.jpg/bird.mp4`
     def __init__(self, path, img_size=640, stride=32, auto=True, transforms=None, vid_stride=1):
-        if isinstance(path, str) and Path(path).suffix == '.txt':  # *.txt file with img/vid/dir on each line
+        if isinstance(path, str) and Path(path).suffix == '.txt':  # *.txt file with img/bird/dir on each line
             path = Path(path).read_text().rsplit()
         files = []
         for p in sorted(path) if isinstance(path, (list, tuple)) else [path]:

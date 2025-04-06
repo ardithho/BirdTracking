@@ -40,9 +40,9 @@ blender_cfg = data_dir / 'blender/configs/cam.yaml'
 h, w = (720, 1280)
 writer = cv2.VideoWriter(str(out_dir / f'pnp_{TEST}.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), FPS//STRIDE*SPEED, (w, h * 2))
 
-K, dist, re = calibrate(calib_path, flip=FLIP)
+K, dist, mre_calib = calibrate(calib_path, flip=FLIP)
 dist = dist.squeeze()
-print('Test {} Calibration Mean Re-projection Error: {}'.format(TEST, re))
+print(f'Calibration MRE: {mre_calib}')
 
 with open(blender_cfg, 'r') as f:
     cfg = yaml.safe_load(f)
@@ -51,10 +51,7 @@ with open(blender_cfg, 'r') as f:
     cam_rvec = cv2.Rodrigues(cam_rmat)[0]
     cam_tvec = ext[:3, 3]
 
-sim = Sim()
-
 cap = cv2.VideoCapture(str(vid_path))
-
 cam = pycolmap.Camera(
     model='OPENCV',
     width=int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
@@ -65,10 +62,10 @@ cam = pycolmap.Camera(
     )
 
 birds = Birds()
-frame_no = 0
 frame_count = 0
 re_sum = 0
 
+sim = Sim()
 T = np.eye(4)
 prev_T = np.eye(4)
 proj_T = np.eye(4)
@@ -112,7 +109,7 @@ while cap.isOpened():
                     tvec = -tvec
 
                     T[:3, :3] = rmat @ prev_T[:3, :3].T
-                    # T[:3, 3] = tvec - prev_T[:3, 3]
+                    T[:3, 3] = tvec - prev_T[:3, 3]
                     print('es:', *np.rint(R.from_matrix(T[:3, :3]).as_euler('xyz', degrees=True)))
                     print('esT:', *np.rint(-r))
 
@@ -137,7 +134,6 @@ while cap.isOpened():
         cv2.imshow('out', cv2.resize(out, None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
 
         writer.write(out)
-        frame_no += 1
 
         if cv2.waitKey(1) == ord('q'):
             break
@@ -149,5 +145,4 @@ writer.release()
 cv2.destroyAllWindows()
 sim.close()
 
-mre_text = f'MRE: {round(re_sum / frame_count, 3)}'
-print(mre_text)
+print(f'Pose MRE:', round(re_sum / frame_count, 3))

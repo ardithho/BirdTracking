@@ -12,36 +12,36 @@ if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
 from yolov8.predict import Predictor, detect_features
-from yolov8.track import Tracker
 
 from utils.box import pad_boxes
-from utils.camera import Stereo
+from utils.calibrate import calibrate
 from utils.filter import ParticleFilter
 from utils.general import RAD2DEG
 from utils.reconstruct import get_head_feat_pts, reproj_error
 from utils.structs import Bird, Birds
 
 
-RESIZE = .5  # resize display window
 STRIDE = 1
-FPS = 120
-SPEED = .5
 PADDING = 30
-TEST = 6
+FLIP = True
+TEST = int(sys.argv[1]) if len(sys.argv) > 1 else 1
+print('Test', TEST)
 
-tracker = Tracker(ROOT / 'yolov8/weights/head.pt')
 predictor = Predictor(ROOT / 'yolov8/weights/head.pt')
 
-vid_path = ROOT / f'data/vid/test/test_{TEST}.mp4'
+data_dir = ROOT / 'data'
+test_dir = data_dir / 'test'
+out_dir = data_dir / 'out/pnp'
+os.makedirs(out_dir, exist_ok=True)
 
-cfg_path = ROOT / 'data/calibration/cam.yaml'
-blender_cfg = ROOT / 'data/blender/configs/cam.yaml'
+vid_path = test_dir / f'vid/test_{TEST}.mp4'
+calib_path = test_dir / f'calib/test_{TEST}.mp4'
 
-stereo = Stereo(path=cfg_path)
-with open(cfg_path, 'r') as f:
-    cfg = yaml.safe_load(f)
-    K = np.asarray(cfg['KR']).reshape(3, 3)
-    dist = np.asarray(cfg['distR'])
+blender_cfg = data_dir / 'blender/configs/cam.yaml'
+
+K, dist, mre_calib = calibrate(calib_path, flip=FLIP)
+dist = dist.squeeze()
+print(f'Calibration MRE: {mre_calib}')
 
 with open(blender_cfg, 'r') as f:
     cfg = yaml.safe_load(f)
@@ -50,18 +50,16 @@ with open(blender_cfg, 'r') as f:
     cam_rvec = cv2.Rodrigues(cam_rmat)[0]
     cam_tvec = ext[:3, 3]
 
+cap = cv2.VideoCapture(str(vid_path))
 cam = pycolmap.Camera(
     model='OPENCV',
-    width=stereo.camR.w,
-    height=stereo.camR.h,
+    width=int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
+    height=int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)),
     params=(K[0, 0], K[1, 1],  # fx, fy
             K[0, 2], K[1, 2],  # cx, cy
             *dist[:4]),  # dist: k1, k2, p1, p2
     )
 
-pf = ParticleFilter()
-
-cap = cv2.VideoCapture(str(vid_path))
 birds = Birds()
 frame_count = 0
 re_sum = 0
@@ -69,6 +67,8 @@ re_sum = 0
 T = np.eye(4)
 prev_T = np.eye(4)
 proj_T = np.eye(4)
+
+pf = ParticleFilter()
 continuous = False
 while cap.isOpened():
     for i in range(STRIDE):
@@ -127,7 +127,7 @@ while cap.isOpened():
                     frame_count += 1
 
                     prev_T[:3, :3] = rmat
-                    prev_T[:3, 3] = tvec.T
+                    prev_T[:3, 3] = tvec
                     continuous = True
                 else:
                     continious = False
@@ -144,4 +144,4 @@ while cap.isOpened():
 cap.release()
 cv2.destroyAllWindows()
 
-print('MRE:', re_sum / frame_count)
+print(f'Pose MRE:', round(re_sum / frame_count, 3))

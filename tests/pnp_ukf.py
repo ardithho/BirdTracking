@@ -11,7 +11,7 @@ if str(ROOT) not in sys.path:
 from yolov8.predict import Predictor, detect_features
 
 from utils.box import pad_boxes
-from utils.camera import Stereo
+from utils.calibrate import calibrate
 from utils.general import RAD2DEG
 from utils.filter import ukf, OBS_COV_LOW
 from utils.reconstruct import get_head_feat_pts, reproj_error
@@ -23,31 +23,28 @@ RESIZE = .5
 STRIDE = 1
 FPS = 120
 PADDING = 30
-TEST = 1
+FLIP = False
+TEST = int(sys.argv[1]) if len(sys.argv) > 1 else 1
+print('Test', TEST)
 
 predictor = Predictor(ROOT / 'yolov8/weights/head.pt')
 
 data_dir = ROOT / 'data'
+test_dir = data_dir / 'test'
 out_dir = data_dir / 'out/pnp'
-img_dir = out_dir / f'pnp_{TEST}'
 os.makedirs(out_dir, exist_ok=True)
-os.makedirs(img_dir, exist_ok=True)
 
-vid_path = data_dir / f'vid/test/test_{TEST}.mp4'
+vid_path = test_dir / f'vid/test_{TEST}.mp4'
+calib_path = test_dir / f'calib/test_{TEST}.mp4'
 
-cfg_path = data_dir / 'calibration/cam.yaml'
 blender_cfg = data_dir / 'blender/configs/cam.yaml'
+
+K, dist, mre_calib = calibrate(calib_path, flip=FLIP)
+dist = dist.squeeze()
+print(f'Calibration MRE: {mre_calib}')
 
 h, w = (720, 1280)
 writer = cv2.VideoWriter(str(out_dir / f'pnp_ukf_{TEST}.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), FPS//STRIDE, (w, h * 2))
-error_path = out_dir / f'pnp_ukf_error_{TEST}.txt'
-errors = []
-
-stereo = Stereo(path=cfg_path)
-with open(cfg_path, 'r') as f:
-    cfg = yaml.safe_load(f)
-    K = np.asarray(cfg['KR']).reshape(3, 3)
-    dist = np.asarray(cfg['distR'])
 
 with open(blender_cfg, 'r') as f:
     cfg = yaml.safe_load(f)
@@ -56,27 +53,26 @@ with open(blender_cfg, 'r') as f:
     cam_rvec = cv2.Rodrigues(cam_rmat)[0]
     cam_tvec = ext[:3, 3]
 
+cap = cv2.VideoCapture(str(vid_path))
 cam = pycolmap.Camera(
     model='OPENCV',
-    width=stereo.camR.w,
-    height=stereo.camR.h,
+    width=int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
+    height=int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)),
     params=(K[0, 0], K[1, 1],  # fx, fy
             K[0, 2], K[1, 2],  # cx, cy
             *dist[:4]),  # dist: k1, k2, p1, p2
     )
 
-sim = Sim()
-
-cap = cv2.VideoCapture(str(vid_path))
 birds = Birds()
-frame_no = 0
 frame_count = 0
 re_sum = 0
 
+sim = Sim()
 T = np.eye(4)
 prev_T = np.eye(4)
 proj_T = np.eye(4)
 sim.update(T)
+
 state_mean = ukf.initial_state_mean
 state_cov = ukf.initial_state_covariance
 while cap.isOpened():
@@ -138,7 +134,7 @@ while cap.isOpened():
                     frame_count += 1
 
                     prev_T[:3, :3] = rmat
-                    prev_T[:3, 3] = tvec.T
+                    prev_T[:3, 3] = tvec
                     sim.update(T)
         cv2.imshow('frame', cv2.resize(birds.plot(), None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
 
@@ -146,13 +142,8 @@ while cap.isOpened():
                            cv2.resize(sim.screen, (w, h), interpolation=cv2.INTER_CUBIC)])
         cv2.imshow('out', cv2.resize(out, None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
         writer.write(out)
-        frame_no += 1
 
-        key = cv2.waitKey(1)
-        if key == ord('s') and bird is not None and head_pts.shape[0] >= 4 and pnp is not None:
-            cv2.imwrite(str(img_dir / f'{frame_no}.jpg'), out)
-            errors.append([frame_no, error])
-        elif key == ord('q'):
+        if cv2.waitKey(1) == ord('q'):
             break
     else:
         break
@@ -162,10 +153,4 @@ writer.release()
 cv2.destroyAllWindows()
 sim.close()
 
-mre_text = f'MRE: {round(re_sum / frame_count, 3)}'
-print(mre_text)
-
-with open(error_path, 'w') as f:
-    for id, error in errors:
-        f.write(f'{id} {round(error, 3)}\n')
-    f.write(mre_text)
+print(f'Pose MRE:', round(re_sum / frame_count, 3))

@@ -7,7 +7,7 @@ NAME = 'vanilla'
 BLENDER_ROOT = Path(__file__).parent.parent
 renders_dir = BLENDER_ROOT / 'renders'
 input_dir = renders_dir / NAME
-output_dir = renders_dir / 'vid'
+output_dir = renders_dir / 'bird'
 out_path = os.path.join(output_dir, f'{NAME}.mp4')
 
 w, h = (1920, 1080)

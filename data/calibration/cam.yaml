@@ -1,4 +1,4 @@
-pathL: /home/ardith/Documents/BirdTracking/data/vid/fps120/K203_K238/GOPRO2/GH010039.MP4
+pathL: /home/ardith/Documents/BirdTracking/data/bird/fps120/K203_K238/GOPRO2/GH010039.MP4
 KL:
 - 917.101359260642
 - 0.0
@@ -43,7 +43,7 @@ PL:
 - 0.0
 flashL: 2178
 offsetL: 7578
-pathR: /home/ardith/Documents/BirdTracking/data/vid/fps120/K203_K238/GOPRO1/GH010045.MP4
+pathR: /home/ardith/Documents/BirdTracking/data/bird/fps120/K203_K238/GOPRO1/GH010045.MP4
 KR:
 - 807.0202786680776
 - 0.0

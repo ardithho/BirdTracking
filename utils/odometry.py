@@ -198,17 +198,3 @@ def draw_kp_matches(im1, kp1, im2, kp2):
         cv2.circle(out, p1, 3, (0, 255, 255), -1)
         cv2.circle(out, p2, 3, (0, 255, 255), -1)
     return out
-
-
-if __name__ == '__main__':
-    cap = cv2.VideoCapture(str(ROOT / '/data/vid/fps120/K203_K238/GOPRO2/GH010039.MP4'))
-    if cap.isOpened():
-        prev = cap.read()[1]
-        while cap.isOpened():
-            ret, curr = cap.read()
-            if ret:
-                print('Homography:', estimate_homography(prev, curr)[0])
-                print('Essential:', estimate_essential_mat(prev, curr)[0])
-                prev = curr
-                optical_flow(prev, curr)
-    cap.release()
