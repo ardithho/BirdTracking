@@ -118,8 +118,6 @@ while cap.isOpened():
 
                     T[:3, :3] = rmat @ prev_T[:3, :3].T
                     T[:3, 3] = tvec - prev_T[:3, 3]
-                    print('es:', *np.rint(R.from_matrix(T[:3, :3]).as_euler('xyz', degrees=True)))
-                    print('esT:', *np.rint(-r * RAD2DEG))
 
                     error = reproj_error(feat_pts, head_pts, proj_T, -cam_rvec, -cam_tvec, K, dist)
                     print('error:', error)
