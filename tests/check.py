@@ -18,7 +18,7 @@ os.makedirs(out_dir, exist_ok=True)
 vid_path = test_dir / f'bird/test_{TEST}.mp4'
 calib_path = test_dir / f'calib/test_{TEST}.mp4'
 
-cap = cv2.VideoCapture(str(vid_path))
+cap = cv2.VideoCapture(str(calib_path))
 ret, frame = cap.read()
-cv2.imwrite(f'test_{TEST}.jpg', frame)
+cv2.imwrite(f'out.jpg', frame)
 cap.release()
