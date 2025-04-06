@@ -31,7 +31,7 @@ data_dir = ROOT / 'data'
 out_dir = data_dir / 'out/pnp'
 os.makedirs(out_dir, exist_ok=True)
 
-vid_path = data_dir / f'vid/test/test_{TEST}.mp4'
+vid_path = data_dir / f'bird/test/test_{TEST}.mp4'
 
 cfg_path = data_dir / 'calibration/cam.yaml'
 blender_cfg = data_dir / 'blender/configs/cam.yaml'
