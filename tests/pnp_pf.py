@@ -158,5 +158,6 @@ writer.release()
 cv2.destroyAllWindows()
 sim.close()
 
+print('Test', TEST)
 print(f'Calibration MRE: {round(mre_calib, 3)}')
 print(f'Pose MRE:', round(re_sum / frame_count, 3))
