@@ -151,5 +151,5 @@ if __name__ == '__main__':
     test_dir = ROOT / 'data/test/calib'
     vid_path = test_dir / f'test_{TEST}.mp4'
 
-    mtx, dist, mre = calibrate(vid_path, stride=STRIDE, resize=RESIZE)
+    mtx, dist, mre = calibrate(vid_path, stride=STRIDE, resize=RESIZE, display=True)
     print('Test {} Mean Re-projection Error: {}'.format(TEST, mre))
