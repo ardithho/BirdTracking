@@ -24,7 +24,7 @@ STRIDE = 1
 FPS = 120
 PADDING = 30
 FLIP = False
-TEST = int(sys.argv[1]) if len(sys.argv) > 1 else 1
+TEST = int(sys.argv[1]) if len(sys.argv) > 1 else 2
 print('Test', TEST)
 
 predictor = Predictor(ROOT / 'yolov8/weights/head.pt')
