@@ -29,7 +29,7 @@ predictor = Predictor(ROOT / 'yolov8/weights/head.pt')
 
 vid_path = ROOT / 'data/vid/fps120/K203_K238_1_GH040045.mp4'
 
-cfg_path = ROOT / 'data/calibration/cam.yaml'
+cfg_path = ROOT / 'data/configs/cam.yaml'
 blender_cfg = ROOT / 'data/blender/configs/cam.yaml'
 
 h, w = (720, 1280)

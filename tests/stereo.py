@@ -25,7 +25,7 @@ predictor_head = Predictor(ROOT / 'yolov8/weights/head.pt')
 vidL = ROOT / 'data/vid/fps120/K203_K238/GOPRO2/GH010039.MP4'
 vidR = ROOT / 'data/vid/fps120/K203_K238/GOPRO1/GH010045.MP4'
 
-cfg_path = ROOT / 'data/calibration/cam.yaml'
+cfg_path = ROOT / 'data/configs/cam.yaml'
 
 # sync videos and calibrate cameras
 # stereo = Stereo(vidL=vidL, vidR=vidR, stride=STRIDE)
