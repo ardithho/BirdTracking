@@ -1,5 +1,4 @@
 import pycolmap
-import matplotlib.pyplot as plt
 from scipy.spatial.transform import Rotation as R
 
 import os
@@ -12,7 +11,7 @@ if str(ROOT) not in sys.path:
 from yolov8.predict import Predictor, detect_features
 
 from utils.box import pad_boxes
-from utils.camera import Stereo
+from utils.calibrate import calibrate
 from utils.reconstruct import get_head_feat_pts, reproj_error, reproj_error_
 from utils.sim import *
 from utils.structs import Bird, Birds
@@ -23,17 +22,18 @@ STRIDE = 1
 FPS = 120
 SPEED = 0.5
 PADDING = 30
-TEST = 2
+TEST = int(sys.argv[1]) if len(sys.argv) > 1 else 2
 
 predictor = Predictor(ROOT / 'yolov8/weights/head.pt')
 
 data_dir = ROOT / 'data'
+test_dir = data_dir / 'test'
 out_dir = data_dir / 'out/pnp'
 os.makedirs(out_dir, exist_ok=True)
 
-vid_path = data_dir / f'bird/test/test_{TEST}.mp4'
+vid_path = test_dir / f'bird/test_{TEST}.mp4'
+calib_path = test_dir / f'calib/test_{TEST}.mp4'
 
-cfg_path = data_dir / 'calibration/cam.yaml'
 blender_cfg = data_dir / 'blender/configs/cam.yaml'
 
 out_path = out_dir / f'pnp_{TEST}.mp4'
@@ -42,11 +42,8 @@ h, w = (720, 1280)
 writer = cv2.VideoWriter(str(out_path), cv2.VideoWriter_fourcc(*'mp4v'), FPS//STRIDE*SPEED, (w, h * 2))
 errors = []
 
-stereo = Stereo(path=cfg_path)
-with open(cfg_path, 'r') as f:
-    cfg = yaml.safe_load(f)
-    K = np.asarray(cfg['KR']).reshape(3, 3)
-    dist = np.asarray(cfg['distR'])
+K, dist, mre_calib = calibrate(calib_path, display=True)
+dist = dist.squeeze()
 
 with open(blender_cfg, 'r') as f:
     cfg = yaml.safe_load(f)
@@ -55,23 +52,21 @@ with open(blender_cfg, 'r') as f:
     cam_rvec = cv2.Rodrigues(cam_rmat)[0]
     cam_tvec = ext[:3, 3]
 
+cap = cv2.VideoCapture(str(vid_path))
 cam = pycolmap.Camera(
     model='OPENCV',
-    width=stereo.camR.w,
-    height=stereo.camR.h,
+    width=int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
+    height=int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)),
     params=(K[0, 0], K[1, 1],  # fx, fy
             K[0, 2], K[1, 2],  # cx, cy
             *dist[:4]),  # dist: k1, k2, p1, p2
     )
 
-sim = Sim()
-
-cap = cv2.VideoCapture(str(vid_path))
 birds = Birds()
-frame_no = 0
 frame_count = 0
 re_sum = 0
 
+sim = Sim()
 T = np.eye(4)
 prev_T = np.eye(4)
 proj_T = np.eye(4)
@@ -122,11 +117,10 @@ while cap.isOpened():
                     print('')
 
                     re_sum += error
-                    errors.append(error)
                     frame_count += 1
 
                     prev_T[:3, :3] = rmat
-                    prev_T[:3, 3] = tvec
+                    # prev_T[:3, 3] = tvec
                     sim.update(T)
         cv2.imshow('frame', cv2.resize(birds.plot(), None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
 
@@ -135,7 +129,6 @@ while cap.isOpened():
         cv2.imshow('out', cv2.resize(out, None, fx=RESIZE, fy=RESIZE, interpolation=cv2.INTER_CUBIC))
 
         writer.write(out)
-        frame_no += 1
 
         if cv2.waitKey(1) == ord('q'):
             break
@@ -147,14 +140,8 @@ writer.release()
 cv2.destroyAllWindows()
 sim.close()
 
-mre_text = f'MRE: {round(re_sum / frame_count, 3)}'
-print(mre_text)
-
-plt.plot(np.arange(0, len(errors)/120, 1/120)[:len(errors)], np.asarray(errors), color='r')
-plt.title('Re-projection Error over Time')
-plt.xlabel('Time (s)')
-plt.ylabel('Re-projection Error')
-plt.savefig(str(data_dir / 'img/pnp_calib_error.png'), dpi=1000)
-plt.show()
+print('Test', TEST)
+print(f'Calibration MRE: {round(mre_calib, 3)}')
+print(f'Pose MRE:', round(re_sum / frame_count, 3))
 
 print('Video saved to:', str(out_path))
