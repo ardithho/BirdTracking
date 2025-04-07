@@ -1,20 +1,16 @@
 import cv2
 
 from yolov8.predict import Predictor, detect_features
-from yolov8.track import Tracker
 
 from utils.box import pad_boxes
 from utils.structs import Bird, Birds
-
-from ultralytics.data.utils import IMG_FORMATS, VID_FORMATS
 
 
 RESIZE = .5
 STRIDE = 1
 SAVE = True
-PADDING = 40
+PADDING = 30
 
-tracker = Tracker('yolov8/weights/head.pt')
 predictor = Predictor('yolov8/weights/head.pt')
 
 vid = 'data/vid/fps120/K203_K238_1_GH040045.mp4'

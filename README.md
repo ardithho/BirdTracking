@@ -13,7 +13,22 @@ cd BirdTracking
 pip install -r requirements.txt  # install
 ```
 
+## Demo
+Run `main.py` for a demo of the 3D bird head pose estimation.
+```bash
+python main.py
+```
+Optionally you can specify the test video ranging from 1-5
+```bash
+python main.py 1
+```
+
 ## Detect
+`landmarks.py` is the standard head and facial landmark detection pipeline used in this project.
+```bash
+python landmarks.py
+```
+
 `detect.py` runs inference on a variety of sources and saving results to `runs/detect`.
 ```bash
 python predict.py --source 0                               # webcam
@@ -27,27 +42,3 @@ python predict.py --source 0                               # webcam
                            'https://youtu.be/Zgi9g1ksQHc'  # YouTube
                            'rtsp://example.com/media.mp4'  # RTSP, RTMP, HTTP stream
 ```
-Use the full path or relative path of files instead of just the file names. 
-The full path of images, videos or directories can be found by 
-selecting the file in file explorer and then pressing `Ctrl+Shift+C` for Windows, 
-or right-clicking the file and select `Get Info` for macOS.
-
-Add `--save-txt` for saving detections in .txt file.
-
-
-## Interpolate
-`interpolate.py` interpolates missing features in result labels from `detect.py`. 
-It is only available for videos.
-
-```bash
-python interpolate.py --labels {relative path} --source {video filepath}
-```
-At the end of running `detect.py`, it should show the relative path of the directory of the labels as 
-`{n} labels saved to {relative path}` if `--save-txt` was used.
-
-The filepath for `--source` should be the same one as used for `detect.py`.
-
-```bash
-python interpolate.py -h
-```
-Run this to check out other parameter options.
