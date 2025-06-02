@@ -13,10 +13,15 @@ from yolov8.predict import Predictor, detect_features
 
 from utils.box import pad_boxes
 from utils.calibrate import calibrate
+from utils.camera import Camera
 from utils.reconstruct import get_head_feat_pts, reproj_error
 from utils.sim import *
 from utils.structs import Bird, Birds
 
+
+predictor = Predictor(ROOT / 'yolov8/weights/head.pt')
+out_dir = ROOT / 'out'
+os.makedirs(out_dir, exist_ok=True)
 
 # initialise parser
 parser = argparse.ArgumentParser()
@@ -57,7 +62,10 @@ def run(
         padding=30,
         resize=0.5
 ):
-    pass
+    if Path(calib).suffix == '.yaml':
+        cam = Camera(calib).colmap
+    else:
+        pass
 
 
 def main(opt):
@@ -71,12 +79,8 @@ SPEED = 0.5
 PADDING = 30
 TEST = int(sys.argv[1]) if len(sys.argv) > 1 else 2
 
-predictor = Predictor(ROOT / 'yolov8/weights/head.pt')
-
 data_dir = ROOT / 'data'
 test_dir = data_dir / 'test'
-out_dir = data_dir / 'out/pnp'
-os.makedirs(out_dir, exist_ok=True)
 
 vid_path = test_dir / f'bird/test_{TEST}.mp4'
 calib_path = test_dir / f'calib/test_{TEST}.mp4'
