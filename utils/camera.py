@@ -16,29 +16,42 @@ from utils.general import kernel
 
 class Camera:
     def __init__(self, path, skip=0, flash=-1, K=None, dist=None, ext=None, P=None):
-        self.path = path
-        self.cap = cv2.VideoCapture(path)
-        self.skip = skip
-        self.h = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        self.w = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        self.flash = flash
-        self.K = K
-        self.dist = dist
-        self.ext = np.concatenate([np.eye(3), np.zeros((3, 1))], axis=1) if ext is None else ext
-        if K is None:
-            self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.skip)
-            self.first_flash()
-            self.objpts = []
-            self.imgpts = []
-            self.mpts = []
-            self.mpts_ = []
-            self.colmap = None
-        else:
+        if Path(path).suffix == '.yaml':
+            with open(path, 'r') as f:
+                cfg = yaml.safe_load(f)
+            self.path = cfg['path']
+            self.h = cfg['h']
+            self.w = cfg['w']
+            self.flash = cfg['flash'] if 'flash' in cfg.keys() else flash
+            self.K = np.array(cfg['K']).reshape(3, 3)
+            self.dist = np.array(cfg['dist']) if 'dist' in cfg.keys() else None
+            self.ext = np.array(cfg['ext']).reshape(3, 4)
+            self.P = np.array(cfg['P']).reshape(3, 4) if 'P' in cfg.keys() else self.K @ self.ext
             self.setup_colmap()
-        if P is None and self.K is not None:
-            self.P = self.K @ self.ext
         else:
-            self.P = P
+            self.path = path
+            self.cap = cv2.VideoCapture(path)
+            self.h = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            self.w = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            self.flash = flash
+            self.K = K
+            self.dist = dist
+            self.ext = np.concatenate([np.eye(3), np.zeros((3, 1))], axis=1) if ext is None else ext
+            if K is None:
+                self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.skip)
+                self.first_flash()
+                self.objpts = []
+                self.imgpts = []
+                self.mpts = []
+                self.mpts_ = []
+                self.colmap = None
+            else:
+                self.setup_colmap()
+            if P is None and self.K is not None:
+                self.P = self.K @ self.ext
+            else:
+                self.P = P
+        self.skip = skip
 
     def first_flash(self, kernel_size=5):
         print('Detecting camera flash...')
@@ -81,7 +94,7 @@ class Camera:
                 height=self.h,
                 params=(self.K[0, 0],  # focal length
                         self.K[0, 2], self.K[1, 2]),  # cx, cy
-)
+            )
 
     def add_chessboard_pts(self, corners, size):
         if corners is not None and size is not None:
@@ -103,30 +116,42 @@ class Camera:
     def undistort_pts(self, pts):
         return cv2.undistortImagePoints(pts, self.K, self.dist)
 
+    def save(self, path):
+        with open(path, 'w') as f:
+            data = {'path': self.path,
+                    'K': self.K.flatten().tolist(),
+                    'dist': self.dist.flatten().tolist(),
+                    'ext': self.ext.flatten().tolist(),
+                    'P': self.P.flatten().tolist(),
+                    'h': self.h,
+                    'w': self.w,
+                    'flash': self.flash}
+            f.write(yaml.dump(data, sort_keys=False))
+
 
 class Stereo:
     def __init__(self, path=None, vidL=None, vidR=None, skip=1500, stride=30, timeout=5400, size=(4, 7)):
         if path is not None:
             with open(path, 'r') as f:
                 cfg = yaml.safe_load(f)
-                self.camL = Camera(cfg['pathL'], skip=skip,
-                                   flash=cfg['flashL'] if 'flashL' in cfg.keys() else None,
-                                   K=np.array(cfg['KL']).reshape(3, 3),
-                                   dist=np.array(cfg['distL']) if 'distL' in cfg.keys() else None,
-                                   ext=np.array(cfg['extL']).reshape(3, 4),
-                                   P=np.array(cfg['PL']).reshape(3, 4) if 'PL' in cfg.keys() else None)
-                self.camR = Camera(cfg['pathR'], skip=skip,
-                                   flash=cfg['flashR'] if 'flashR' in cfg.keys() else None,
-                                   K=np.array(cfg['KR']).reshape(3, 3),
-                                   dist=np.array(cfg['distR']) if 'distR' in cfg.keys() else None,
-                                   ext=np.array(cfg['extR']).reshape(3, 4),
-                                   P=np.array(cfg['PR']).reshape(3, 4) if 'PR' in cfg.keys() else None)
-                self.R = np.asarray(cfg['R']).reshape(3, 3) if 'R' in cfg.keys() else None
-                self.T = np.asarray(cfg['T']).reshape(3, 1) if 'T' in cfg.keys() else None
-                self.E = np.asarray(cfg['E']).reshape(3, 3) if 'E' in cfg.keys() else None
-                self.F = np.asarray(cfg['F']).reshape(3, 3) if 'F' in cfg.keys() else None
-                self.offsetL = cfg['offsetL'] if 'offsetL' in cfg.keys() else 0
-                self.offsetR = cfg['offsetR'] if 'offsetR' in cfg.keys() else 0
+            self.camL = Camera(cfg['pathL'], skip=skip,
+                               flash=cfg['flashL'] if 'flashL' in cfg.keys() else None,
+                               K=np.array(cfg['KL']).reshape(3, 3),
+                               dist=np.array(cfg['distL']) if 'distL' in cfg.keys() else None,
+                               ext=np.array(cfg['extL']).reshape(3, 4),
+                               P=np.array(cfg['PL']).reshape(3, 4) if 'PL' in cfg.keys() else None)
+            self.camR = Camera(cfg['pathR'], skip=skip,
+                               flash=cfg['flashR'] if 'flashR' in cfg.keys() else None,
+                               K=np.array(cfg['KR']).reshape(3, 3),
+                               dist=np.array(cfg['distR']) if 'distR' in cfg.keys() else None,
+                               ext=np.array(cfg['extR']).reshape(3, 4),
+                               P=np.array(cfg['PR']).reshape(3, 4) if 'PR' in cfg.keys() else None)
+            self.R = np.asarray(cfg['R']).reshape(3, 3) if 'R' in cfg.keys() else None
+            self.T = np.asarray(cfg['T']).reshape(3, 1) if 'T' in cfg.keys() else None
+            self.E = np.asarray(cfg['E']).reshape(3, 3) if 'E' in cfg.keys() else None
+            self.F = np.asarray(cfg['F']).reshape(3, 3) if 'F' in cfg.keys() else None
+            self.offsetL = cfg['offsetL'] if 'offsetL' in cfg.keys() else 0
+            self.offsetR = cfg['offsetR'] if 'offsetR' in cfg.keys() else 0
         else:
             self.camL = Camera(vidL, skip)
             self.camR = Camera(vidR, skip)
@@ -210,6 +235,8 @@ class Stereo:
                     'distL': self.camL.dist.flatten().tolist(),
                     'extL': self.camL.ext.flatten().tolist(),
                     'PL': self.camL.P.flatten().tolist(),
+                    'hL': self.camL.h,
+                    'wL': self.camL.w,
                     'flashL': self.camL.flash,
                     'offsetL': self.offsetL,
                     'pathR': self.camR.path,
@@ -217,6 +244,8 @@ class Stereo:
                     'distR': self.camR.dist.flatten().tolist(),
                     'extR': self.camR.ext.flatten().tolist(),
                     'PR': self.camR.P.flatten().tolist(),
+                    'hR': self.camR.h,
+                    'wR': self.camR.w,
                     'flashR': self.camR.flash,
                     'offsetR': self.offsetR,
                     'R': self.R.flatten().tolist(),
