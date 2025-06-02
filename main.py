@@ -41,6 +41,29 @@ def parse_opt(parser):
     return opt
 
 
+def run(
+        source=ROOT / 'data/img',
+        calib=ROOT / 'data/configs/cam.yaml',
+        conf=0.25,
+        iou=0.7,
+        imgsz=640,
+        half=False,
+        device='',
+        max_det=300,
+        vid_stride=1,
+        agnostic_nms=False,
+        classes=None,
+        speed=1,
+        padding=30,
+        resize=0.5
+):
+    pass
+
+
+def main(opt):
+    run(**vars(opt))
+
+
 RESIZE = 0.5  # resize display window
 STRIDE = 1
 FPS = 120
@@ -169,3 +192,7 @@ print(f'Calibration MRE: {round(mre_calib, 3)}')
 print(f'Pose MRE:', round(re_sum / frame_count, 3))
 
 print('Video saved to:', str(out_path))
+
+if __name__ == '__main__':
+    opt = parse_opt(parser)
+    main(opt)
