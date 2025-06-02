@@ -21,7 +21,7 @@ parser.add_argument('--imgsz', '--img', '--img-size', nargs='+', type=int, defau
 parser.add_argument('--half', action='store_true', help='use FP16 half-precision inference')
 parser.add_argument('--device', default='', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
 parser.add_argument('--max-det', type=int, default=300, help='maximum detections per image')
-parser.add_argument('--bird-stride', type=int, default=1, help='video frame-rate stride')
+parser.add_argument('--vid-stride', type=int, default=1, help='video frame-rate stride')
 parser.add_argument('--visualize', action='store_true', help='visualize features')
 parser.add_argument('--augment', action='store_true', help='augmented inference')
 parser.add_argument('--agnostic-nms', action='store_true', help='class-agnostic NMS')

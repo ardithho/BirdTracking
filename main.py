@@ -1,3 +1,4 @@
+import argparse
 import pycolmap
 from scipy.spatial.transform import Rotation as R
 
@@ -12,9 +13,32 @@ from yolov8.predict import Predictor, detect_features
 
 from utils.box import pad_boxes
 from utils.calibrate import calibrate
-from utils.reconstruct import get_head_feat_pts, reproj_error, reproj_error_
+from utils.reconstruct import get_head_feat_pts, reproj_error
 from utils.sim import *
 from utils.structs import Bird, Birds
+
+
+# initialise parser
+parser = argparse.ArgumentParser()
+parser.add_argument('--source', type=str, default=ROOT / 'data/img', help='file/dir/URL/glob/screen/0(webcam)')
+parser.add_argument('--calib', type=str, default=ROOT / 'data/configs/cam.yaml', help='calibration video or yaml file')
+parser.add_argument('--conf', type=float, default=0.25, help='confidence threshold')
+parser.add_argument('--iou', type=float, default=0.7, help='NMS IoU threshold')
+parser.add_argument('--imgsz', '--img', '--img-size', nargs='+', type=int, default=640, help='inference size')
+parser.add_argument('--half', action='store_true', help='use FP16 half-precision inference')
+parser.add_argument('--device', default='', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
+parser.add_argument('--max-det', type=int, default=300, help='maximum detections per image')
+parser.add_argument('--vid-stride', type=int, default=1, help='inference video frame-rate stride')
+parser.add_argument('--agnostic-nms', action='store_true', help='class-agnostic NMS')
+parser.add_argument('--classes', nargs='+', type=int, help='filter by class: --classes 0, or --classes 0 2 3')
+parser.add_argument('--speed', type=int, default=1, help='output video speed')
+parser.add_argument('--padding', type=int, default=30, help='head bounding box padding')
+parser.add_argument('--resize', type=float, default=0.5, help='resize display window')
+
+
+def parse_opt(parser):
+    opt = parser.parse_args()
+    return opt
 
 
 RESIZE = 0.5  # resize display window
