@@ -105,7 +105,39 @@ class Camera:
         self.mpts.append(corners)
         self.mpts_.append(corners.squeeze)
 
-    def calibrate(self):
+    def calibrate(self, find_pts=True, shape=(4, 7), stride=30, resize=0.5, display=True):
+        if find_pts:
+            # termination criteria
+            criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+            # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
+            objp = np.zeros((shape[0] * shape[1], 3), np.float32)
+            objp[:, :2] = np.mgrid[0:shape[0], 0:shape[1]].T.reshape(-1, 2)
+
+            while self.cap.isOpened():
+                for i in range(stride):
+                    if self.cap.isOpened():
+                        _ = self.cap.grab()
+                    else:
+                        break
+                ret, frame = self.cap.retrieve()
+                if ret:
+                    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                    ret_, corners = cv2.findChessboardCorners(gray, shape, None)
+                    if ret_:
+                        self.objpts.append(objp)
+                        corners = cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
+                        self.imgpts.append(corners)
+                        # Draw and display the corners
+                        cv2.drawChessboardCorners(frame, shape, corners, ret)
+                    if display:
+                        cv2.imshow('Calibration',
+                                   cv2.resize(frame, None, fx=resize, fy=resize, interpolation=cv2.INTER_CUBIC))
+                    if cv2.waitKey(1) == ord('q'):
+                        break
+                else:
+                    break
+            self.cap.release()
+            cv2.destroyAllWindows()
         _, self.K, self.dist, _, _ = cv2.calibrateCamera(
             self.objpts, self.imgpts, (self.w, self.h),
             None, None)
@@ -187,8 +219,8 @@ class Stereo:
                     self.find_chessboard(frameL, frameR)
                 else:
                     break
-            self.camL.calibrate()
-            self.camR.calibrate()
+            self.camL.calibrate(find_pts=False)
+            self.camR.calibrate(find_pts=False)
             print('Syncing cameras...')
             self.calibrate()
         else:
