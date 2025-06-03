@@ -167,13 +167,13 @@ class Stereo:
             with open(path, 'r') as f:
                 cfg = yaml.safe_load(f)
             self.camL = Camera(cfg['pathL'], skip=skip,
-                               flash=cfg['flashL'] if 'flashL' in cfg.keys() else None,
+                               flash=cfg['flashL'] if 'flashL' in cfg.keys() else -1,
                                K=np.array(cfg['KL']).reshape(3, 3),
                                dist=np.array(cfg['distL']) if 'distL' in cfg.keys() else None,
                                ext=np.array(cfg['extL']).reshape(3, 4),
                                P=np.array(cfg['PL']).reshape(3, 4) if 'PL' in cfg.keys() else None)
             self.camR = Camera(cfg['pathR'], skip=skip,
-                               flash=cfg['flashR'] if 'flashR' in cfg.keys() else None,
+                               flash=cfg['flashR'] if 'flashR' in cfg.keys() else -1,
                                K=np.array(cfg['KR']).reshape(3, 3),
                                dist=np.array(cfg['distR']) if 'distR' in cfg.keys() else None,
                                ext=np.array(cfg['extR']).reshape(3, 4),
