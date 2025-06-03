@@ -39,7 +39,6 @@ class Camera:
             self.ext = np.concatenate([np.eye(3), np.zeros((3, 1))], axis=1) if ext is None else ext
             if K is None:
                 self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.skip)
-                self.first_flash()
                 self.objpts = []
                 self.imgpts = []
                 self.mpts = []
@@ -199,6 +198,8 @@ class Stereo:
             self.sync(stride=stride, timeout=timeout)
 
     def sync(self, stride, timeout):
+        self.camL.first_flash()
+        self.camR.first_flash()
         if self.camL.flash >= 0 and self.camR.flash >= 0:
             print('Calibrating cameras...')
             self.offsetL = self.camL.flash

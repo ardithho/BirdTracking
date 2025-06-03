@@ -65,7 +65,7 @@ def run(
     if Path(calib).suffix == '.yaml':
         cam = Camera(calib).colmap
     else:
-        pass
+        cam = Camera(calib)
 
 
 def main(opt):
