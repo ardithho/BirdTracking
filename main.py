@@ -66,6 +66,7 @@ def run(
         cam = Camera(calib).colmap
     else:
         cam = Camera(calib)
+        cam.calibrate()
 
 
 def main(opt):
