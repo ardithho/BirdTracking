@@ -41,7 +41,7 @@ if you have not already installed git.
 Clone this repo and install 
 [requirements.txt](https://github.com/teethoe/BirdTracking/blob/master/requirements.txt).
 ```bash
-git clone https://github.com/teethoe/BirdTracking  # clone
+git clone https://github.com/ardithho/BirdTracking  # clone
 cd BirdTracking
 pip install -r requirements.txt  # install
 ```
