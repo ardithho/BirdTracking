@@ -1,14 +1,13 @@
-runs
-venv
-datasets
+runs/
+venv/
+datasets/
 __pycache__
-perspective/
 JSON2YOLO/
 .git/
 .idea/
 data/
-!data/detect/
 misc/
+out/
 
 yolov5/.git/
 yolov5/.github/
