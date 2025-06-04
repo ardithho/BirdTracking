@@ -39,7 +39,6 @@ class Camera:
             self.dist = dist
             self.ext = np.concatenate([np.eye(3), np.zeros((3, 1))], axis=1) if ext is None else ext
             if K is None:
-                self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.skip)
                 self.objpts = []
                 self.imgpts = []
                 self.mpts = []
@@ -53,6 +52,7 @@ class Camera:
                 self.P = P
             self.mre = mre
         self.skip = skip
+        self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.skip)
 
     def first_flash(self, kernel_size=5):
         print('Detecting camera flash...')
@@ -143,6 +143,8 @@ class Camera:
         ret, self.K, self.dist, rvecs, tvecs = cv2.calibrateCamera(
             self.objpts, self.imgpts, (self.w, self.h),
             None, None)
+        self.dist = self.dist.flatten()
+        self.P = self.K @ self.ext
         # Re-projection error
         if ret:
             self.mre = 0

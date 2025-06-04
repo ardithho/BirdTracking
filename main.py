@@ -83,6 +83,7 @@ def run(
         cam.calibrate()
         print(f'Calibration MRE: {round(cam.mre, 3)}')
         cam.save(cam_path)
+        cam.setup_colmap()
         cam = cam.colmap
 
     cap = cv2.VideoCapture(str(source))
@@ -146,18 +147,11 @@ def run(
 
                         # camera pose to head pose
                         rmat = rmat.T
-                        tvec = -tvec
 
                         T[:3, :3] = rmat @ prev_T[:3, :3].T
-                        # T[:3, 3] = tvec - prev_T[:3, 3]
-                        print('es:', *np.rint(R.from_matrix(T[:3, :3]).as_euler('xyz', degrees=True)))
-                        print('esT:', *np.rint(-r))
-
-                        frame_count += 1
-
                         prev_T[:3, :3] = rmat
-                        # prev_T[:3, 3] = tvec
                         sim.update(T)
+                        frame_count += 1
             cv2.imshow('frame', cv2.resize(birds.plot(), None, fx=resize, fy=resize, interpolation=cv2.INTER_CUBIC))
 
             out = cv2.vconcat([cv2.resize(birds.plot(), (w, h), interpolation=cv2.INTER_CUBIC),
