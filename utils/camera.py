@@ -15,7 +15,7 @@ from utils.general import kernel
 
 
 class Camera:
-    def __init__(self, path, skip=0, flash=-1, K=None, dist=None, ext=None, P=None):
+    def __init__(self, path, skip=0, flash=-1, K=None, dist=None, ext=None, P=None, mre=-1):
         if Path(path).suffix == '.yaml':
             with open(path, 'r') as f:
                 cfg = yaml.safe_load(f)
@@ -27,6 +27,7 @@ class Camera:
             self.dist = np.array(cfg['dist']) if 'dist' in cfg.keys() else None
             self.ext = np.array(cfg['ext']).reshape(3, 4)
             self.P = np.array(cfg['P']).reshape(3, 4) if 'P' in cfg.keys() else self.K @ self.ext
+            self.mre = cfg['mre'] if 'mre' in cfg.keys() else mre
             self.setup_colmap()
         else:
             self.path = path
@@ -50,6 +51,7 @@ class Camera:
                 self.P = self.K @ self.ext
             else:
                 self.P = P
+            self.mre = mre
         self.skip = skip
 
     def first_flash(self, kernel_size=5):
@@ -137,9 +139,18 @@ class Camera:
                     break
             self.cap.release()
             cv2.destroyAllWindows()
-        _, self.K, self.dist, _, _ = cv2.calibrateCamera(
+        # Calibrate camera
+        ret, self.K, self.dist, rvecs, tvecs = cv2.calibrateCamera(
             self.objpts, self.imgpts, (self.w, self.h),
             None, None)
+        # Re-projection error
+        if ret:
+            self.mre = 0
+            for i in range(len(self.objpts)):
+                imgpts_, _ = cv2.projectPoints(self.objpts[i], rvecs[i], tvecs[i], self.K, self.dist)
+                error = cv2.norm(self.imgpts[i], imgpts_, cv2.NORM_L2) / len(imgpts_)
+                self.mre += error
+            self.mre /= len(self.objpts)
 
     def undistort(self, im):
         return cv2.undistort(im, self.K, self.dist)
@@ -158,6 +169,7 @@ class Camera:
                     'w': self.w,
                     'flash': self.flash}
             f.write(yaml.dump(data, sort_keys=False))
+        print('Camera config saved to {}'.format(path))
 
 
 class Stereo:
@@ -170,13 +182,15 @@ class Stereo:
                                K=np.array(cfg['KL']).reshape(3, 3),
                                dist=np.array(cfg['distL']) if 'distL' in cfg.keys() else None,
                                ext=np.array(cfg['extL']).reshape(3, 4),
-                               P=np.array(cfg['PL']).reshape(3, 4) if 'PL' in cfg.keys() else None)
+                               P=np.array(cfg['PL']).reshape(3, 4) if 'PL' in cfg.keys() else None,
+                               mre=cfg['mreL'] if 'mreL' in cfg.keys() else -1)
             self.camR = Camera(cfg['pathR'], skip=skip,
                                flash=cfg['flashR'] if 'flashR' in cfg.keys() else -1,
                                K=np.array(cfg['KR']).reshape(3, 3),
                                dist=np.array(cfg['distR']) if 'distR' in cfg.keys() else None,
                                ext=np.array(cfg['extR']).reshape(3, 4),
-                               P=np.array(cfg['PR']).reshape(3, 4) if 'PR' in cfg.keys() else None)
+                               P=np.array(cfg['PR']).reshape(3, 4) if 'PR' in cfg.keys() else None,
+                               mre=cfg['mreR'] if 'mreR' in cfg.keys() else -1)
             self.R = np.asarray(cfg['R']).reshape(3, 3) if 'R' in cfg.keys() else None
             self.T = np.asarray(cfg['T']).reshape(3, 1) if 'T' in cfg.keys() else None
             self.E = np.asarray(cfg['E']).reshape(3, 3) if 'E' in cfg.keys() else None
@@ -286,6 +300,7 @@ class Stereo:
                     'E': self.E.flatten().tolist(),
                     'F': self.F.flatten().tolist()}
             f.write(yaml.dump(data, sort_keys=False))
+        print('Stereo config saved to {}'.format(path))
 
 
 if __name__ == '__main__':
