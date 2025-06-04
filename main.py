@@ -20,7 +20,6 @@ from utils.structs import Bird, Birds
 
 predictor = Predictor(ROOT / 'yolov8/weights/head.pt')
 out_dir = ROOT / 'out'
-os.makedirs(out_dir, exist_ok=True)
 
 blender_cfg = ROOT / 'data/blender/configs/cam.yaml'
 with open(blender_cfg, 'r') as f:
@@ -71,13 +70,15 @@ def run(
         padding=30,
         resize=0.5
 ):
+    os.makedirs(output, exist_ok=True)
+
     # Setup camera
     if Path(calib).suffix == '.yaml':
         # Setuop camera from yaml config file
         cam = Camera(calib).colmap
     else:
         # Calibrate camera
-        cam_path = out_dir / 'cam.yaml'
+        cam_path = Path(output) / 'cam.yaml'
         cam = Camera(calib)
         print('Calibrating camera...')
         cam.calibrate()
@@ -91,11 +92,10 @@ def run(
 
     h, w = (720, 1280)
     out_path = output / f'out.mp4'
-    writer = cv2.VideoWriter(str(out_path), cv2.VideoWriter_fourcc(*'mp4v'), fps // stride * speed, (w, h * 2))
+    writer = cv2.VideoWriter(str(out_path), cv2.VideoWriter_fourcc(*'mp4v'), fps//stride*speed, (w, h*2))
 
     birds = Birds()
     frame_count = 0
-    re_sum = 0
 
     sim = Sim()
     T = np.eye(4)

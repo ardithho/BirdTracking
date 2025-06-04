@@ -8,7 +8,7 @@ Clone repo and install [requirements.txt](https://github.com/teethoe/BirdTrackin
 [INSTALL.md](https://github.com/teethoe/BirdTracking/blob/master/INSTALL.md).)
 
 ```bash
-git clone https://github.com/teethoe/BirdTracking  # clone
+git clone https://github.com/ardithho/BirdTracking  # clone
 cd BirdTracking
 pip install -r requirements.txt  # install
 ```
@@ -16,11 +16,7 @@ pip install -r requirements.txt  # install
 ## Demo
 Run `main.py` for a demo of the 3D bird head pose estimation.
 ```bash
-python main.py
-```
-Optionally you can specify the test video ranging from 1-5
-```bash
-python main.py 1
+python main.py --source {path/to/vid} --calib {path/to/calibration/vid}
 ```
 
 ## Detect
